@@ -1,0 +1,89 @@
+{
+  "source": "owner-manual",
+  "entries": [
+    {
+      "id": "wire-porosity",
+      "processes": ["MIG", "FLUX_CORED"],
+      "symptom": "Porosity: small cavities, pinholes, or holes in a wire-weld bead",
+      "questions": ["Are you using gas-shielded MIG or self-shielded flux-cored wire?", "Is the polarity correct for the wire?", "Is the base metal bright bare metal?"],
+      "checks": [
+        { "appliesTo": ["MIG", "FLUX_CORED"], "cause": "Incorrect polarity", "action": "Use DCEP for solid-wire MIG. Use DCEN for typical self-shielded flux-cored wire; verify the spool label." },
+        { "appliesTo": ["MIG"], "cause": "Insufficient, excessive, or wrong shielding gas", "action": "Check cylinder level and regulator flow, clean the nozzle, confirm the gas recommended by the wire supplier, and protect the arc from drafts." },
+        { "appliesTo": ["MIG", "FLUX_CORED"], "cause": "Dirty workpiece or wire", "action": "Clean the workpiece to bright bare metal and replace rusty, oily, coated, or contaminated wire." },
+        { "appliesTo": ["MIG", "FLUX_CORED"], "cause": "Contact-tip-to-work distance is too long", "action": "Reduce CTWD and keep it consistent." },
+        { "appliesTo": ["MIG", "FLUX_CORED"], "cause": "Inconsistent travel speed", "action": "Maintain a steady travel speed." }
+      ],
+      "pages": [37, 43],
+      "figureId": "wire-weld-defects-b"
+    },
+    {
+      "id": "wire-birds-nest",
+      "processes": ["MIG", "FLUX_CORED"],
+      "symptom": "Wire creates a bird's nest during operation",
+      "checks": [
+        { "cause": "Excess wire-feed pressure", "action": "Adjust feed pressure using the wood-block test on page 17." },
+        { "cause": "Incorrect contact-tip size", "action": "Install the tip size that matches the wire." },
+        { "cause": "Gun cable connector not fully inserted", "action": "Seat the connector fully in the wire-feed mechanism." },
+        { "cause": "Damaged liner", "action": "Have a qualified technician inspect and replace the liner." }
+      ],
+      "pages": [42]
+    },
+    {
+      "id": "wire-feed-stops",
+      "processes": ["MIG", "FLUX_CORED"],
+      "symptom": "Wire stops or feeds erratically during welding",
+      "checks": [
+        { "cause": "Severely bent gun cable", "action": "Straighten the gun cable." },
+        { "cause": "Clogged, worn, or undersized liner", "action": "Check the liner and replace it with the correct size if necessary." },
+        { "cause": "Tangled spool or wire missing the roller", "action": "Correct cross-winding and route the wire through the proper groove." },
+        { "cause": "Incorrect feed tension", "action": "Set only enough pressure to feed without crushing the wire or overrunning after trigger release." }
+      ],
+      "pages": [42],
+      "figureId": "feed-roller-guide"
+    },
+    {
+      "id": "unstable-wire-arc",
+      "processes": ["MIG", "FLUX_CORED"],
+      "symptom": "MIG or flux-cored welding arc is not stable",
+      "checks": [
+        { "cause": "Wire-feed problem or wrong speed", "action": "Correct feed issues, then adjust wire speed for a stable arc." },
+        { "cause": "Wrong or worn contact tip/liner", "action": "Match both to the wire and replace worn parts." },
+        { "cause": "Loose lead, gun, or work clamp", "action": "Tighten connections and clamp to clean bare metal." },
+        { "cause": "Incorrect polarity", "action": "Use DCEP for MIG and DCEN for self-shielded flux-cored wire." },
+        { "cause": "Gas flow too low or high (MIG)", "action": "Set flow from the machine/wire guidance and ensure the gun connector O-rings are not exposed." }
+      ],
+      "pages": [42]
+    },
+    {
+      "id": "wire-no-arc",
+      "processes": ["MIG", "FLUX_CORED"],
+      "symptom": "Wire feeds but the arc does not ignite",
+      "checks": [
+        { "cause": "Poor ground connection", "action": "Clamp to clean bare metal and verify both the workpiece and machine connections." },
+        { "cause": "Incorrect, worn, or dirty contact tip", "action": "Clean it or replace it with the correct size and type." }
+      ],
+      "pages": [43]
+    },
+    {
+      "id": "overheat-shutdown",
+      "processes": ["MIG", "FLUX_CORED", "TIG", "STICK"],
+      "symptom": "Welder stops and displays an overheat warning",
+      "checks": [
+        { "cause": "Rated duty cycle exceeded", "action": "Rest the torch or holder on a heat-proof nonconductive surface and leave the power switch ON so the fan can cool the welder. Resume with shorter weld periods and longer rests." }
+      ],
+      "pages": [23, 29, 43, 44]
+    },
+    {
+      "id": "tig-stick-unstable-arc",
+      "processes": ["TIG", "STICK"],
+      "symptom": "TIG or stick welding arc is not stable",
+      "checks": [
+        { "cause": "Loose electrode or ground cable", "action": "Tighten all lead connections." },
+        { "cause": "Damaged electrode holder", "action": "Have a qualified technician inspect and repair it." },
+        { "cause": "Incorrect current setting", "action": "Match the setting to the material/electrode and validate on scrap." },
+        { "appliesTo": ["TIG"], "cause": "Shielding gas is low", "action": "Replace or refill the argon cylinder." }
+      ],
+      "pages": [44]
+    }
+  ]
+}

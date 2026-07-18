@@ -1,0 +1,34 @@
+{
+  "source": "owner-manual",
+  "pages": [20, 21, 30, 31, 32, 33],
+  "accuracyNote": "The supplied documents describe the LCD inputs and operating ranges but do not publish the synergic algorithm's resulting wire-speed/voltage pairs. Do not fabricate numeric outputs.",
+  "modes": [
+    {
+      "process": "MIG",
+      "inputs": ["wire material/type", "wire diameter", "material thickness"],
+      "machineBehavior": "The synergic program sets a starting wire speed and voltage; make a test weld on same-thickness scrap and use the manual's diagnosis guide to tune it.",
+      "supportedMaterials": ["mild steel", "stainless steel", "aluminum with optional spool gun"],
+      "wireDiameterIn": [0.025, 0.03, 0.035]
+    },
+    {
+      "process": "FLUX_CORED",
+      "inputs": ["wire diameter", "material thickness"],
+      "machineBehavior": "The synergic program supplies a starting point. Confirm DCEN for self-shielded wire and tune only after a scrap test.",
+      "supportedMaterials": ["mild steel", "stainless steel when supported by the selected wire"],
+      "wireDiameterIn": [0.03, 0.035, 0.045]
+    },
+    {
+      "process": "TIG",
+      "inputs": ["material", "material thickness", "tungsten diameter"],
+      "machineBehavior": "Select the process and set current; foot-pedal mode varies current up to the selected maximum.",
+      "supportedMaterials": ["mild steel", "stainless steel", "chrome moly"],
+      "unsupportedNote": "The OmniPro 220 is DC TIG; the manual does not support AC TIG aluminum."
+    },
+    {
+      "process": "STICK",
+      "inputs": ["electrode type", "electrode diameter", "material thickness"],
+      "machineBehavior": "Select the electrode and set current, then tune with a scrap weld while observing duty-cycle limits.",
+      "supportedMaterials": ["mild steel", "stainless steel"]
+    }
+  ]
+}

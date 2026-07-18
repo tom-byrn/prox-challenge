@@ -1,0 +1,64 @@
+{
+  "source": "owner-manual and quick-start guide",
+  "setups": [
+    {
+      "id": "mig-solid",
+      "process": "MIG",
+      "aliases": ["GMAW", "solid wire", "gas-shielded MIG", "spool gun"],
+      "polarity": "DCEP",
+      "polarityMeaning": "Direct Current Electrode Positive",
+      "groundClampSocket": "negative",
+      "electrodeLead": "wire-feed power cable",
+      "electrodeSocket": "positive",
+      "gas": "required; choose shielding gas for the wire and material",
+      "wireFeedConnected": true,
+      "pages": { "ownerManual": [14], "quickStart": [2] },
+      "figureId": "mig-flux-cable-setup"
+    },
+    {
+      "id": "flux-self-shielded",
+      "process": "FLUX_CORED",
+      "aliases": ["FCAW-S", "flux", "self-shielded flux-cored"],
+      "polarity": "DCEN",
+      "polarityMeaning": "Direct Current Electrode Negative",
+      "groundClampSocket": "positive",
+      "electrodeLead": "wire-feed power cable",
+      "electrodeSocket": "negative",
+      "gas": "not used for self-shielded wire",
+      "wireFeedConnected": true,
+      "pages": { "ownerManual": [13, 42, 43], "quickStart": [2] },
+      "figureId": "mig-flux-cable-setup",
+      "caution": "Some gas-shielded flux-cored wires use a different polarity. Follow the wire manufacturer's label if it conflicts."
+    },
+    {
+      "id": "tig-dc",
+      "process": "TIG",
+      "aliases": ["GTAW", "DC TIG", "lift TIG"],
+      "polarity": "DCEN",
+      "polarityMeaning": "Direct Current Electrode Negative",
+      "groundClampSocket": "positive",
+      "electrodeLead": "TIG torch cable",
+      "electrodeSocket": "negative",
+      "gas": "100% argon required",
+      "wireFeedConnected": false,
+      "extraConnections": ["shielding-gas hose to regulator", "foot-pedal cable to the socket inside the welder when using the pedal"],
+      "pages": { "ownerManual": [24, 25], "quickStart": [2] },
+      "figureId": "tig-cable-setup"
+    },
+    {
+      "id": "stick-default",
+      "process": "STICK",
+      "aliases": ["SMAW", "electrode holder"],
+      "polarity": "DCEP",
+      "polarityMeaning": "Direct Current Electrode Positive",
+      "groundClampSocket": "negative",
+      "electrodeLead": "electrode-holder cable",
+      "electrodeSocket": "positive",
+      "gas": "not required",
+      "wireFeedConnected": false,
+      "pages": { "ownerManual": [27], "quickStart": [2] },
+      "figureId": "stick-cable-setup",
+      "caution": "Use the polarity specified by the electrode manufacturer if it differs."
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "source": "owner-manual",
+  "pages": [7],
+  "maximumOpenCircuitVoltageVdc": 86,
+  "processes": {
+    "MIG": {
+      "input": {
+        "120": { "frequencyHz": 60, "currentInput": "20.8 A at 100 A output", "weldingCurrentRangeA": [30, 140] },
+        "240": { "frequencyHz": 60, "currentInput": "25.5 A at 200 A output", "weldingCurrentRangeA": [30, 220] }
+      },
+      "materials": ["mild steel", "stainless steel", "aluminum with optional spool gun"],
+      "wireSpeedIpm": [50, 500],
+      "spoolCapacityLb": 12,
+      "wireCapacityIn": {
+        "solidCore": [0.025, 0.03, 0.035],
+        "fluxCored": [0.03, 0.035, 0.045]
+      }
+    },
+    "TIG": {
+      "input": {
+        "120": { "frequencyHz": 60, "currentInput": "20.6 A at 125 A output", "weldingCurrentRangeA": [10, 125] },
+        "240": { "frequencyHz": 60, "currentInput": "15.6 A at 175 A output", "weldingCurrentRangeA": [10, 175] }
+      },
+      "materials": ["mild steel", "stainless steel", "chrome moly"],
+      "note": "This machine provides DC TIG. The manual does not list aluminum as a TIG-weldable material."
+    },
+    "STICK": {
+      "input": {
+        "120": { "frequencyHz": 60, "currentInput": "19.5 A at 80 A output", "weldingCurrentRangeA": [10, 80] },
+        "240": { "frequencyHz": 60, "currentInput": "23.7 A at 175 A output", "weldingCurrentRangeA": [10, 175] }
+      },
+      "materials": ["mild steel", "stainless steel"]
+    }
+  }
+}

@@ -1,0 +1,404 @@
+[
+  {
+    "id": "process-selection-chart",
+    "title": "Choosing a welding process",
+    "source": "selection-chart",
+    "pages": [
+      1
+    ],
+    "file": "figures/process-selection-chart.png",
+    "caption": "General tradeoffs between flux-cored, MIG, stick, and TIG processes.",
+    "keywords": [
+      "choose",
+      "process",
+      "mig",
+      "flux",
+      "stick",
+      "tig",
+      "material",
+      "gas"
+    ],
+    "answers": [
+      "Which process should I use?"
+    ]
+  },
+  {
+    "id": "cable-setup-quick-guide",
+    "title": "Cable setup quick guide",
+    "source": "quick-start",
+    "pages": [
+      2
+    ],
+    "file": "figures/cable-setup-quick-guide.png",
+    "caption": "Visual hookup guide for stick, MIG, flux-cored, and TIG.",
+    "keywords": [
+      "cable",
+      "socket",
+      "terminal",
+      "polarity",
+      "hookup"
+    ],
+    "answers": [
+      "Which socket does each cable use?"
+    ]
+  },
+  {
+    "id": "stick-cable-setup",
+    "title": "Stick cable setup",
+    "source": "quick-start",
+    "pages": [
+      2
+    ],
+    "file": "figures/stick-cable-setup.png",
+    "caption": "Ground clamp to negative; electrode holder to positive; wire-feed power disconnected.",
+    "keywords": [
+      "stick",
+      "dcep",
+      "ground",
+      "negative",
+      "holder",
+      "positive"
+    ],
+    "answers": [
+      "How do I connect stick leads?"
+    ]
+  },
+  {
+    "id": "mig-flux-cable-setup",
+    "title": "MIG and flux-cored cable setup",
+    "source": "quick-start",
+    "pages": [
+      2
+    ],
+    "file": "figures/mig-flux-cable-setup.png",
+    "caption": "MIG is DCEP. Self-shielded flux-cored reverses the ground and wire-feed power leads for DCEN.",
+    "keywords": [
+      "mig",
+      "flux",
+      "dcep",
+      "dcen",
+      "ground",
+      "wire feed",
+      "polarity"
+    ],
+    "answers": [
+      "How do I switch between MIG and flux-cored polarity?"
+    ]
+  },
+  {
+    "id": "tig-cable-setup",
+    "title": "TIG cable setup",
+    "source": "quick-start",
+    "pages": [
+      2
+    ],
+    "file": "figures/tig-cable-setup.png",
+    "caption": "Ground clamp to positive, TIG torch to negative, plus argon and the foot pedal.",
+    "keywords": [
+      "tig",
+      "dcen",
+      "ground",
+      "positive",
+      "torch",
+      "negative",
+      "argon",
+      "pedal"
+    ],
+    "answers": [
+      "What polarity setup do I need for TIG?"
+    ]
+  },
+  {
+    "id": "front-panel-controls",
+    "title": "Front panel controls",
+    "source": "owner-manual",
+    "pages": [
+      8
+    ],
+    "file": "figures/front-panel-controls.png",
+    "caption": "Labeled front panel showing the LCD, knobs, MIG/spool-gun socket, and positive and negative sockets.",
+    "keywords": [
+      "front panel",
+      "controls",
+      "socket",
+      "lcd",
+      "knob",
+      "positive",
+      "negative"
+    ],
+    "answers": [
+      "Where is the negative socket?",
+      "What does the front panel look like?"
+    ]
+  },
+  {
+    "id": "interior-controls",
+    "title": "Interior controls",
+    "source": "owner-manual",
+    "pages": [
+      9
+    ],
+    "file": "figures/interior-controls.png",
+    "caption": "Labeled interior showing spool, roller, tensioner, wire-feed control, and foot-pedal socket.",
+    "keywords": [
+      "inside",
+      "interior",
+      "spool",
+      "feed",
+      "tensioner",
+      "roller",
+      "pedal"
+    ],
+    "answers": [
+      "Where is the wire feed tensioner?"
+    ]
+  },
+  {
+    "id": "feed-roller-guide",
+    "title": "Feed roller orientation",
+    "source": "owner-manual",
+    "pages": [
+      12
+    ],
+    "file": "figures/feed-roller-guide.png",
+    "caption": "V-groove solid-wire and knurled flux-cored roller sizes and orientation.",
+    "keywords": [
+      "feed roller",
+      "v groove",
+      "knurled",
+      "wire size",
+      "0.030",
+      "0.035",
+      "0.045"
+    ],
+    "answers": [
+      "Which feed roller groove should I use?"
+    ]
+  },
+  {
+    "id": "solid-mig-polarity",
+    "title": "Solid-wire MIG DCEP setup",
+    "source": "owner-manual",
+    "pages": [
+      14
+    ],
+    "file": "figures/solid-mig-polarity.png",
+    "caption": "Manual setup for gas-shielded solid wire: ground negative and wire-feed power positive.",
+    "keywords": [
+      "mig",
+      "solid wire",
+      "dcep",
+      "gas",
+      "polarity"
+    ],
+    "answers": [
+      "What polarity does gas-shielded MIG use?"
+    ]
+  },
+  {
+    "id": "mig-duty-cycle",
+    "title": "MIG rated duty cycles",
+    "source": "owner-manual",
+    "pages": [
+      23
+    ],
+    "file": "figures/mig-duty-cycle.png",
+    "caption": "MIG duty-cycle clocks for 120 V and 240 V input.",
+    "keywords": [
+      "mig",
+      "duty cycle",
+      "120v",
+      "240v",
+      "200a",
+      "100a"
+    ],
+    "answers": [
+      "What's the MIG duty cycle at 200 amps on 240 volts?"
+    ]
+  },
+  {
+    "id": "tig-stick-duty-cycle",
+    "title": "TIG and stick rated duty cycles",
+    "source": "owner-manual",
+    "pages": [
+      29
+    ],
+    "file": "figures/tig-stick-duty-cycle.png",
+    "caption": "Rated weld/rest periods for TIG and stick at both input voltages.",
+    "keywords": [
+      "tig",
+      "stick",
+      "duty cycle",
+      "120v",
+      "240v",
+      "175a"
+    ],
+    "answers": [
+      "How long can I weld before resting?"
+    ]
+  },
+  {
+    "id": "wire-weld-diagnosis",
+    "title": "Wire-weld heat and technique diagnosis",
+    "source": "owner-manual",
+    "pages": [
+      35
+    ],
+    "file": "figures/wire-weld-diagnosis.png",
+    "caption": "Visual comparison of correct and incorrect wire weld penetration, heat, speed, and CTWD.",
+    "keywords": [
+      "mig",
+      "flux",
+      "diagnosis",
+      "penetration",
+      "heat",
+      "speed",
+      "ctwd"
+    ],
+    "answers": [
+      "Why does my MIG bead look wrong?"
+    ]
+  },
+  {
+    "id": "wire-weld-defects-a",
+    "title": "Wire-weld penetration and adhesion defects",
+    "source": "owner-manual",
+    "pages": [
+      36
+    ],
+    "file": "figures/wire-weld-defects-a.png",
+    "caption": "Profile diagrams for penetration, non-adherence, and joint distortion.",
+    "keywords": [
+      "penetration",
+      "adhesion",
+      "bend",
+      "wire weld",
+      "defect"
+    ],
+    "answers": [
+      "Why is my weld sitting on the surface?"
+    ]
+  },
+  {
+    "id": "wire-weld-defects-b",
+    "title": "Wire-weld porosity and spatter",
+    "source": "owner-manual",
+    "pages": [
+      37
+    ],
+    "file": "figures/wire-weld-defects-b.png",
+    "caption": "Manual examples and remedies for burn-through, porosity, and excessive spatter.",
+    "keywords": [
+      "porosity",
+      "holes",
+      "spatter",
+      "burn through",
+      "flux cored",
+      "mig"
+    ],
+    "answers": [
+      "I'm getting porosity in my flux-cored welds. What should I check?"
+    ]
+  },
+  {
+    "id": "stick-weld-diagnosis",
+    "title": "Stick weld diagnosis",
+    "source": "owner-manual",
+    "pages": [
+      38
+    ],
+    "file": "figures/stick-weld-diagnosis.png",
+    "caption": "Visual comparison of stick-weld current, travel speed, and arc-length errors.",
+    "keywords": [
+      "stick",
+      "diagnosis",
+      "current",
+      "speed",
+      "arc length"
+    ],
+    "answers": [
+      "How can I read my stick weld bead?"
+    ]
+  },
+  {
+    "id": "stick-weld-defects",
+    "title": "Stick weld defect guide",
+    "source": "owner-manual",
+    "pages": [
+      39
+    ],
+    "file": "figures/stick-weld-defects.png",
+    "caption": "Stick-weld penetration, adhesion, and distortion diagrams.",
+    "keywords": [
+      "stick",
+      "penetration",
+      "adhesion",
+      "defect",
+      "distortion"
+    ],
+    "answers": [
+      "Why isn't my stick weld penetrating?"
+    ]
+  },
+  {
+    "id": "stick-porosity-spatter",
+    "title": "Stick porosity and spatter guide",
+    "source": "owner-manual",
+    "pages": [
+      40
+    ],
+    "file": "figures/stick-porosity-spatter.png",
+    "caption": "Stick-weld slag, porosity, wavy bead, spatter, and burn-through examples.",
+    "keywords": [
+      "stick",
+      "slag",
+      "porosity",
+      "spatter",
+      "wavy",
+      "burn through"
+    ],
+    "answers": [
+      "Are these holes in my stick weld porosity?"
+    ]
+  },
+  {
+    "id": "wiring-schematic",
+    "title": "Wiring schematic",
+    "source": "owner-manual",
+    "pages": [
+      45
+    ],
+    "file": "figures/wiring-schematic.png",
+    "caption": "Owner's-manual electrical schematic. Internal service should be performed by a qualified technician.",
+    "keywords": [
+      "wiring",
+      "schematic",
+      "pcb",
+      "igbt",
+      "fan",
+      "solenoid"
+    ],
+    "answers": [
+      "Can I see the wiring schematic?"
+    ]
+  },
+  {
+    "id": "assembly-diagram",
+    "title": "Exploded assembly diagram",
+    "source": "owner-manual",
+    "pages": [
+      47
+    ],
+    "file": "figures/assembly-diagram.png",
+    "caption": "Exploded assembly diagram keyed to the parts list on page 46.",
+    "keywords": [
+      "parts",
+      "assembly",
+      "exploded",
+      "diagram"
+    ],
+    "answers": [
+      "Where is this part in the machine?"
+    ]
+  }
+]

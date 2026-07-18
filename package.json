@@ -1,0 +1,22 @@
+{
+  "name": "arcwell-omnipro-agent",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c '#f97316,#38bdf8' 'npm run dev -w @arcwell/server' 'npm run dev -w @arcwell/web'",
+    "build": "npm run build -w @arcwell/web && npm run build -w @arcwell/server",
+    "start": "npm run start -w @arcwell/server",
+    "typecheck": "npm run typecheck -w @arcwell/server && npm run typecheck -w @arcwell/web",
+    "test": "npm run test -w @arcwell/server",
+    "extract": "python3 scripts/extract/extract.py"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

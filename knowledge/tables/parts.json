@@ -1,0 +1,29 @@
+{
+  "source": "owner-manual",
+  "listPage": 46,
+  "diagramPage": 47,
+  "orderingNote": "Specify UPC 193175422590. The manual says repairs and parts replacement should be performed by certified and licensed technicians; some illustrated parts are not available individually.",
+  "parts": [
+    { "number": 1, "description": "Right Cover", "quantity": 1 }, { "number": 2, "description": "Handle Base", "quantity": 1 }, { "number": 3, "description": "Handle Cover", "quantity": 1 },
+    { "number": 4, "description": "Hinge-Right", "quantity": 2 }, { "number": 5, "description": "Hinge-left", "quantity": 2 }, { "number": 6, "description": "Left Cover", "quantity": 1 },
+    { "number": 7, "description": "Latch", "quantity": 1 }, { "number": 8, "description": "Middle Bracket", "quantity": 1 }, { "number": 9, "description": "PFC Inductance", "quantity": 1 },
+    { "number": 10, "description": "Spool", "quantity": 1 }, { "number": 11, "description": "Remote Control PCB", "quantity": 1 }, { "number": 12, "description": "Wire Feeder", "quantity": 1 },
+    { "number": 13, "description": "Aviation Plug Wire", "quantity": 1 }, { "number": 14, "description": "Miller Plug Connector", "quantity": 1 }, { "number": 15, "description": "Protective Cover", "quantity": 1 },
+    { "number": 16, "description": "Display PCB", "quantity": 1 }, { "number": 17, "description": "Screen Cover", "quantity": 1 }, { "number": 18, "description": "Screen Frame", "quantity": 1 },
+    { "number": 19, "description": "MIG Welding Torch", "quantity": 1 }, { "number": 20, "description": "Front Handle Cover", "quantity": 1 }, { "number": 21, "description": "Front Panel", "quantity": 1 },
+    { "number": 22, "description": "Display", "quantity": 1 }, { "number": 23, "description": "Knob", "quantity": 2 }, { "number": 24, "description": "Knob", "quantity": 1 },
+    { "number": 25, "description": "Storage Door", "quantity": 1 }, { "number": 26, "description": "Switch", "quantity": 1 }, { "number": 27, "description": "American Air Fitting", "quantity": 2 },
+    { "number": 28, "description": "Air Connector", "quantity": 3 }, { "number": 29, "description": "Quick Connector", "quantity": 2 }, { "number": 30, "description": "Grounding Clamp Assembly", "quantity": 1 },
+    { "number": 31, "description": "Welding Clamp Assembly", "quantity": 1 }, { "number": 32, "description": "Polarity Cable", "quantity": 1 }, { "number": 33, "description": "Output Inductor", "quantity": 1 },
+    { "number": 34, "description": "Air Connector", "quantity": 2 }, { "number": 35, "description": "Solenoid Valve", "quantity": 2 }, { "number": 36, "description": "Bottom Housing", "quantity": 1 },
+    { "number": 37, "description": "Board Insulation Paper", "quantity": 1 }, { "number": 38, "description": "Main PCB", "quantity": 1 }, { "number": 39, "description": "Control PCB", "quantity": 1 },
+    { "number": 40, "description": "Fast Recovery Diode", "quantity": 6 }, { "number": 41, "description": "Metal Case Air Way", "quantity": 1 }, { "number": 42, "description": "Rectifier Radiator Support Bar", "quantity": 1 },
+    { "number": 43, "description": "Rectifier Radiator", "quantity": 1 }, { "number": 44, "description": "Fan", "quantity": 1 }, { "number": 45, "description": "Transformer", "quantity": 1 },
+    { "number": 46, "description": "IGBT", "quantity": 6 }, { "number": 47, "description": "Bridge Rectifier Heatsink", "quantity": 1 }, { "number": 48, "description": "Fast Recovery Diode", "quantity": 2 },
+    { "number": 49, "description": "IGBT Heat Sink Support Bar", "quantity": 1 }, { "number": 50, "description": "IGBT Radiator", "quantity": 1 }, { "number": 51, "description": "Bridge Rectifiers", "quantity": 2 },
+    { "number": 52, "description": "IGBT Radiator", "quantity": 2 }, { "number": 53, "description": "Fan", "quantity": 1 }, { "number": 54, "description": "Y-Type Threaded Tee", "quantity": 1 },
+    { "number": 55, "description": "120 VAC Power Cord", "quantity": 1 }, { "number": 56, "description": "Rear Panel", "quantity": 1 }, { "number": 57, "description": "Rear Handle Cover", "quantity": 1 },
+    { "number": 58, "description": "American Power Socket", "quantity": 1 }, { "number": 59, "description": "Overload Protector", "quantity": 1 }, { "number": 60, "description": "Rear Panel", "quantity": 1 },
+    { "number": 61, "description": "240 VAC Power Cord", "quantity": 1 }
+  ]
+}

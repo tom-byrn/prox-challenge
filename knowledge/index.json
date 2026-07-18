@@ -1,0 +1,145 @@
+{
+  "product": "Vulcan OmniPro 220",
+  "item": "57812",
+  "sections": [
+    {
+      "title": "Safety",
+      "source": "owner-manual",
+      "pages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "summary": "Fumes, fire, electrical, cylinder, PPE, and equipment safety."
+    },
+    {
+      "title": "Specifications",
+      "source": "owner-manual",
+      "pages": [
+        7
+      ],
+      "summary": "Process ranges, rated duty cycles, materials, OCV, and wire capacities."
+    },
+    {
+      "title": "Controls",
+      "source": "owner-manual",
+      "pages": [
+        8,
+        9
+      ],
+      "summary": "Front panel sockets and controls; interior wire-feed components."
+    },
+    {
+      "title": "Wire setup",
+      "source": "owner-manual",
+      "pages": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "summary": "Spool, roller, gun, polarity, gas, wire feed, and tension setup."
+    },
+    {
+      "title": "MIG and flux-cored operation",
+      "source": "owner-manual",
+      "pages": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "summary": "Work preparation, LCD setup, technique, shutdown, and duty cycle."
+    },
+    {
+      "title": "TIG setup",
+      "source": "owner-manual",
+      "pages": [
+        24,
+        25,
+        26
+      ],
+      "summary": "DCEN cable routing, argon, foot pedal, torch, and tungsten preparation."
+    },
+    {
+      "title": "Stick setup",
+      "source": "owner-manual",
+      "pages": [
+        27
+      ],
+      "summary": "DCEP cable routing and power connection."
+    },
+    {
+      "title": "TIG and stick operation",
+      "source": "owner-manual",
+      "pages": [
+        28,
+        29,
+        30,
+        31,
+        32,
+        33
+      ],
+      "summary": "Technique, LCD setup, duty cycles, and operating procedures."
+    },
+    {
+      "title": "Weld diagnosis",
+      "source": "owner-manual",
+      "pages": [
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40
+      ],
+      "summary": "Visual examples for penetration, heat, speed, porosity, spatter, and defects."
+    },
+    {
+      "title": "Maintenance and troubleshooting",
+      "source": "owner-manual",
+      "pages": [
+        41,
+        42,
+        43,
+        44
+      ],
+      "summary": "Maintenance schedule and process-specific troubleshooting matrices."
+    },
+    {
+      "title": "Wiring and parts",
+      "source": "owner-manual",
+      "pages": [
+        45,
+        46,
+        47
+      ],
+      "summary": "Electrical schematic, parts list, and exploded assembly diagram."
+    },
+    {
+      "title": "Cable setup quick guide",
+      "source": "quick-start",
+      "pages": [
+        2
+      ],
+      "summary": "Single-page visual hookup guide for stick, MIG, flux-cored, and TIG."
+    },
+    {
+      "title": "Process selection",
+      "source": "selection-chart",
+      "pages": [
+        1
+      ],
+      "summary": "General comparison of flux-cored, MIG, stick, and TIG tradeoffs."
+    }
+  ]
+}

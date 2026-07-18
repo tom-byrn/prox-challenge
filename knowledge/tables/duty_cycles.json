@@ -1,0 +1,28 @@
+{
+  "source": "owner-manual",
+  "definitionPage": 29,
+  "periodMinutes": 10,
+  "policy": "Only published rated points are returned. Do not interpolate duty cycle between amperages.",
+  "ratings": [
+    { "process": "MIG", "inputVoltage": 120, "amps": 100, "dutyPercent": 40, "weldMinutes": 4, "restMinutes": 6, "pages": [7, 14, 23] },
+    { "process": "MIG", "inputVoltage": 120, "amps": 85, "dutyPercent": 60, "weldMinutes": 6, "restMinutes": 4, "pages": [14] },
+    { "process": "MIG", "inputVoltage": 120, "amps": 75, "dutyPercent": 100, "weldMinutes": 10, "restMinutes": 0, "pages": [7, 14, 23] },
+    { "process": "MIG", "inputVoltage": 240, "amps": 200, "dutyPercent": 25, "weldMinutes": 2.5, "restMinutes": 7.5, "pages": [7, 14, 23] },
+    { "process": "MIG", "inputVoltage": 240, "amps": 130, "dutyPercent": 60, "weldMinutes": 6, "restMinutes": 4, "pages": [14] },
+    { "process": "MIG", "inputVoltage": 240, "amps": 115, "dutyPercent": 100, "weldMinutes": 10, "restMinutes": 0, "pages": [7, 14, 23] },
+
+    { "process": "TIG", "inputVoltage": 120, "amps": 125, "dutyPercent": 40, "weldMinutes": 4, "restMinutes": 6, "pages": [7, 25, 29] },
+    { "process": "TIG", "inputVoltage": 120, "amps": 105, "dutyPercent": 60, "weldMinutes": 6, "restMinutes": 4, "pages": [25] },
+    { "process": "TIG", "inputVoltage": 120, "amps": 90, "dutyPercent": 100, "weldMinutes": 10, "restMinutes": 0, "pages": [7, 25, 29] },
+    { "process": "TIG", "inputVoltage": 240, "amps": 175, "dutyPercent": 30, "weldMinutes": 3, "restMinutes": 7, "pages": [7, 25, 29] },
+    { "process": "TIG", "inputVoltage": 240, "amps": 125, "dutyPercent": 60, "weldMinutes": 6, "restMinutes": 4, "pages": [25] },
+    { "process": "TIG", "inputVoltage": 240, "amps": 105, "dutyPercent": 100, "weldMinutes": 10, "restMinutes": 0, "pages": [7, 25, 29] },
+
+    { "process": "STICK", "inputVoltage": 120, "amps": 80, "dutyPercent": 40, "weldMinutes": 4, "restMinutes": 6, "pages": [7, 27, 29] },
+    { "process": "STICK", "inputVoltage": 120, "amps": 70, "dutyPercent": 60, "weldMinutes": 6, "restMinutes": 4, "pages": [27] },
+    { "process": "STICK", "inputVoltage": 120, "amps": 60, "dutyPercent": 100, "weldMinutes": 10, "restMinutes": 0, "pages": [7, 27, 29] },
+    { "process": "STICK", "inputVoltage": 240, "amps": 175, "dutyPercent": 25, "weldMinutes": 2.5, "restMinutes": 7.5, "pages": [7, 27, 29] },
+    { "process": "STICK", "inputVoltage": 240, "amps": 115, "dutyPercent": 60, "weldMinutes": 6, "restMinutes": 4, "pages": [27] },
+    { "process": "STICK", "inputVoltage": 240, "amps": 100, "dutyPercent": 100, "weldMinutes": 10, "restMinutes": 0, "pages": [7, 27, 29] }
+  ]
+}
