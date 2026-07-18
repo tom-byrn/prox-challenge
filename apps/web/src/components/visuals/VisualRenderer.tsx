@@ -1,0 +1,65 @@
+import { useState } from "react";
+import { Columns3, Eye, EyeOff, ListChecks, ScanSearch, Waypoints } from "lucide-react";
+import type { VisualPayload, VisualSourceRef } from "../../visual-spec";
+import { AnnotatedImageVisual } from "./AnnotatedImageVisual";
+import { ComparisonVisual } from "./ComparisonVisual";
+import { ConnectionDiagramVisual } from "./ConnectionDiagramVisual";
+import { ProcedureVisual } from "./ProcedureVisual";
+
+function sourceLabel(ref: VisualSourceRef): string {
+  const source = ({
+    "owner-manual": "Owner's Manual",
+    "quick-start": "Quick Start Guide",
+    "selection-chart": "Process Selection Chart"
+  } as const)[ref.source];
+  return `${source}, p${ref.pages.length > 1 ? "p" : ""}. ${ref.pages.join(", ")}`;
+}
+
+function VisualIcon({ kind }: { kind: VisualPayload["spec"]["kind"] }) {
+  if (kind === "annotated-image") return <ScanSearch size={17} />;
+  if (kind === "connection-diagram") return <Waypoints size={17} />;
+  if (kind === "procedure") return <ListChecks size={17} />;
+  return <Columns3 size={17} />;
+}
+
+export function VisualRenderer({ visual }: { visual: VisualPayload }) {
+  const { spec } = visual;
+  const [showAnnotations, setShowAnnotations] = useState(false);
+  const annotationOverlayId = `annotation-overlay-${visual.id}`;
+
+  return (
+    <section className={`visual-card visual-${spec.kind}`} aria-labelledby={`visual-title-${visual.id}`}>
+      <header className="visual-heading">
+        <span className="visual-icon"><VisualIcon kind={spec.kind} /></span>
+        <div className="visual-heading-copy">
+          <span className="eyebrow">Dynamic visual</span>
+          <h3 id={`visual-title-${visual.id}`}>{spec.title}</h3>
+          {spec.description ? <p>{spec.description}</p> : null}
+        </div>
+        {spec.kind === "annotated-image" ? (
+          <button
+            type="button"
+            className={`annotation-toggle${showAnnotations ? " active" : ""}`}
+            aria-controls={annotationOverlayId}
+            aria-pressed={showAnnotations}
+            onClick={() => setShowAnnotations((visible) => !visible)}
+          >
+            {showAnnotations ? <Eye size={14} /> : <EyeOff size={14} />}
+            <span>Annotations</span>
+            <small>{showAnnotations ? "On" : "Off"}</small>
+          </button>
+        ) : null}
+      </header>
+
+      {spec.kind === "annotated-image" ? <AnnotatedImageVisual spec={spec} assets={visual.assets} visualId={visual.id} overlayId={annotationOverlayId} showOverlay={showAnnotations} /> : null}
+      {spec.kind === "connection-diagram" ? <ConnectionDiagramVisual spec={spec} visualId={visual.id} /> : null}
+      {spec.kind === "procedure" ? <ProcedureVisual spec={spec} /> : null}
+      {spec.kind === "comparison" ? <ComparisonVisual spec={spec} /> : null}
+
+      <footer className="visual-sources">
+        <strong>Sources</strong>
+        {spec.sourceRefs.map((ref, index) => <span key={`${ref.source}:${ref.pages.join("-")}:${index}`}>{sourceLabel(ref)}</span>)}
+      </footer>
+    </section>
+  );
+}

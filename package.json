@@ -6,17 +6,23 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -n server,web -c '#f97316,#38bdf8' 'npm run dev -w @arcwell/server' 'npm run dev -w @arcwell/web'",
+    "dev": "concurrently -n convex,server,web -c '#a78bfa,#f97316,#38bdf8' 'convex dev' 'npm run dev -w @arcwell/server' 'npm run dev -w @arcwell/web'",
     "build": "npm run build -w @arcwell/web && npm run build -w @arcwell/server",
+    "convex:deploy": "convex deploy",
     "start": "npm run start -w @arcwell/server",
     "typecheck": "npm run typecheck -w @arcwell/server && npm run typecheck -w @arcwell/web",
     "test": "npm run test -w @arcwell/server",
-    "extract": "python3 scripts/extract/extract.py"
+    "eval": "npm run eval -w @arcwell/server",
+    "extract": "python3 scripts/extract/extract.py",
+    "extract:video": "python3 scripts/video/extract.py"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "convex": "^1.42.3"
   }
 }

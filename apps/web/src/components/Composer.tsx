@@ -26,8 +26,8 @@ export function Composer({ value, onChange, onSubmit, onStop, busy }: Props) {
           ref={textareaRef}
           value={value}
           rows={1}
-          placeholder="Ask about setup, duty cycle, or a weld problem…"
-          aria-label="Message Arcwell"
+          placeholder="Ask about the OmniPro 220…"
+          aria-label="Message the OmniPro 220 assistant"
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -40,7 +40,6 @@ export function Composer({ value, onChange, onSubmit, onStop, busy }: Props) {
           {busy ? <Square size={15} fill="currentColor" /> : <ArrowUp size={19} />}
         </button>
       </div>
-      <p>Manual-grounded guidance for item 57812 · Verify setup before striking an arc.</p>
     </div>
   );
 }

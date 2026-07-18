@@ -1,0 +1,137 @@
+{
+  "sourceId": "setup-demo",
+  "videoId": "kxGDoGcnhBw",
+  "title": "Vulcan OmniPro 220 multi-process setup demonstration",
+  "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw",
+  "captionType": "auto-generated",
+  "authority": "supplemental-demonstration",
+  "segments": [
+    {
+      "id": "video:setup-demo@0-36",
+      "sourceId": "setup-demo",
+      "videoId": "kxGDoGcnhBw",
+      "title": "Synergic setup overview",
+      "startSeconds": 0,
+      "endSeconds": 36,
+      "frameSeconds": 18,
+      "frame": "video/frames/synergic-overview.jpg",
+      "summary": "The presenter explains selecting a welding process and material thickness before testing setup time for each process.",
+      "keywords": [
+        "synergic",
+        "process selection",
+        "material thickness",
+        "LCD settings"
+      ],
+      "transcript": "get welding in a matter of minutes I've got the Omni Pro 220 it's got synergetic settings more and more welders are coming out with this you know I know the fillers had it forever with their Auto set welders but pretty much what this means is all you have to do is choose the process and then the thickness of material you want to do and the Machine does everything for you after that so let's just see how easy it really is I'm going to time myself setting up the machine for each process and then obviously do a little test just to see how good those settings are",
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw&t=0s",
+      "authority": "supplemental-demonstration"
+    },
+    {
+      "id": "video:setup-demo@36-108",
+      "sourceId": "setup-demo",
+      "videoId": "kxGDoGcnhBw",
+      "title": "Flux-cored setup and test welds",
+      "startSeconds": 36,
+      "endSeconds": 108,
+      "frameSeconds": 44,
+      "frame": "video/frames/flux-core-setup.jpg",
+      "summary": "A flux-cored setup is timed from an empty spool and disconnected leads, followed by test welds using 0.035-inch wire.",
+      "keywords": [
+        "flux core",
+        "wire spool",
+        "0.035 wire",
+        "fillet weld",
+        "setup"
+      ],
+      "transcript": "starting with flux core with a new spool not installed and all the leads disconnected it took me four and a half minutes from start to finish since that first test of flat horizontal weld on 3 16 inch plate turned out nice I kicked it down a notch and did a fillet weld on some welding coupons I am using .035 Vulcan flux core wire now if you want to get really nitpicky these are eighth inch coupons and technically an eighth inch is about 11 gauge and so the omnipro settings go from 12 to 10. so you know go a little slower if you choose 12 and quicker if 10. both those welds turned out just fine with the flux cord",
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw&t=36s",
+      "authority": "supplemental-demonstration"
+    },
+    {
+      "id": "video:setup-demo@108-167",
+      "sourceId": "setup-demo",
+      "videoId": "kxGDoGcnhBw",
+      "title": "MIG roller, gas, and lead changes",
+      "startSeconds": 108,
+      "endSeconds": 167,
+      "frameSeconds": 120,
+      "frame": "video/frames/mig-setup.jpg",
+      "summary": "The presenter changes from the knurled roller to the V-groove, connects shielding gas, switches the leads, and tests 0.035-inch solid wire.",
+      "keywords": [
+        "MIG",
+        "V-groove",
+        "knurled roller",
+        "shielding gas",
+        "CO2",
+        "polarity",
+        "solid wire"
+      ],
+      "transcript": "for the Mig process it took just a minute longer I was right at about five and a half minutes there are a couple little extras you know don't forget to switch out the roller from a knurled wheel to the v-groove the Omni Pro does come with both running the wire is just the same as Flex score but don't forget the gas I'm using a hundred percent CO2 more importantly well okay the other stuff's important too but don't forget to switch those leads yes you will get some pretty ugly welds and they won't turn out great if not the wire I'm using is .035 solid core Vulcan wire foreign I would say that the suggested settings or the synergetic settings were right on for the Mig welds as well",
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw&t=108s",
+      "authority": "supplemental-demonstration"
+    },
+    {
+      "id": "video:setup-demo@167-249",
+      "sourceId": "setup-demo",
+      "videoId": "kxGDoGcnhBw",
+      "title": "Stick setup and 7018 examples",
+      "startSeconds": 167,
+      "endSeconds": 249,
+      "frameSeconds": 174,
+      "frame": "video/frames/stick-setup.jpg",
+      "summary": "Stick setup is shown as a quick ground-clamp and electrode-holder connection, followed by 7018 weld examples.",
+      "keywords": [
+        "stick",
+        "SMAW",
+        "electrode holder",
+        "7018",
+        "rod selection",
+        "T-joint"
+      ],
+      "transcript": "stick is by far the easiest setup you're not dealing with wire and so hooking up the ground and Electro holder takes a whopping 30 seconds it does ask if you're using 60 or 70 series rods but no ending so I'm not sure if it's capable of running a 6010 Rod but with this technology and the Machine I'm assuming it can tell me if I'm wrong I'm using some 7018 eighth inch rod and this first example was done on some 3 16 inch flat plate and then I moved it over to the eighth inch coupons doing a fillet weld on a t-joint foreign",
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw&t=167s",
+      "authority": "supplemental-demonstration"
+    },
+    {
+      "id": "video:setup-demo@249-334",
+      "sourceId": "setup-demo",
+      "videoId": "kxGDoGcnhBw",
+      "title": "TIG setup, foot pedal, and lift start",
+      "startSeconds": 249,
+      "endSeconds": 334,
+      "frameSeconds": 288,
+      "frame": "video/frames/tig-setup.jpg",
+      "summary": "The presenter covers torch preparation, tungsten grinding, gas, optional foot-pedal control, and the machine's lift-start TIG sequence.",
+      "keywords": [
+        "TIG",
+        "lift start",
+        "foot pedal",
+        "tungsten",
+        "argon",
+        "amperage control"
+      ],
+      "transcript": "you can run the machine as a scratch start without the foot pedal but I'd opted for it because it does give you the amperage control once you add in the time for the torch setup tungsten grinding and gas hookup it does take the longest I was right at about eight minutes Harbor Freight if you're listening well I know you're not but hey one thing that would really take the omnipro up to the next level is adding high frequency start you do get lift style TIG so to start the arc you touch the tungsten to the work piece step on the foot pedal and as soon as you lift up thus the name the arc is created and you can start welding and as mentioned before you can control the amperage with the foot pedal foreign these are on just some eighth inch coupons and I would say the machine actually has some pretty good preset settings so I would consider the omnipro right in the middle of the spectrum as far as the tig features go",
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw&t=249s",
+      "authority": "supplemental-demonstration"
+    },
+    {
+      "id": "video:setup-demo@334-349",
+      "sourceId": "setup-demo",
+      "videoId": "kxGDoGcnhBw",
+      "title": "Preset results and conclusion",
+      "startSeconds": 334,
+      "endSeconds": 349,
+      "frameSeconds": 339,
+      "frame": "video/frames/weld-results.jpg",
+      "summary": "The presenter concludes that the presets produced useful test welds quickly.",
+      "keywords": [
+        "preset settings",
+        "weld results",
+        "conclusion"
+      ],
+      "transcript": "all right I'll say it throwing down some awesome welds within a couple minutes is pretty freaking sweet the omniprobe I would say is probably worth keeping around that's all I got for this one thanks for watching we'll see you next time",
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw&t=334s",
+      "authority": "supplemental-demonstration"
+    }
+  ]
+}

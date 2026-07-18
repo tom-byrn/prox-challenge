@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import MiniSearch from "minisearch";
+import { evidenceRefId, uniqueEvidence, type EvidenceRef, type EvidenceSource } from "./evidence.js";
 import type { Process } from "./types.js";
 
 type SearchDocument = {
@@ -21,6 +22,22 @@ export type FigureRecord = {
   caption: string;
   keywords: string[];
   answers: string[];
+};
+
+export type VideoSegmentRecord = {
+  id: string;
+  sourceId: string;
+  videoId: string;
+  title: string;
+  startSeconds: number;
+  endSeconds: number;
+  frameSeconds: number;
+  frame: string;
+  summary: string;
+  keywords: string[];
+  transcript: string;
+  url: string;
+  authority: "supplemental-demonstration";
 };
 
 type DutyRating = {
@@ -55,6 +72,15 @@ function loadJson<T>(relativePath: string): T {
 
 const searchDocuments = loadJson<SearchDocument[]>("search-documents.json");
 const figures = loadJson<FigureRecord[]>("figures.json");
+const videoKnowledge = loadJson<{
+  sourceId: string;
+  videoId: string;
+  title: string;
+  url: string;
+  captionType: string;
+  authority: "supplemental-demonstration";
+  segments: VideoSegmentRecord[];
+}>("video/segments.json");
 const manualIndex = loadJson<{ product: string; item: string; sections: Array<{ title: string; source: string; pages: number[]; summary: string }> }>("index.json");
 const dutyCycles = loadJson<{ periodMinutes: number; policy: string; ratings: DutyRating[] }>("tables/duty_cycles.json");
 const specs = loadJson<Record<string, unknown>>("tables/specs.json");
@@ -85,6 +111,17 @@ const figureSearch = new MiniSearch<FigureRecord>({
   }
 });
 figureSearch.addAll(figures);
+
+const videoSearch = new MiniSearch<VideoSegmentRecord>({
+  fields: ["title", "summary", "keywords", "transcript"],
+  storeFields: ["id", "sourceId", "videoId", "title", "startSeconds", "endSeconds", "frame", "summary", "transcript", "url", "authority"],
+  searchOptions: {
+    boost: { title: 3, keywords: 2.5, summary: 2 },
+    fuzzy: 0.2,
+    prefix: true
+  }
+});
+videoSearch.addAll(videoKnowledge.segments);
 
 function normalizeProcess(value: string): Process | undefined {
   const normalized = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
@@ -146,6 +183,34 @@ export function searchManual(query: string, limit = 6) {
   return { query, pages, figures: matchedFigures };
 }
 
+export function searchSources(query: string, limit = 6) {
+  const manual = searchManual(query, limit);
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const videos = videoSearch.search(query).slice(0, 3).map((result) => ({
+    ref: { kind: "video" as const, segmentId: result.id as string },
+    id: result.id,
+    title: result.title,
+    startSeconds: result.startSeconds,
+    endSeconds: result.endSeconds,
+    summary: result.summary,
+    transcriptSnippet: makeSnippet(result.transcript as string, terms, 360),
+    authority: result.authority,
+    score: Number(result.score.toFixed(2))
+  }));
+  return {
+    query,
+    documents: manual.pages.map((page) => ({
+      ...page,
+      ref: { kind: "document" as const, sourceId: page.source as "owner-manual" | "quick-start" | "selection-chart", pages: [page.page] }
+    })),
+    figures: manual.figures.map((figure) => ({
+      ...figure,
+      ref: { kind: "figure" as const, figureId: figure.id as string }
+    })),
+    videos
+  };
+}
+
 export function getPage(source: string, page: number) {
   const normalizedSource = source.toLowerCase().replace(/\s+/g, "-");
   const document = searchDocuments.find((candidate) => candidate.source === normalizedSource && candidate.page === page);
@@ -164,6 +229,95 @@ export function getFigure(id: string): FigureRecord {
 
 export function listFigures() {
   return figures.map(({ id, title, caption, source, pages, keywords }) => ({ id, title, caption, source, pages, keywords }));
+}
+
+export function getVideoSegment(id: string): VideoSegmentRecord {
+  const segment = videoKnowledge.segments.find((candidate) => candidate.id === id);
+  if (!segment) throw new Error(`Unknown video segment: ${id}`);
+  return segment;
+}
+
+function documentTitle(sourceId: "owner-manual" | "quick-start" | "selection-chart"): string {
+  if (sourceId === "owner-manual") return "Owner's Manual";
+  if (sourceId === "quick-start") return "Quick Start Guide";
+  return "Process Selection Chart";
+}
+
+function documentUrl(sourceId: "owner-manual" | "quick-start" | "selection-chart", page: number): string {
+  const filename = sourceId === "owner-manual" ? "owner-manual.pdf"
+    : sourceId === "quick-start" ? "quick-start-guide.pdf"
+      : "selection-chart.pdf";
+  return `/files/${filename}#page=${page}`;
+}
+
+export function resolveEvidenceRef(ref: EvidenceRef): EvidenceSource {
+  if (ref.kind === "document") {
+    const documents = ref.pages
+      .map((page) => searchDocuments.find((candidate) => candidate.source === ref.sourceId && candidate.page === page))
+      .filter((document): document is SearchDocument => document !== undefined);
+    return {
+      id: evidenceRefId(ref),
+      kind: "document",
+      ref,
+      sourceId: ref.sourceId,
+      pages: ref.pages,
+      title: documentTitle(ref.sourceId),
+      excerpt: documents.map((document) => makeSnippet(document.text, [], 300)).join(" "),
+      url: documentUrl(ref.sourceId, ref.pages[0] ?? 1),
+      previewUrl: documents[0] ? `/knowledge/${documents[0].image}` : undefined
+    };
+  }
+  if (ref.kind === "figure") {
+    const figure = getFigure(ref.figureId);
+    const sourceId = figure.source as "owner-manual" | "quick-start" | "selection-chart";
+    return {
+      id: evidenceRefId(ref),
+      kind: "figure",
+      ref,
+      sourceId,
+      pages: figure.pages,
+      title: figure.title,
+      caption: figure.caption,
+      excerpt: figure.caption,
+      previewUrl: `/knowledge/${figure.file}`,
+      url: documentUrl(sourceId, figure.pages[0] ?? 1),
+      derivedFrom: [{ kind: "document", sourceId, pages: figure.pages }]
+    };
+  }
+  if (ref.kind === "video") {
+    const segment = getVideoSegment(ref.segmentId);
+    return {
+      id: evidenceRefId(ref),
+      kind: "video",
+      ref,
+      sourceId: segment.sourceId,
+      videoId: segment.videoId,
+      startSeconds: segment.startSeconds,
+      endSeconds: segment.endSeconds,
+      captionType: videoKnowledge.captionType,
+      title: segment.title,
+      excerpt: segment.transcript,
+      previewUrl: `/knowledge/${segment.frame}`,
+      url: segment.url
+    };
+  }
+  const title = ref.dataset.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+  return {
+    id: evidenceRefId(ref),
+    kind: "structured-data",
+    ref,
+    dataset: ref.dataset,
+    recordIds: ref.recordIds,
+    sourceId: ref.sourceId,
+    pages: ref.pages,
+    title,
+    url: documentUrl(ref.sourceId, ref.pages[0] ?? 1),
+    derivedFrom: [{ kind: "document", sourceId: ref.sourceId, pages: ref.pages }]
+  };
+}
+
+export function resolveEvidenceRefs(refs: EvidenceRef[]): EvidenceSource[] {
+  return uniqueEvidence(refs.map(resolveEvidenceRef));
 }
 
 export function lookupDutyCycle(processInput: string, inputVoltage: number, amps: number) {

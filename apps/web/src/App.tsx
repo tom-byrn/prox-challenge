@@ -1,39 +1,43 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Cable, ChevronRight, Flame, Gauge, LifeBuoy, Menu, MessageSquarePlus, PanelLeftClose, SearchCheck, ShieldCheck, Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Menu } from "lucide-react";
 import { AssistantMessage } from "./components/AssistantMessage";
+import { ChatHistorySidebar } from "./components/ChatHistorySidebar";
 import { Composer } from "./components/Composer";
+import { useChatPersistence } from "./lib/chat-persistence";
 import { streamChat } from "./lib/stream-chat";
-import type { ChatMessage, ChatPart, StreamEvent } from "./types";
+import type { ChatMessage, ChatPart, StreamEvent, ToolCall } from "./types";
 
-const SUGGESTIONS = [
-  {
-    icon: Gauge,
-    label: "Duty cycle",
-    question: "What’s the duty cycle for MIG welding at 200A on 240V?",
-    hint: "Rated output + live cycle"
-  },
-  {
-    icon: LifeBuoy,
-    label: "Diagnose a weld",
-    question: "I’m getting porosity in my flux-cored welds. What should I check?",
-    hint: "Checklist + manual figure"
-  },
-  {
-    icon: Cable,
-    label: "Cable setup",
-    question: "What polarity setup do I need for TIG? Which socket gets the ground clamp?",
-    hint: "Visual cable routing"
-  }
-] as const;
-
-const SOURCE_STATS = [
-  ["51", "source pages"],
-  ["19", "curated figures"],
-  ["6", "verified datasets"]
+const SAMPLE_QUESTIONS = [
+  "What’s the duty cycle for MIG welding at 200A on 240V?",
+  "I’m getting porosity in my flux-cored welds. What should I check?",
+  "What polarity setup do I need for TIG? Which socket gets the ground clamp?"
 ] as const;
 
 function newConversationId() {
   return crypto.randomUUID();
+}
+
+type ConversationRoute = {
+  conversationId: string;
+  loadStored: boolean;
+};
+
+function conversationRouteFromLocation(): ConversationRoute {
+  const storedId = new URL(window.location.href).searchParams.get("chat")?.trim();
+  return storedId && storedId.length <= 100
+    ? { conversationId: storedId, loadStored: true }
+    : { conversationId: newConversationId(), loadStored: false };
+}
+
+function updateConversationUrl(conversationId?: string, mode: "push" | "replace" = "replace") {
+  const url = new URL(window.location.href);
+  if (conversationId) url.searchParams.set("chat", conversationId);
+  else url.searchParams.delete("chat");
+  window.history[mode === "push" ? "pushState" : "replaceState"]({}, "", url);
+}
+
+function conversationTitle(text: string): string {
+  return text.length > 80 ? `${text.slice(0, 77).trimEnd()}…` : text;
 }
 
 function appendTextPart(parts: ChatPart[], text: string): ChatPart[] {
@@ -44,35 +48,144 @@ function appendTextPart(parts: ChatPart[], text: string): ChatPart[] {
   return [...parts, { id: crypto.randomUUID(), type: "text", text }];
 }
 
+function finishRunningTools(toolCalls: ToolCall[] | undefined, status: ToolCall["status"]): ToolCall[] {
+  return (toolCalls ?? []).map((tool) => tool.status === "running" ? { ...tool, status } : tool);
+}
+
 export default function App() {
+  const [initialRoute] = useState(conversationRouteFromLocation);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [hydrating, setHydrating] = useState(initialRoute.loadStored);
   const [sessionId, setSessionId] = useState<string>();
-  const [conversationId, setConversationId] = useState(newConversationId);
+  const [conversationRoute, setConversationRoute] = useState(initialRoute);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { conversations, loadConversation, saveMessage: saveStoredMessage, storageError } = useChatPersistence();
+  const conversationId = conversationRoute.conversationId;
   const abortRef = useRef<AbortController | undefined>(undefined);
   const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  const followStreamRef = useRef(true);
+  const messageSnapshotsRef = useRef(new Map<string, ChatMessage>());
+  const messageSequencesRef = useRef(new Map<string, number>());
+  const nextSequenceRef = useRef(0);
+  const titleRef = useRef("");
 
   useEffect(() => {
-    if (busy) scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, busy]);
+    if (!conversationRoute.loadStored) {
+      setHydrating(false);
+      return;
+    }
 
-  const updateAssistant = useCallback((assistantId: string, updater: (message: ChatMessage) => ChatMessage) => {
-    setMessages((current) => current.map((message) => message.id === assistantId ? updater(message) : message));
+    let cancelled = false;
+    setHydrating(true);
+    void loadConversation(conversationId)
+      .then((stored) => {
+        if (cancelled) return;
+        if (!stored) {
+          setMessages([]);
+          setSessionId(undefined);
+          messageSnapshotsRef.current.clear();
+          messageSequencesRef.current.clear();
+          nextSequenceRef.current = 0;
+          titleRef.current = "";
+          return;
+        }
+
+        const ordered = [...stored.messages].sort((a, b) => a.sequence - b.sequence);
+        const restoredMessages = ordered.map((message) => message.payload);
+        setMessages(restoredMessages);
+        setSessionId(stored.sessionId);
+        messageSnapshotsRef.current = new Map(restoredMessages.map((message) => [message.id, message]));
+        messageSequencesRef.current = new Map(ordered.map((message) => [message.payload.id, message.sequence]));
+        nextSequenceRef.current = ordered.reduce((next, message) => Math.max(next, message.sequence + 1), 0);
+        titleRef.current = stored.title;
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setHydrating(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, conversationRoute.loadStored, loadConversation]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      abortRef.current?.abort();
+      abortRef.current = undefined;
+      messageSnapshotsRef.current.clear();
+      messageSequencesRef.current.clear();
+      nextSequenceRef.current = 0;
+      titleRef.current = "";
+      setMessages([]);
+      setInput("");
+      setSessionId(undefined);
+      setBusy(false);
+      setConversationRoute(conversationRouteFromLocation());
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  useEffect(() => {
+    const updateFollowState = () => {
+      const distanceFromBottom = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+      followStreamRef.current = distanceFromBottom < 120;
+    };
+
+    window.addEventListener("scroll", updateFollowState, { passive: true });
+    return () => window.removeEventListener("scroll", updateFollowState);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (busy && followStreamRef.current) scrollAnchorRef.current?.scrollIntoView({ block: "end" });
+  }, [messages, busy]);
+
+  const updateAssistant = useCallback((assistantId: string, updater: (message: ChatMessage) => ChatMessage): ChatMessage | undefined => {
+    const current = messageSnapshotsRef.current.get(assistantId);
+    if (!current) return undefined;
+    const updated = updater(current);
+    messageSnapshotsRef.current.set(assistantId, updated);
+    setMessages((messages) => messages.map((message) => message.id === assistantId ? updated : message));
+    return updated;
+  }, []);
+
+  const persistMessage = useCallback((message: ChatMessage, storedSessionId?: string) => {
+    const sequence = messageSequencesRef.current.get(message.id);
+    if (sequence === undefined) return;
+    void saveStoredMessage({
+      conversationId,
+      title: titleRef.current || "New chat",
+      sessionId: storedSessionId,
+      sequence,
+      message
+    });
+  }, [conversationId, saveStoredMessage]);
+
   const handleEvent = useCallback((assistantId: string, event: StreamEvent) => {
-    if (event.type === "text_delta") {
+    if (event.type === "text_delta" || event.type === "clarification") {
       updateAssistant(assistantId, (message) => ({ ...message, parts: appendTextPart(message.parts, event.text) }));
       return;
     }
     if (event.type === "tool_start") {
-      updateAssistant(assistantId, (message) => ({ ...message, activeTools: [...(message.activeTools ?? []), { id: event.id, label: event.label }] }));
+      updateAssistant(assistantId, (message) => ({
+        ...message,
+        toolCalls: [...(message.toolCalls ?? []), { id: event.id, name: event.name, label: event.label, input: event.input, status: "running" }]
+      }));
       return;
     }
     if (event.type === "tool_end") {
-      updateAssistant(assistantId, (message) => ({ ...message, activeTools: (message.activeTools ?? []).filter((tool) => tool.id !== event.id) }));
+      updateAssistant(assistantId, (message) => ({
+        ...message,
+        toolCalls: (message.toolCalls ?? []).map((tool) => tool.id === event.id ? { ...tool, status: event.ok ? "complete" : "error" } : tool)
+      }));
+      return;
+    }
+    if (event.type === "clarification_request") {
+      updateAssistant(assistantId, (message) => ({ ...message, parts: [...message.parts, { id: crypto.randomUUID(), type: "clarification", clarification: event.clarification }] }));
       return;
     }
     if (event.type === "figure") {
@@ -83,30 +196,50 @@ export default function App() {
       updateAssistant(assistantId, (message) => ({ ...message, parts: [...message.parts, { id: crypto.randomUUID(), type: "widget", widget: event.widget }] }));
       return;
     }
+    if (event.type === "visual") {
+      updateAssistant(assistantId, (message) => ({ ...message, parts: [...message.parts, { id: crypto.randomUUID(), type: "visual", visual: event.visual }] }));
+      return;
+    }
     if (event.type === "artifact") {
       updateAssistant(assistantId, (message) => ({ ...message, parts: [...message.parts, { id: crypto.randomUUID(), type: "artifact", artifact: event.artifact }] }));
       return;
     }
     if (event.type === "error") {
-      updateAssistant(assistantId, (message) => ({ ...message, status: "error", error: event.message, activeTools: [] }));
+      updateAssistant(assistantId, (message) => ({ ...message, status: "error", error: event.message, toolCalls: finishRunningTools(message.toolCalls, "error") }));
       return;
     }
     if (event.type === "done") {
+      const storedSessionId = event.sessionId ?? sessionId;
       if (event.sessionId) setSessionId(event.sessionId);
-      updateAssistant(assistantId, (message) => ({ ...message, status: message.error ? "error" : "done", activeTools: [] }));
+      const updated = updateAssistant(assistantId, (message) => ({
+        ...message,
+        status: message.error ? "error" : "done",
+        toolCalls: finishRunningTools(message.toolCalls, message.error ? "error" : "complete")
+      }));
+      if (updated) persistMessage(updated, storedSessionId);
     }
-  }, [updateAssistant]);
+  }, [persistMessage, sessionId, updateAssistant]);
 
-  const sendMessage = useCallback(async (override?: string) => {
+  const sendMessage = useCallback(async (override?: string, displayOverride?: string) => {
     const text = (override ?? input).trim();
-    if (!text || busy) return;
-    const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", parts: [{ id: crypto.randomUUID(), type: "text", text }], status: "done" };
+    if (!text || busy || abortRef.current) return;
+    const displayText = displayOverride?.trim() || text;
+    const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", parts: [{ id: crypto.randomUUID(), type: "text", text: displayText }], status: "done" };
     const assistantId = crypto.randomUUID();
-    const assistantMessage: ChatMessage = { id: assistantId, role: "assistant", parts: [], status: "streaming", activeTools: [] };
+    const assistantMessage: ChatMessage = { id: assistantId, role: "assistant", parts: [], status: "streaming", toolCalls: [] };
+    const userSequence = nextSequenceRef.current++;
+    const assistantSequence = nextSequenceRef.current++;
+    messageSnapshotsRef.current.set(userMessage.id, userMessage);
+    messageSnapshotsRef.current.set(assistantMessage.id, assistantMessage);
+    messageSequencesRef.current.set(userMessage.id, userSequence);
+    messageSequencesRef.current.set(assistantMessage.id, assistantSequence);
+    if (!titleRef.current) titleRef.current = conversationTitle(displayText);
+    updateConversationUrl(conversationId);
+    persistMessage(userMessage, sessionId);
+    followStreamRef.current = true;
     setMessages((current) => [...current, userMessage, assistantMessage]);
     setInput("");
     setBusy(true);
-    setSidebarOpen(false);
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -120,107 +253,130 @@ export default function App() {
       });
     } catch (error) {
       if ((error as Error).name !== "AbortError") {
-        updateAssistant(assistantId, (message) => ({ ...message, status: "error", activeTools: [], error: error instanceof Error ? error.message : "The response failed." }));
+        const updated = updateAssistant(assistantId, (message) => ({
+          ...message,
+          status: "error",
+          toolCalls: finishRunningTools(message.toolCalls, "error"),
+          error: error instanceof Error ? error.message : "The response failed."
+        }));
+        if (updated) persistMessage(updated, sessionId);
       } else {
-        updateAssistant(assistantId, (message) => ({ ...message, status: "done", activeTools: [] }));
+        const updated = updateAssistant(assistantId, (message) => ({ ...message, status: "done", toolCalls: finishRunningTools(message.toolCalls, "error") }));
+        if (updated) persistMessage(updated, sessionId);
       }
     } finally {
       setBusy(false);
       abortRef.current = undefined;
     }
-  }, [busy, conversationId, handleEvent, input, sessionId, updateAssistant]);
+  }, [busy, conversationId, handleEvent, input, persistMessage, sessionId, updateAssistant]);
+
+  const handleClarification = useCallback((answer: string, originalQuestion: string) => {
+    const continuation = `The user is answering a clarification request. Continue the original task using this context:\n${JSON.stringify({ originalQuestion, answer })}`;
+    void sendMessage(continuation, answer);
+  }, [sendMessage]);
+
+  const handleRepair = useCallback((message: string) => {
+    void sendMessage(message);
+  }, [sendMessage]);
 
   const resetChat = useCallback(() => {
     abortRef.current?.abort();
+    abortRef.current = undefined;
+    messageSnapshotsRef.current.clear();
+    messageSequencesRef.current.clear();
+    nextSequenceRef.current = 0;
+    titleRef.current = "";
     setMessages([]);
     setInput("");
     setSessionId(undefined);
-    setConversationId(newConversationId());
+    setConversationRoute({ conversationId: newConversationId(), loadStored: false });
     setBusy(false);
     setSidebarOpen(false);
+    updateConversationUrl(undefined, "push");
   }, []);
 
-  const firstUserQuestion = useMemo(() => messages.find((message) => message.role === "user")?.parts[0]?.type === "text" ? (messages.find((message) => message.role === "user")?.parts[0] as { text: string }).text : undefined, [messages]);
+  const selectConversation = useCallback((selectedConversationId: string) => {
+    setSidebarOpen(false);
+    if (selectedConversationId === conversationId && conversationRoute.loadStored) return;
+    abortRef.current?.abort();
+    abortRef.current = undefined;
+    messageSnapshotsRef.current.clear();
+    messageSequencesRef.current.clear();
+    nextSequenceRef.current = 0;
+    titleRef.current = "";
+    setMessages([]);
+    setInput("");
+    setSessionId(undefined);
+    setBusy(false);
+    setConversationRoute({ conversationId: selectedConversationId, loadStored: true });
+    updateConversationUrl(selectedConversationId, "push");
+  }, [conversationId, conversationRoute.loadStored]);
+
+  const hideSidebar = useCallback(() => {
+    setSidebarOpen(false);
+    if (!window.matchMedia("(max-width: 850px)").matches) setSidebarCollapsed(true);
+  }, []);
+
+  const showSidebar = useCallback(() => {
+    setSidebarCollapsed(false);
+    setSidebarOpen(true);
+  }, []);
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+      <ChatHistorySidebar
+        activeConversationId={conversationId}
+        collapsed={sidebarCollapsed}
+        conversations={conversations}
+        open={sidebarOpen}
+        onClose={hideSidebar}
+        onNewChat={resetChat}
+        onSelect={selectConversation}
+      />
       <header className="topbar">
-        <button className="mobile-menu" type="button" onClick={() => setSidebarOpen(true)} aria-label="Open source panel"><Menu size={20} /></button>
-        <a className="brand" href="#top" onClick={(event) => { event.preventDefault(); resetChat(); }}>
-          <span className="brand-mark"><Flame size={20} fill="currentColor" /></span>
-          <span><strong>Arcwell</strong><small>OMNIPRO 220 FIELD GUIDE</small></span>
-        </a>
-        <div className="header-context">
-          {firstUserQuestion ? <span>{firstUserQuestion}</span> : <span>Manual-grounded welding support</span>}
-        </div>
-        <div className="header-actions">
-          <span className="source-status"><i /> Sources ready</span>
-          <button type="button" onClick={resetChat}><MessageSquarePlus size={17} /><span>New chat</span></button>
+        <div className="header-inner">
+          <button
+            type="button"
+            className="sidebar-menu-button"
+            aria-label="Show chat history"
+            aria-expanded={sidebarOpen}
+            onClick={showSidebar}
+          >
+            <Menu size={18} />
+          </button>
+          <strong>OmniPro 220 Assistant</strong>
         </div>
       </header>
 
-      <div className="body-layout">
-        <aside className={sidebarOpen ? "sidebar open" : "sidebar"}>
-          <button className="sidebar-close" type="button" onClick={() => setSidebarOpen(false)} aria-label="Close source panel"><X size={19} /></button>
-          <div className="machine-card">
-            <div className="machine-image"><img src="/product.webp" alt="Vulcan OmniPro 220 welder" /></div>
-            <span className="eyebrow">Your machine</span>
-            <h2>Vulcan OmniPro 220</h2>
-            <p>Multiprocess · 120/240 V · Item 57812</p>
-            <div className="process-tags"><span>MIG</span><span>Flux</span><span>TIG</span><span>Stick</span></div>
-          </div>
-
-          <div className="source-pack">
-            <div className="sidebar-section-title"><span>Source pack</span><SearchCheck size={16} /></div>
-            {SOURCE_STATS.map(([value, label]) => <div className="source-stat" key={label}><strong>{value}</strong><span>{label}</span><ShieldCheck size={14} /></div>)}
-            <p>Extracted once, committed, and checked against the page pixels.</p>
-          </div>
-
-          <div className="sidebar-prompts">
-            <span className="sidebar-section-title">Quick asks</span>
-            {SUGGESTIONS.map((suggestion) => (
-              <button type="button" key={suggestion.label} onClick={() => void sendMessage(suggestion.question)} disabled={busy}>
-                <suggestion.icon size={16} /><span>{suggestion.label}</span><ChevronRight size={15} />
-              </button>
-            ))}
-          </div>
-
-          <div className="safety-note"><ShieldCheck size={17} /><p><strong>Safety first</strong><span>Disconnect power before setup or service. Keep the manual’s PPE and ventilation rules in reach.</span></p></div>
-        </aside>
-        {sidebarOpen ? <button className="sidebar-scrim" type="button" onClick={() => setSidebarOpen(false)} aria-label="Close source panel" /> : null}
-
-        <main className="chat-main" id="top">
-          {messages.length === 0 ? (
-            <section className="welcome">
-              <div className="welcome-badge"><Sparkles size={15} /> Visual answers from the actual manual</div>
-              <h1>Good welds start<br />before the arc.</h1>
-              <p>Ask a real setup or troubleshooting question. Arcwell cross-checks the OmniPro 220 source pack, then shows you the answer—not just a wall of text.</p>
-              <div className="suggestion-grid">
-                {SUGGESTIONS.map((suggestion) => (
-                  <button type="button" key={suggestion.label} onClick={() => void sendMessage(suggestion.question)}>
-                    <span className="suggestion-icon"><suggestion.icon size={19} /></span>
-                    <span className="suggestion-label">{suggestion.label}</span>
-                    <strong>{suggestion.question}</strong>
-                    <small>{suggestion.hint}<ChevronRight size={14} /></small>
-                  </button>
+      <main className="chat-main">
+        {storageError ? <div className="storage-warning" role="status">Chat storage is temporarily unavailable. This conversation may not be saved.</div> : null}
+        {hydrating ? (
+          <section className="empty-state"><p>Loading saved conversation…</p></section>
+        ) : messages.length === 0 ? (
+          <section className="empty-state">
+            <h1>OmniPro 220 Assistant</h1>
+            <p>Ask about setup, operation, or troubleshooting.</p>
+            {!input.trim() ? (
+              <div className="sample-questions" aria-label="Example questions">
+                {SAMPLE_QUESTIONS.map((question) => (
+                  <button type="button" key={question} onClick={() => void sendMessage(question)}>{question}</button>
                 ))}
               </div>
-              <div className="welcome-trust"><span><SearchCheck size={15} /> 51 pages indexed</span><i /><span><ShieldCheck size={15} /> Exact-number lookups</span><i /><span><PanelLeftClose size={15} /> Real manual figures</span></div>
-            </section>
-          ) : (
-            <section className="conversation" aria-live="polite">
-              {messages.map((message) => message.role === "user" ? (
-                <article className="message user-message" key={message.id}>
-                  <div>{message.parts[0]?.type === "text" ? message.parts[0].text : ""}</div>
-                  <span>You</span>
-                </article>
-              ) : <AssistantMessage key={message.id} message={message} onRepair={(repairMessage) => void sendMessage(repairMessage)} />)}
-              <div ref={scrollAnchorRef} />
-            </section>
-          )}
-          <Composer value={input} onChange={setInput} onSubmit={() => void sendMessage()} onStop={() => abortRef.current?.abort()} busy={busy} />
-        </main>
-      </div>
+            ) : null}
+          </section>
+        ) : (
+          <section className="conversation" aria-live="polite">
+            {messages.map((message) => message.role === "user" ? (
+              <article className="message user-message" key={message.id}>
+                <span>You</span>
+                <div>{message.parts[0]?.type === "text" ? message.parts[0].text : ""}</div>
+              </article>
+            ) : <AssistantMessage key={message.id} message={message} onRepair={handleRepair} onClarify={handleClarification} />)}
+            <div ref={scrollAnchorRef} />
+          </section>
+        )}
+        {!hydrating ? <Composer value={input} onChange={setInput} onSubmit={() => void sendMessage()} onStop={() => abortRef.current?.abort()} busy={busy} /> : null}
+      </main>
     </div>
   );
 }

@@ -30,7 +30,7 @@ export function ArtifactFrame({ artifact, onRepair }: { artifact: ArtifactPayloa
     <section className="artifact-card">
       <div className="artifact-title"><span><Code2 size={16} /> Interactive artifact</span><strong>{artifact.title}</strong></div>
       {error ? (
-        <div className="artifact-error"><TriangleAlert size={22} /><strong>This interactive view hit an error.</strong><small>{error}</small><button type="button" onClick={() => onRepair(`Repair the “${artifact.title}” artifact. It failed with: ${error}`)}><RefreshCw size={15} /> Ask Arcwell to repair</button></div>
+        <div className="artifact-error"><TriangleAlert size={22} /><strong>This interactive view hit an error.</strong><small>{error}</small><button type="button" onClick={() => onRepair(`Repair the “${artifact.title}” artifact. It failed with: ${error}`)}><RefreshCw size={15} />Repair</button></div>
       ) : null}
       <iframe ref={frameRef} title={artifact.title} sandbox="allow-scripts" srcDoc={srcDoc} />
     </section>

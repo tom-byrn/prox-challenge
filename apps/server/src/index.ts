@@ -9,6 +9,8 @@ import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { runAgentTurn } from "./agent.js";
 import type { AgentEvent } from "./types.js";
+import { getPreparedVisualAsset } from "./visual-assets.js";
+import { resolveVisualAsset } from "./visuals.js";
 
 const app = new Hono();
 const rootDir = fileURLToPath(new URL("../../../", import.meta.url));
@@ -18,6 +20,16 @@ config({ path: fileURLToPath(new URL("../../../.env", import.meta.url)), quiet: 
 app.use("/api/*", cors({ origin: ["http://localhost:5173", "http://127.0.0.1:5173"], allowMethods: ["GET", "POST", "OPTIONS"] }));
 
 app.get("/api/health", (context) => context.json({ ok: true, product: "Vulcan OmniPro 220", agentSdk: true }));
+
+app.get("/api/visual-assets/:assetId", async (context) => {
+  const assetId = decodeURIComponent(context.req.param("assetId"));
+  const prepared = getPreparedVisualAsset(assetId) ?? await resolveVisualAsset(assetId).catch(() => undefined);
+  if (!prepared) return context.json({ error: "Prepared visual asset not found." }, 404);
+  return context.body(new Uint8Array(prepared.image), 200, {
+    "Content-Type": "image/png",
+    "Cache-Control": "private, max-age=3600"
+  });
+});
 
 const ChatRequest = z.object({
   message: z.string().trim().min(1).max(8_000),

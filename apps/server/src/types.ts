@@ -1,3 +1,6 @@
+import type { VisualPayload } from "./visual-spec.js";
+import type { EvidenceSource } from "./evidence.js";
+
 export type Process = "MIG" | "FLUX_CORED" | "TIG" | "STICK";
 
 export type SourceRef = {
@@ -26,13 +29,31 @@ export type ArtifactPayload = {
   html: string;
 };
 
+export type VideoPayload = {
+  id: string;
+  source: Extract<EvidenceSource, { kind: "video" }>;
+};
+
+export type ClarificationRequest = {
+  id: string;
+  originalQuestion: string;
+  question: string;
+  options: Array<{ id: string; label: string; description?: string }>;
+  allowOther: boolean;
+};
+
 export type AgentEvent =
   | { type: "meta"; conversationId: string }
   | { type: "text_delta"; text: string }
-  | { type: "tool_start"; id: string; name: string; label: string }
+  | { type: "clarification"; text: string }
+  | { type: "clarification_request"; clarification: ClarificationRequest }
+  | { type: "tool_start"; id: string; name: string; label: string; input: Record<string, unknown> }
   | { type: "tool_end"; id: string; name: string; ok: boolean }
+  | { type: "evidence"; sources: EvidenceSource[] }
   | { type: "figure"; figure: FigurePayload }
+  | { type: "video"; video: VideoPayload }
   | { type: "widget"; widget: WidgetPayload }
+  | { type: "visual"; visual: VisualPayload }
   | { type: "artifact"; artifact: ArtifactPayload }
   | { type: "error"; message: string; retryable: boolean }
   | { type: "done"; sessionId?: string; costUsd?: number };

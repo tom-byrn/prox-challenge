@@ -56,7 +56,7 @@ export function DutyCycleWidget({ data }: { data: unknown }) {
           <div className="widget-icon warning"><TriangleAlert size={19} /></div>
           <div><span className="eyebrow">Unpublished operating point</span><h3>No certified rating at {data.requested.amps} A</h3></div>
         </div>
-        <p>The manual does not give a duty cycle for this exact amperage, so Arcwell won’t estimate one.</p>
+        <p>The manual does not give a duty cycle for this exact amperage, so no estimate is shown.</p>
         <div className="nearest-ratings">
           {data.nearestPublishedRatings.map((rating) => (
             <div key={`${rating.inputVoltage}-${rating.amps}`}>
