@@ -141,7 +141,7 @@ const evaluations: Evaluation[] = [
         validateAnnotationGrounding(annotation.spec, prepared);
         assert.equal(annotationTargetsRegion(annotation, (_target, normalized) => normalized.x > 0.5 && normalized.x < 0.8 && normalized.y > 0.4 && normalized.y < 0.8), true);
       }
-      assert.equal(hasTool(events, "search_manual") || hasTool(events, "read_manual_pages"), true);
+      assert.equal(hasTool(events, "search_sources") || hasTool(events, "read_manual_pages"), true);
       assert.equal(hasTool(events, "inspect_visual_source"), true);
       assert.equal(hasTool(events, "preview_visual_annotations"), true);
       assert.equal(hasTool(events, "render_visual"), true);
@@ -182,7 +182,7 @@ const evaluations: Evaluation[] = [
     check(events) {
       const text = responseText(events);
       assert.match(text, /DC TIG|DC-only|does not support AC|cannot AC TIG|not.*TIG.*aluminum/is);
-      assert.equal(hasTool(events, "get_specs") || hasTool(events, "search_manual") || hasTool(events, "read_manual_pages"), true);
+      assert.equal(hasTool(events, "get_specs") || hasTool(events, "search_sources") || hasTool(events, "read_manual_pages"), true);
     }
   }
 ];

@@ -10,7 +10,7 @@ test("accepts an arbitrary content-agnostic connection graph", () => {
     kind: "connection-diagram",
     title: "Cooling loop",
     description: "A held-out graph unrelated to a fixed product renderer.",
-    sourceRefs: [{ source: "owner-manual", pages: [7] }],
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [7] }],
     layout: { direction: "left-to-right" },
     nodes: [
       { id: "reservoir", role: "endpoint", label: "Reservoir", ports: [{ id: "out", label: "Outlet", side: "right" }] },
@@ -30,7 +30,7 @@ test("rejects graph connections to unknown nodes or ports", () => {
     schemaVersion: 1,
     kind: "connection-diagram",
     title: "Broken graph",
-    sourceRefs: [{ source: "owner-manual", pages: [7] }],
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [7] }],
     layout: { direction: "left-to-right" },
     nodes: [{ id: "known", role: "device", label: "Known node" }, { id: "other", role: "endpoint", label: "Other node" }],
     connections: [{ id: "bad", from: { node: "known", port: "missing" }, to: { node: "unknown" } }]
@@ -44,7 +44,7 @@ test("prepares an approved image into a trimmed, controlled pixel space", async 
     schemaVersion: 1,
     kind: "annotated-image",
     title: "Interior controls",
-    sourceRefs: [{ source: "owner-manual", pages: [9] }],
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [9] }],
     image: { assetId: "figure:interior-controls", alt: "Interior controls shown in the owner's manual" },
     annotations: [
       { id: "pedal", shape: "pin", point: { x: 725, y: 585 }, label: "Foot pedal socket" },
@@ -62,7 +62,7 @@ test("rejects external image URLs and annotations outside prepared pixel bounds"
     schemaVersion: 1,
     kind: "annotated-image",
     title: "External image",
-    sourceRefs: [{ source: "owner-manual", pages: [12] }],
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [12] }],
     image: { assetId: "https://example.com/image.png", alt: "An external untrusted source image" },
     annotations: [{ id: "pin", shape: "pin", point: { x: 20, y: 20 }, label: "Pin" }]
   });
@@ -70,7 +70,7 @@ test("rejects external image URLs and annotations outside prepared pixel bounds"
     schemaVersion: 1,
     kind: "annotated-image",
     title: "Overflow image",
-    sourceRefs: [{ source: "owner-manual", pages: [12] }],
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [12] }],
     image: { assetId: "figure:feed-roller-guide", alt: "Feed roller controls shown in the owner's manual" },
     annotations: [{ id: "box", shape: "box", bounds: { x1: 800, y1: 200, x2: 4000, y2: 500 }, label: "Overflow" }]
   };
@@ -79,14 +79,20 @@ test("rejects external image URLs and annotations outside prepared pixel bounds"
 });
 
 test("rejects a marker that lands on trimmed image whitespace", async () => {
-  await assert.rejects(buildVisualPayload("blank", {
+  const blankSpec = {
     schemaVersion: 1,
-    kind: "annotated-image",
+    kind: "annotated-image" as const,
     title: "Blank target",
-    sourceRefs: [{ source: "owner-manual", pages: [9] }],
+    sourceRefs: [{ kind: "document" as const, sourceId: "owner-manual" as const, pages: [9] }],
     image: { assetId: "figure:interior-controls", alt: "Interior controls shown in the owner's manual" },
-    annotations: [{ id: "blank", shape: "pin", point: { x: 1050, y: 730 }, label: "Incorrect blank target" }]
-  }), /blank background/);
+    annotations: [{ id: "blank", shape: "pin" as const, point: { x: 1050, y: 730 }, label: "Incorrect blank target" }]
+  };
+  const preview = await buildAnnotationPreview(blankSpec);
+  assert.equal(preview.valid, false);
+  assert.equal(preview.issues[0]?.annotationId, "blank");
+  assert.match(preview.issues[0]?.message ?? "", /blank background/);
+  assert.ok(preview.preview.length > 0, "Invalid placement should still return a visual overlay for correction.");
+  await assert.rejects(buildVisualPayload("blank", blankSpec), /blank background/);
 });
 
 test("builds a source-preserving annotation preview in the prepared coordinate space", async () => {
@@ -94,12 +100,14 @@ test("builds a source-preserving annotation preview in the prepared coordinate s
     schemaVersion: 1,
     kind: "annotated-image",
     title: "Interior sockets",
-    sourceRefs: [{ source: "owner-manual", pages: [9] }],
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [9] }],
     image: { assetId: "figure:interior-controls", alt: "Interior controls shown in the owner's manual" },
     annotations: [{ id: "pedal", shape: "pin", point: { x: 725, y: 585 }, label: "Foot pedal socket" }]
   });
   assert.equal(preview.prepared.asset.width, 1183);
   assert.equal(preview.prepared.asset.height, 778);
+  assert.equal(preview.valid, true);
+  assert.deepEqual(preview.issues, []);
   assert.ok(preview.preview.byteLength > preview.prepared.image.byteLength / 2);
   assert.match(preview.hash, /^[a-f0-9]{64}$/);
 });
@@ -115,7 +123,7 @@ test("rejects comparison values that reference nonexistent columns", () => {
     schemaVersion: 1,
     kind: "comparison",
     title: "Process comparison",
-    sourceRefs: [{ source: "owner-manual", pages: [7] }],
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [7] }],
     columns: [{ id: "mig", label: "MIG" }, { id: "tig", label: "TIG" }],
     rows: [{ id: "gas", label: "Gas", values: [{ columnId: "mig", text: "Required" }, { columnId: "stick", text: "None" }] }]
   });

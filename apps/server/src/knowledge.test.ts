@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getFigure, lookupDutyCycle, lookupPolarity, lookupTroubleshooting, searchParts } from "./knowledge.js";
+import { getFigure, lookupDutyCycle, lookupPolarity, lookupTroubleshooting, resolveEvidenceRef, searchParts, searchSources } from "./knowledge.js";
 
 test("returns the sample MIG duty-cycle rating exactly", () => {
   const result = lookupDutyCycle("MIG", 240, 200);
@@ -37,4 +37,16 @@ test("filters gas-only porosity advice out of self-shielded flux-cored checks", 
 test("figure and parts catalogs resolve", () => {
   assert.equal(getFigure("tig-cable-setup").pages[0], 2);
   assert.equal(searchParts("fan").results.length, 2);
+});
+
+test("finds and resolves an exact timestamped product-video segment", () => {
+  const result = searchSources("foot pedal lift start TIG");
+  assert.equal(result.videos[0]?.id, "video:setup-demo@249-334");
+  const source = resolveEvidenceRef({ kind: "video", segmentId: "video:setup-demo@249-334" });
+  assert.equal(source.kind, "video");
+  if (source.kind === "video") {
+    assert.equal(source.startSeconds, 249);
+    assert.equal(source.endSeconds, 334);
+    assert.match(source.url ?? "", /t=249s/);
+  }
 });

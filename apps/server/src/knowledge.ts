@@ -1,7 +1,9 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import MiniSearch from "minisearch";
 import { evidenceRefId, uniqueEvidence, type EvidenceRef, type EvidenceSource } from "./evidence.js";
+import { activeProductId, hasActiveProductPackage, KNOWLEDGE_ROOT, loadKnowledgePackage, productPackageDirectory } from "./knowledge-package.js";
 import type { Process } from "./types.js";
 
 type SearchDocument = {
@@ -13,6 +15,16 @@ type SearchDocument = {
   image: string;
 };
 
+type DatasetSearchDocument = {
+  id: string;
+  datasetId: string;
+  title: string;
+  text: string;
+  recordId: string;
+  sourceId: string;
+  pages: number[];
+};
+
 export type FigureRecord = {
   id: string;
   title: string;
@@ -21,7 +33,7 @@ export type FigureRecord = {
   file: string;
   caption: string;
   keywords: string[];
-  answers: string[];
+  answers?: string[];
 };
 
 export type VideoSegmentRecord = {
@@ -64,15 +76,29 @@ type TroubleshootingEntry = {
   figureId?: string;
 };
 
-const KNOWLEDGE_DIR = fileURLToPath(new URL("../../../knowledge/", import.meta.url));
+const KNOWLEDGE_DIR = KNOWLEDGE_ROOT;
+const activePackage = hasActiveProductPackage() ? loadKnowledgePackage(productPackageDirectory()) : undefined;
 
 function loadJson<T>(relativePath: string): T {
+  if (activePackage) return activePackage.readJson<T>(relativePath);
   return JSON.parse(readFileSync(new URL(relativePath, new URL(`file://${KNOWLEDGE_DIR}/`)), "utf8")) as T;
 }
 
-const searchDocuments = loadJson<SearchDocument[]>("search-documents.json");
-const figures = loadJson<FigureRecord[]>("figures.json");
-const videoKnowledge = loadJson<{
+const searchDocuments: SearchDocument[] = activePackage
+  ? activePackage.searchDocuments.map((document) => ({ ...document, source: document.documentId ?? document.source }))
+  : loadJson<SearchDocument[]>("search-documents.json");
+const figures: FigureRecord[] = activePackage
+  ? activePackage.manifest.figures.map((figure) => ({
+    id: figure.id,
+    title: figure.title,
+    source: figure.documentId,
+    pages: [figure.page],
+    file: figure.asset,
+    caption: figure.caption,
+    keywords: figure.keywords
+  }))
+  : loadJson<FigureRecord[]>("figures.json");
+const legacyVideoKnowledge = activePackage ? undefined : loadJson<{
   sourceId: string;
   videoId: string;
   title: string;
@@ -81,14 +107,49 @@ const videoKnowledge = loadJson<{
   authority: "supplemental-demonstration";
   segments: VideoSegmentRecord[];
 }>("video/segments.json");
-const manualIndex = loadJson<{ product: string; item: string; sections: Array<{ title: string; source: string; pages: number[]; summary: string }> }>("index.json");
-const dutyCycles = loadJson<{ periodMinutes: number; policy: string; ratings: DutyRating[] }>("tables/duty_cycles.json");
-const specs = loadJson<Record<string, unknown>>("tables/specs.json");
-const polarity = loadJson<{ setups: Array<Record<string, unknown> & { id: string; process: Process; aliases: string[] }> }>("tables/polarity.json");
-const troubleshooting = loadJson<{ entries: TroubleshootingEntry[] }>("tables/troubleshooting.json");
-const weldDiagnosis = loadJson<{ entries: Array<Record<string, unknown> & { id: string; defect: string; processes: Process[] }> }>("tables/weld_diagnosis.json");
-const settingsGuide = loadJson<{ modes: Array<Record<string, unknown> & { process: Process }> }>("tables/settings_guide.json");
-const parts = loadJson<{ parts: Array<{ number: number; description: string; quantity: number }>; listPage: number; diagramPage: number; orderingNote: string }>("tables/parts.json");
+const videoKnowledge = activePackage ? {
+  sourceId: activePackage.manifest.videos[0]?.id ?? "video",
+  videoId: activePackage.manifest.videos[0]?.videoId ?? "video",
+  title: activePackage.manifest.videos[0]?.title ?? "Video",
+  url: activePackage.manifest.videos[0]?.url ?? "",
+  captionType: activePackage.manifest.videos[0]?.captionType ?? "manual",
+  authority: activePackage.manifest.videos[0]?.authority ?? "supplemental-demonstration",
+  segments: activePackage.manifest.videoSegments.map((segment): VideoSegmentRecord => {
+    const video = activePackage.manifest.videos.find((candidate) => candidate.id === segment.videoId);
+    const transcript = video ? activePackage.readJson<{ captions: Array<{ startSeconds: number; durationSeconds: number; text: string }> }>(video.transcriptFile) : { captions: [] };
+    return {
+      ...segment,
+      sourceId: segment.videoId,
+      videoId: video?.videoId ?? segment.videoId,
+      transcript: transcript.captions.filter((caption) => caption.startSeconds < segment.endSeconds && caption.startSeconds + caption.durationSeconds > segment.startSeconds).map((caption) => caption.text).join(" "),
+      url: video ? `${video.url}${video.url.includes("?") ? "&" : "?"}t=${Math.floor(segment.startSeconds)}s` : "",
+      authority: "supplemental-demonstration"
+    };
+  })
+} : legacyVideoKnowledge!;
+const manualIndex = activePackage ? {
+  product: activePackage.manifest.product.name,
+  item: activePackage.manifest.product.id,
+  sections: activePackage.manifest.sections.map((section) => ({
+    title: section.title,
+    source: section.documentId,
+    pages: Array.from({ length: section.endPage - section.startPage + 1 }, (_, index) => section.startPage + index),
+    summary: section.summary
+  }))
+} : loadJson<{ product: string; item: string; sections: Array<{ title: string; source: string; pages: number[]; summary: string }> }>("index.json");
+
+function legacyTable<T>(path: string): T | undefined {
+  if (activePackage) return undefined;
+  return loadJson<T>(path);
+}
+
+const dutyCycles = legacyTable<{ periodMinutes: number; policy: string; ratings: DutyRating[] }>("tables/duty_cycles.json");
+const specs = legacyTable<Record<string, unknown>>("tables/specs.json");
+const polarity = legacyTable<{ setups: Array<Record<string, unknown> & { id: string; process: Process; aliases: string[] }> }>("tables/polarity.json");
+const troubleshooting = legacyTable<{ entries: TroubleshootingEntry[] }>("tables/troubleshooting.json");
+const weldDiagnosis = legacyTable<{ entries: Array<Record<string, unknown> & { id: string; defect: string; processes: Process[] }> }>("tables/weld_diagnosis.json");
+const settingsGuide = legacyTable<{ modes: Array<Record<string, unknown> & { process: Process }> }>("tables/settings_guide.json");
+const parts = legacyTable<{ parts: Array<{ number: number; description: string; quantity: number }>; listPage: number; diagramPage: number; orderingNote: string }>("tables/parts.json");
 
 const pageSearch = new MiniSearch<SearchDocument>({
   fields: ["title", "text", "source"],
@@ -102,10 +163,10 @@ const pageSearch = new MiniSearch<SearchDocument>({
 pageSearch.addAll(searchDocuments);
 
 const figureSearch = new MiniSearch<FigureRecord>({
-  fields: ["title", "caption", "keywords", "answers"],
+  fields: ["title", "caption", "keywords"],
   storeFields: ["id", "title", "source", "pages", "file", "caption"],
   searchOptions: {
-    boost: { title: 3, keywords: 2.5, answers: 2 },
+    boost: { title: 3, keywords: 2.5 },
     fuzzy: 0.2,
     prefix: true
   }
@@ -122,6 +183,54 @@ const videoSearch = new MiniSearch<VideoSegmentRecord>({
   }
 });
 videoSearch.addAll(videoKnowledge.segments);
+
+const datasetSearchDocuments: DatasetSearchDocument[] = activePackage ? activePackage.manifest.datasets.flatMap((dataset) => {
+  const stored = activePackage.readJson<{ records: Array<{ id: string; values: Record<string, string | number | boolean>; evidence: Array<{ documentId: string; page: number }> }> }>(dataset.recordsFile);
+  return stored.records.map((record) => ({
+    id: `${dataset.id}:${record.id}`,
+    datasetId: dataset.id,
+    title: dataset.title,
+    text: Object.entries(record.values).map(([key, value]) => `${key}: ${value}`).join(" "),
+    recordId: record.id,
+    sourceId: record.evidence[0]?.documentId ?? dataset.evidence[0]?.documentId ?? "",
+    pages: [...new Set(record.evidence.map((evidence) => evidence.page))]
+  })).filter((record) => record.sourceId && record.pages.length);
+}) : [];
+const datasetSearch = new MiniSearch<DatasetSearchDocument>({
+  fields: ["title", "text", "datasetId"],
+  storeFields: ["datasetId", "title", "text", "recordId", "sourceId", "pages"],
+  searchOptions: { boost: { title: 2.5, datasetId: 2 }, fuzzy: 0.2, prefix: true }
+});
+datasetSearch.addAll(datasetSearchDocuments);
+
+function titleFromId(id: string): string {
+  return id.split("-").map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`).join(" ");
+}
+
+const documentCatalog = activePackage?.manifest.documents ?? [...new Set(searchDocuments.map((document) => document.source))].map((id) => {
+  const exact = `${id}.pdf`;
+  const guideVariant = `${id}-guide.pdf`;
+  const sourceFile = existsSync(join(KNOWLEDGE_DIR, "..", "files", exact)) ? exact : existsSync(join(KNOWLEDGE_DIR, "..", "files", guideVariant)) ? guideVariant : exact;
+  return { id, title: titleFromId(id), sourceFile, sha256: "", pageCount: Math.max(...searchDocuments.filter((document) => document.source === id).map((document) => document.page)), authority: "authoritative-manual", outlineAvailable: false };
+});
+
+export function listDocuments() {
+  return documentCatalog.map(({ id, title, sourceFile, pageCount, authority }) => ({ id, title, sourceFile, pageCount, authority }));
+}
+
+function documentRecord(sourceId: string) {
+  const document = documentCatalog.find((candidate) => candidate.id === sourceId);
+  if (!document) throw new Error(`Unknown document source: ${sourceId}`);
+  return document;
+}
+
+export function getKnowledgeAssetPath(relativePath: string): string {
+  return activePackage ? activePackage.assetPath(relativePath) : fileURLToPath(new URL(relativePath, new URL(`file://${KNOWLEDGE_DIR}/`)));
+}
+
+export function getKnowledgeAssetUrl(relativePath: string): string {
+  return activePackage ? `/knowledge/products/${encodeURIComponent(activeProductId())}/${relativePath}` : `/knowledge/${relativePath}`;
+}
 
 function normalizeProcess(value: string): Process | undefined {
   const normalized = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
@@ -163,6 +272,15 @@ export function getManualMap(): string {
     .join("\n");
 }
 
+export function getKnowledgeProductInfo() {
+  return {
+    id: activePackage?.manifest.product.id ?? "omnipro-220",
+    name: manualIndex.product,
+    documents: listDocuments(),
+    hasOmniProAdapter: !activePackage && activeProductId() === "omnipro-220"
+  };
+}
+
 export function searchManual(query: string, limit = 6) {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   const pages = pageSearch.search(query).slice(0, limit).map((result) => ({
@@ -197,17 +315,32 @@ export function searchSources(query: string, limit = 6) {
     authority: result.authority,
     score: Number(result.score.toFixed(2))
   }));
+  const datasets = datasetSearch.search(query).slice(0, 5).map((result) => ({
+    dataset: result.datasetId as string,
+    recordId: result.recordId as string,
+    title: result.title as string,
+    valueSummary: result.text as string,
+    ref: {
+      kind: "structured-data" as const,
+      dataset: result.datasetId as string,
+      recordIds: [result.recordId as string],
+      sourceId: result.sourceId as string,
+      pages: result.pages as number[]
+    },
+    score: Number(result.score.toFixed(2))
+  }));
   return {
     query,
     documents: manual.pages.map((page) => ({
       ...page,
-      ref: { kind: "document" as const, sourceId: page.source as "owner-manual" | "quick-start" | "selection-chart", pages: [page.page] }
+      ref: { kind: "document" as const, sourceId: page.source, pages: [page.page] }
     })),
     figures: manual.figures.map((figure) => ({
       ...figure,
       ref: { kind: "figure" as const, figureId: figure.id as string }
     })),
-    videos
+    videos,
+    datasets
   };
 }
 
@@ -217,7 +350,7 @@ export function getPage(source: string, page: number) {
   if (!document) throw new Error(`No page ${page} in ${source}.`);
   return {
     ...document,
-    imagePath: fileURLToPath(new URL(document.image, new URL(`file://${KNOWLEDGE_DIR}/`)))
+    imagePath: getKnowledgeAssetPath(document.image)
   };
 }
 
@@ -237,17 +370,12 @@ export function getVideoSegment(id: string): VideoSegmentRecord {
   return segment;
 }
 
-function documentTitle(sourceId: "owner-manual" | "quick-start" | "selection-chart"): string {
-  if (sourceId === "owner-manual") return "Owner's Manual";
-  if (sourceId === "quick-start") return "Quick Start Guide";
-  return "Process Selection Chart";
+function documentTitle(sourceId: string): string {
+  return documentRecord(sourceId).title;
 }
 
-function documentUrl(sourceId: "owner-manual" | "quick-start" | "selection-chart", page: number): string {
-  const filename = sourceId === "owner-manual" ? "owner-manual.pdf"
-    : sourceId === "quick-start" ? "quick-start-guide.pdf"
-      : "selection-chart.pdf";
-  return `/files/${filename}#page=${page}`;
+function documentUrl(sourceId: string, page: number): string {
+  return `/files/${encodeURIComponent(documentRecord(sourceId).sourceFile)}#page=${page}`;
 }
 
 export function resolveEvidenceRef(ref: EvidenceRef): EvidenceSource {
@@ -264,12 +392,12 @@ export function resolveEvidenceRef(ref: EvidenceRef): EvidenceSource {
       title: documentTitle(ref.sourceId),
       excerpt: documents.map((document) => makeSnippet(document.text, [], 300)).join(" "),
       url: documentUrl(ref.sourceId, ref.pages[0] ?? 1),
-      previewUrl: documents[0] ? `/knowledge/${documents[0].image}` : undefined
+      previewUrl: documents[0] ? getKnowledgeAssetUrl(documents[0].image) : undefined
     };
   }
   if (ref.kind === "figure") {
     const figure = getFigure(ref.figureId);
-    const sourceId = figure.source as "owner-manual" | "quick-start" | "selection-chart";
+    const sourceId = figure.source;
     return {
       id: evidenceRefId(ref),
       kind: "figure",
@@ -279,7 +407,7 @@ export function resolveEvidenceRef(ref: EvidenceRef): EvidenceSource {
       title: figure.title,
       caption: figure.caption,
       excerpt: figure.caption,
-      previewUrl: `/knowledge/${figure.file}`,
+      previewUrl: getKnowledgeAssetUrl(figure.file),
       url: documentUrl(sourceId, figure.pages[0] ?? 1),
       derivedFrom: [{ kind: "document", sourceId, pages: figure.pages }]
     };
@@ -297,7 +425,7 @@ export function resolveEvidenceRef(ref: EvidenceRef): EvidenceSource {
       captionType: videoKnowledge.captionType,
       title: segment.title,
       excerpt: segment.transcript,
-      previewUrl: `/knowledge/${segment.frame}`,
+      previewUrl: getKnowledgeAssetUrl(segment.frame),
       url: segment.url
     };
   }
@@ -321,6 +449,7 @@ export function resolveEvidenceRefs(refs: EvidenceRef[]): EvidenceSource[] {
 }
 
 export function lookupDutyCycle(processInput: string, inputVoltage: number, amps: number) {
+  if (!dutyCycles) throw new Error(`Duty-cycle lookup is not configured for ${activeProductId()}.`);
   const normalized = normalizeProcess(processInput);
   if (!normalized) throw new Error(`Unknown welding process: ${processInput}`);
   const process = normalized === "FLUX_CORED" ? "MIG" : normalized;
@@ -349,6 +478,7 @@ export function lookupDutyCycle(processInput: string, inputVoltage: number, amps
 }
 
 export function lookupPolarity(processInput: string) {
+  if (!polarity) throw new Error(`Polarity lookup is not configured for ${activeProductId()}.`);
   const normalized = normalizeProcess(processInput);
   const query = processInput.toLowerCase();
   const setup = polarity.setups.find((candidate) => candidate.process === normalized)
@@ -358,6 +488,7 @@ export function lookupPolarity(processInput: string) {
 }
 
 export function lookupTroubleshooting(symptom: string, processInput?: string) {
+  if (!troubleshooting || !weldDiagnosis) throw new Error(`Troubleshooting lookup is not configured for ${activeProductId()}.`);
   const process = processInput ? normalizeProcess(processInput) : undefined;
   const matches = troubleshooting.entries
     .filter((entry) => !process || entry.processes.includes(process))
@@ -381,6 +512,7 @@ export function lookupTroubleshooting(symptom: string, processInput?: string) {
 }
 
 export function getSpecs(processInput?: string) {
+  if (!specs) throw new Error(`Specifications lookup is not configured for ${activeProductId()}.`);
   if (!processInput) return specs;
   const process = normalizeProcess(processInput);
   if (!process) throw new Error(`Unknown process: ${processInput}`);
@@ -390,6 +522,7 @@ export function getSpecs(processInput?: string) {
 }
 
 export function getSettingsGuide(processInput: string) {
+  if (!settingsGuide) throw new Error(`Settings lookup is not configured for ${activeProductId()}.`);
   const process = normalizeProcess(processInput);
   if (!process) throw new Error(`Unknown process: ${processInput}`);
   const mode = settingsGuide.modes.find((candidate) => candidate.process === process);
@@ -398,6 +531,7 @@ export function getSettingsGuide(processInput: string) {
 }
 
 export function searchParts(query: string) {
+  if (!parts) throw new Error(`Parts lookup is not configured for ${activeProductId()}.`);
   const directNumber = Number.parseInt(query, 10);
   const results = parts.parts
     .map((part) => ({ part, score: Number.isFinite(directNumber) && part.number === directNumber ? 100 : tokenOverlapScore(query, part.description) }))

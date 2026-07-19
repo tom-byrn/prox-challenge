@@ -1,4 +1,4 @@
-import { Menu, MessageSquare, MessageSquarePlus, PanelLeftClose } from "lucide-react";
+import { LoaderCircle, MessageSquare, MessageSquarePlus, PanelLeftClose, Trash2 } from "lucide-react";
 
 export type ConversationSummary = {
   conversationId: string;
@@ -11,8 +11,11 @@ type ChatHistorySidebarProps = {
   activeConversationId: string;
   collapsed: boolean;
   conversations: ConversationSummary[] | undefined;
+  deletingConversationId?: string;
+  deleteDisabledConversationId?: string;
   open: boolean;
   onClose: () => void;
+  onDelete: (conversationId: string) => void;
   onNewChat: () => void;
   onSelect: (conversationId: string) => void;
 };
@@ -39,8 +42,11 @@ export function ChatHistorySidebar({
   activeConversationId,
   collapsed,
   conversations,
+  deletingConversationId,
+  deleteDisabledConversationId,
   open,
   onClose,
+  onDelete,
   onNewChat,
   onSelect
 }: ChatHistorySidebarProps) {
@@ -82,28 +88,37 @@ export function ChatHistorySidebar({
             <div className="history-status">Your saved chats will appear here.</div>
           ) : conversations.map((conversation) => {
             const active = conversation.conversationId === activeConversationId;
+            const deleting = deletingConversationId === conversation.conversationId;
+            const deleteDisabled = deleting || deleteDisabledConversationId === conversation.conversationId;
             return (
-              <button
-                type="button"
-                className={`history-item${active ? " active" : ""}`}
-                aria-current={active ? "page" : undefined}
-                key={conversation.conversationId}
-                onClick={() => onSelect(conversation.conversationId)}
-              >
-                <MessageSquare size={14} />
-                <span>
-                  <strong>{conversation.title}</strong>
-                  <small>{updatedLabel(conversation.updatedAt)}</small>
-                </span>
-              </button>
+              <div className={`history-item${active ? " active" : ""}`} key={conversation.conversationId}>
+                <button
+                  type="button"
+                  className="history-item-main"
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => onSelect(conversation.conversationId)}
+                >
+                  <MessageSquare size={14} />
+                  <span>
+                    <strong>{conversation.title}</strong>
+                    <small>{updatedLabel(conversation.updatedAt)}</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="history-delete"
+                  aria-label={`Delete ${conversation.title}`}
+                  title={deleteDisabledConversationId === conversation.conversationId ? "Stop the response before deleting this chat" : `Delete ${conversation.title}`}
+                  disabled={deleteDisabled}
+                  onClick={() => onDelete(conversation.conversationId)}
+                >
+                  {deleting ? <LoaderCircle className="spinning" size={13} /> : <Trash2 size={13} />}
+                </button>
+              </div>
             );
           })}
         </nav>
 
-        <div className="sidebar-footer">
-          <Menu size={13} />
-          <span>Chat history</span>
-        </div>
       </aside>
     </>
   );

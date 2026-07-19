@@ -17,7 +17,7 @@ const diagram: VisualPayload = {
     schemaVersion: 1,
     kind: "connection-diagram",
     title: "TIG routing",
-    sourceRefs: [{ source: "quick-start", pages: [2] }],
+    sourceRefs: [{ kind: "document", sourceId: "quick-start", pages: [2] }],
     layout: { direction: "left-to-right" },
     nodes: [
       { id: "torch", role: "endpoint", label: "TIG torch" },
@@ -60,7 +60,7 @@ test("normalizes annotation targets against the prepared source asset", () => {
       schemaVersion: 1,
       kind: "annotated-image",
       title: "Target",
-      sourceRefs: [{ source: "owner-manual", pages: [12] }],
+      sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [12] }],
       image: { assetId: "figure:guide", alt: "A sufficiently descriptive source image" },
       annotations: [{ id: "target", shape: "pin", point: { x: 700, y: 500 }, label: "Target" }]
     }

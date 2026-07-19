@@ -35,8 +35,36 @@ export type ClarificationRequest = {
   allowOther: boolean;
 };
 
+export type TurnMetrics = {
+  status: "success" | "degraded" | "error";
+  model: string;
+  costUsd: number;
+  durationMs: number;
+  apiDurationMs: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadInputTokens: number;
+  cacheCreationInputTokens: number;
+  sdkTurns: number;
+  toolCalls: number;
+  toolErrors: number;
+  repaired: boolean;
+  validationIssues: number;
+};
+
+export type PhotoAttachment = {
+  id: string;
+  url: string;
+  mimeType: "image/jpeg";
+  width: number;
+  height: number;
+  sizeBytes: number;
+  alt: string;
+};
+
 export type ChatPart =
   | { id: string; type: "text"; text: string }
+  | { id: string; type: "photo"; photo: PhotoAttachment }
   | { id: string; type: "figure"; figure: FigurePayload }
   | { id: string; type: "video"; video: VideoPayload }
   | { id: string; type: "widget"; widget: WidgetPayload }
@@ -58,6 +86,8 @@ export type ChatMessage = {
   parts: ChatPart[];
   toolCalls?: ToolCall[];
   sources?: EvidenceSource[];
+  startedAt?: number;
+  metrics?: TurnMetrics;
   status?: "streaming" | "done" | "error";
   error?: string;
 };
@@ -76,4 +106,4 @@ export type StreamEvent =
   | { type: "visual"; visual: VisualPayload }
   | { type: "artifact"; artifact: ArtifactPayload }
   | { type: "error"; message: string; retryable: boolean }
-  | { type: "done"; sessionId?: string; costUsd?: number };
+  | { type: "done"; sessionId?: string; costUsd?: number; metrics?: TurnMetrics };

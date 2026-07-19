@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "welder-selection-decision-matrix",
+  "records": [
+    {
+      "id": "process-fcaw",
+      "values": {
+        "process_name": "FLUX-CORED",
+        "process_abbreviation": "FCAW",
+        "skill_level": "LOW",
+        "shielding_gas": "NO-GAS REQUIRED",
+        "materials": "STEEL; STAINLESS STEEL",
+        "thickness_range": "18 Gauge to 5/16\"",
+        "weld_cleanliness": "MORE SPATTER"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.06,
+            "y1": 0.38,
+            "x2": 0.27,
+            "y2": 0.97
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-gmaw",
+      "values": {
+        "process_name": "MIG",
+        "process_abbreviation": "GMAW",
+        "skill_level": "LOW",
+        "shielding_gas": "GAS REQUIRED",
+        "materials": "STEEL; STAINLESS STEEL; ALUMINUM (spool gun required)",
+        "thickness_range": "22 Gauge to 3/8\"",
+        "weld_cleanliness": "CLEAN / MINIMAL SPATTER"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.27,
+            "y1": 0.38,
+            "x2": 0.5,
+            "y2": 0.97
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-smaw",
+      "values": {
+        "process_name": "STICK",
+        "process_abbreviation": "SMAW",
+        "skill_level": "MODERATE",
+        "shielding_gas": "NO-GAS REQUIRED",
+        "materials": "STEEL; STAINLESS STEEL; CASTINGS",
+        "thickness_range": "10 Gauge to 1/2\"",
+        "weld_cleanliness": "MORE SPATTER"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.5,
+            "y1": 0.38,
+            "x2": 0.64,
+            "y2": 0.97
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-gtaw",
+      "values": {
+        "process_name": "TIG",
+        "process_abbreviation": "GTAW",
+        "skill_level": "HIGH",
+        "shielding_gas": "GAS REQUIRED",
+        "materials": "STEEL; STAINLESS STEEL; CHROME MOLY (DC TIG REQUIRED); ALUMINUM; MAGNESIUM ALLOYS (AC TIG REQUIRED)",
+        "thickness_range": "24 Gauge to 3/16\"",
+        "weld_cleanliness": "EXTREMELY CLEAN"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.64,
+            "y1": 0.38,
+            "x2": 0.78,
+            "y2": 0.97
+          }
+        }
+      ]
+    }
+  ]
+}

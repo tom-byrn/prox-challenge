@@ -1,9 +1,51 @@
-import { useCallback, useState } from "react";
-import { useConvex, useMutation, useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { ChatMessage } from "../types";
+import { useCallback, useEffect, useState } from "react";
+import type { ChatMessage, TurnMetrics } from "../types";
 
 const OWNER_STORAGE_KEY = "arcwell-chat-owner";
+
+export type ConversationSummary = {
+  conversationId: string;
+  title: string;
+  sessionId?: string;
+  messageCount: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type TelemetrySummary = {
+  sampledTurns: number;
+  totals: {
+    costUsd: number;
+    durationMs: number;
+    apiDurationMs: number;
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadInputTokens: number;
+    cacheCreationInputTokens: number;
+    sdkTurns: number;
+    toolCalls: number;
+    toolErrors: number;
+    repairs: number;
+    validationIssues: number;
+    errors: number;
+    degraded: number;
+  };
+  averages: { costUsd: number; durationMs: number; apiDurationMs: number; toolCalls: number };
+  recent: Array<{
+    id: string;
+    conversationId: string;
+    conversationTitle: string;
+    status: TurnMetrics["status"];
+    model: string;
+    costUsd: number;
+    durationMs: number;
+    toolCalls: number;
+    toolErrors: number;
+    repaired: boolean;
+    validationIssues: number;
+    createdAt: number;
+  }>;
+};
 
 function readOwnerId(): string {
   const existing = window.localStorage.getItem(OWNER_STORAGE_KEY);
@@ -21,31 +63,55 @@ function isChatMessage(value: unknown): value is ChatMessage {
     && Array.isArray(message.parts);
 }
 
+async function responseJson<T>(response: Response): Promise<T> {
+  const body = await response.json().catch(() => null) as { error?: string } | null;
+  if (!response.ok) throw new Error(body?.error || `Local storage request failed (${response.status}).`);
+  return body as T;
+}
+
+export async function loadTelemetrySummary(ownerId: string, signal?: AbortSignal): Promise<TelemetrySummary> {
+  const query = new URLSearchParams({ ownerId, limit: "500" });
+  return responseJson<TelemetrySummary>(await fetch(`/api/telemetry?${query}`, { signal }));
+}
+
 export function useChatPersistence() {
-  const convex = useConvex();
-  const saveMutation = useMutation(api.chats.saveMessage);
   const [ownerId] = useState(readOwnerId);
+  const [conversations, setConversations] = useState<ConversationSummary[]>();
   const [storageError, setStorageError] = useState<string>();
-  const conversations = useQuery(api.chats.list, { ownerId, limit: 100 });
+
+  const refreshConversations = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const query = new URLSearchParams({ ownerId, limit: "100" });
+      const result = await responseJson<{ conversations: ConversationSummary[] }>(await fetch(`/api/chats?${query}`, { signal }));
+      setConversations(result.conversations);
+      setStorageError(undefined);
+    } catch (error) {
+      if ((error as Error).name === "AbortError") return;
+      setStorageError(error instanceof Error ? error.message : "Local chat storage is unavailable.");
+    }
+  }, [ownerId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void refreshConversations(controller.signal);
+    return () => controller.abort();
+  }, [refreshConversations]);
 
   const loadConversation = useCallback(async (conversationId: string) => {
     try {
-      const stored = await convex.query(api.chats.get, { ownerId, conversationId });
+      const query = new URLSearchParams({ ownerId });
+      const response = await fetch(`/api/chats/${encodeURIComponent(conversationId)}?${query}`);
+      if (response.status === 404) return null;
+      const stored = await responseJson<ConversationSummary & { messages: Array<{ sequence: number; payload: unknown }> }>(response);
       setStorageError(undefined);
-      if (!stored) return null;
       const messages = stored.messages
-        .map((message) => ({ sequence: message.sequence, payload: message.payload }))
         .filter((message): message is { sequence: number; payload: ChatMessage } => isChatMessage(message.payload));
-      return {
-        title: stored.conversation.title,
-        sessionId: stored.conversation.sessionId,
-        messages
-      };
+      return { title: stored.title, sessionId: stored.sessionId, messages };
     } catch (error) {
-      setStorageError(error instanceof Error ? error.message : "Chat storage is unavailable.");
+      setStorageError(error instanceof Error ? error.message : "Local chat storage is unavailable.");
       throw error;
     }
-  }, [convex, ownerId]);
+  }, [ownerId]);
 
   const saveMessage = useCallback(async ({
     conversationId,
@@ -61,12 +127,52 @@ export function useChatPersistence() {
     message: ChatMessage;
   }) => {
     try {
-      await saveMutation({ ownerId, conversationId, title, sessionId, messageId: message.id, sequence, payload: message });
+      await responseJson(await fetch(`/api/chats/${encodeURIComponent(conversationId)}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ownerId, title, sessionId, messageId: message.id, sequence, payload: message })
+      }));
       setStorageError(undefined);
+      await refreshConversations();
     } catch (error) {
-      setStorageError(error instanceof Error ? error.message : "This chat could not be saved.");
+      setStorageError(error instanceof Error ? error.message : "This chat could not be saved locally.");
     }
-  }, [ownerId, saveMutation]);
+  }, [ownerId, refreshConversations]);
 
-  return { conversations, loadConversation, saveMessage, storageError };
+  const removeConversation = useCallback(async (conversationId: string) => {
+    try {
+      const query = new URLSearchParams({ ownerId });
+      const result = await responseJson<{ removed: boolean }>(await fetch(`/api/chats/${encodeURIComponent(conversationId)}?${query}`, { method: "DELETE" }));
+      setStorageError(undefined);
+      await refreshConversations();
+      return result.removed;
+    } catch (error) {
+      setStorageError(error instanceof Error ? error.message : "This chat could not be deleted locally.");
+      return false;
+    }
+  }, [ownerId, refreshConversations]);
+
+  const recordTelemetry = useCallback(async ({
+    conversationId,
+    messageId,
+    conversationTitle,
+    metrics
+  }: {
+    conversationId: string;
+    messageId: string;
+    conversationTitle: string;
+    metrics: TurnMetrics;
+  }) => {
+    try {
+      await responseJson(await fetch("/api/telemetry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ownerId, conversationId, messageId, conversationTitle, metrics })
+      }));
+    } catch (error) {
+      setStorageError(error instanceof Error ? error.message : "Telemetry could not be saved locally.");
+    }
+  }, [ownerId]);
+
+  return { conversations, loadConversation, ownerId, recordTelemetry, removeConversation, saveMessage, storageError };
 }

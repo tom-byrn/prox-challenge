@@ -21,6 +21,7 @@ function formatInput(input: ToolCall["input"]): string {
 export const ToolCallTimeline = memo(function ToolCallTimeline({ toolCalls, complete }: Props) {
   const runningCount = toolCalls.filter((tool) => tool.status === "running").length;
   const hasErrors = toolCalls.some((tool) => tool.status === "error");
+  const agentWorking = !complete;
   const [open, setOpen] = useState(!complete);
 
   useEffect(() => {
@@ -32,16 +33,16 @@ export const ToolCallTimeline = memo(function ToolCallTimeline({ toolCalls, comp
   };
 
   return (
-    <details className={`tool-timeline${runningCount > 0 ? " is-running" : ""}${hasErrors ? " has-errors" : ""}`} open={open} onToggle={handleToggle}>
+    <details className={`tool-timeline${agentWorking ? " is-running" : ""}${hasErrors ? " has-errors" : ""}`} open={open} onToggle={handleToggle}>
       <summary className="tool-timeline-overview">
         <span className="tool-timeline-overview-marker" aria-hidden="true">
-          {runningCount > 0 ? <LoaderCircle size={13} /> : hasErrors ? <CircleX size={13} /> : <Check size={13} />}
+          {agentWorking ? <LoaderCircle size={13} /> : hasErrors ? <CircleX size={13} /> : <Check size={13} />}
         </span>
         <span className="tool-timeline-overview-name">
-          <strong>{runningCount > 0 ? "Using tools" : "Tools used"}</strong>
+          <strong>{runningCount > 0 ? "Using tools" : agentWorking ? "Thinking" : "Tools used"}</strong>
           <small>{toolCalls.length} {toolCalls.length === 1 ? "call" : "calls"}</small>
         </span>
-        <span className="tool-timeline-overview-state">{runningCount > 0 ? "Working" : hasErrors ? "Failed" : "Complete"}</span>
+        <span className="tool-timeline-overview-state">{agentWorking ? "Working" : hasErrors ? "Failed" : "Complete"}</span>
         <ChevronDown className="tool-timeline-overview-chevron" size={14} aria-hidden="true" />
       </summary>
       <ol className="tool-timeline-list">
@@ -66,6 +67,12 @@ export const ToolCallTimeline = memo(function ToolCallTimeline({ toolCalls, comp
             </details>
           </li>
         ))}
+        {agentWorking ? (
+          <li className="tool-timeline-thinking" role="status" aria-live="polite">
+            <span className="tool-timeline-thinking-dots" aria-hidden="true"><i /><i /><i /></span>
+            <span>{runningCount > 0 ? "Waiting for the tool" : "Thinking about the next step"}</span>
+          </li>
+        ) : null}
       </ol>
     </details>
   );

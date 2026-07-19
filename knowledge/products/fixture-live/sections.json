@@ -1,0 +1,18 @@
+[
+  {
+    "id": "welder-selection-chart",
+    "documentId": "selection-chart",
+    "title": "How to Choose a Welder — Full Selection Chart",
+    "startPage": 1,
+    "endPage": 1,
+    "summary": "A single-page visual decision chart guiding users through six sequential criteria — skill level, shielding gas requirement, material type, material thickness, typical applications, and weld cleanliness — to select among four welding processes: Flux-Cored/FCAW, MIG/GMAW, Stick/SMAW, and TIG/GTAW. Includes a sidebar comparing MIG vs. Flux-Cored wire characteristics and a Duty Cycle explanation with a 165A @ 30% example. A callout instructs the user to first identify whether their input voltage is 120 V or 240 V.",
+    "headingEvidence": [
+      {
+        "page": 1,
+        "text": "HOW TO CHOOSE A WELDER",
+        "visualOnly": true
+      }
+    ],
+    "generatedBy": "run-fixture-live"
+  }
+]

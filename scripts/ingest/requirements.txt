@@ -1,0 +1,4 @@
+PyMuPDF==1.28.0
+imageio-ffmpeg==0.6.0
+youtube-transcript-api==1.2.3
+yt-dlp==2026.7.4

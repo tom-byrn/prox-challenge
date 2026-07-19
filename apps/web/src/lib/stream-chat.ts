@@ -4,6 +4,7 @@ type ChatRequest = {
   message: string;
   sessionId?: string;
   conversationId: string;
+  photoId?: string;
   signal: AbortSignal;
   onEvent: (event: StreamEvent) => void;
 };
@@ -18,11 +19,11 @@ function parseEventBlock(block: string): StreamEvent | undefined {
   return JSON.parse(data) as StreamEvent;
 }
 
-export async function streamChat({ message, sessionId, conversationId, signal, onEvent }: ChatRequest) {
+export async function streamChat({ message, sessionId, conversationId, photoId, signal, onEvent }: ChatRequest) {
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify({ message, sessionId, conversationId }),
+    body: JSON.stringify({ message, sessionId, conversationId, photoId }),
     signal
   });
 

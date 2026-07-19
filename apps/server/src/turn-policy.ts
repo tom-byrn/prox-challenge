@@ -71,7 +71,7 @@ function addUnique(items: string[], item: string) {
   if (!items.includes(item)) items.push(item);
 }
 
-export function getTurnPolicy(message: string): TurnPolicy {
+export function getTurnPolicy(message: string, options: { hasPhoto?: boolean } = {}): TurnPolicy {
   const requiredTools: string[] = [];
   const requiredVisuals: VisualRequirement[] = [];
   const productQuestion = isProductQuestion(message);
@@ -79,6 +79,11 @@ export function getTurnPolicy(message: string): TurnPolicy {
   const polarityQuestion = isPolarityQuestion(message);
   const defectQuestion = isDefectQuestion(message);
   const settingsQuestion = !dutyCycleQuestion && !polarityQuestion && isSettingsQuestion(message);
+
+  if (options.hasPhoto) {
+    addUnique(requiredTools, "any_grounding_tool");
+    requiredVisuals.push({ type: "visual", kinds: ["annotated-image"] });
+  }
 
   if (dutyCycleQuestion) {
     const missing: string[] = [];
@@ -141,7 +146,7 @@ export function getTurnPolicy(message: string): TurnPolicy {
   return {
     requiredTools,
     requiredVisuals,
-    requireCitation: productQuestion,
+    requireCitation: productQuestion || Boolean(options.hasPhoto),
     allowClarification: !dutyCycleQuestion && !polarityQuestion
   };
 }

@@ -99,7 +99,7 @@
       "title": "TIG setup, foot pedal, and lift start",
       "startSeconds": 249,
       "endSeconds": 334,
-      "frameSeconds": 288,
+      "frameSeconds": 260,
       "frame": "video/frames/tig-setup.jpg",
       "summary": "The presenter covers torch preparation, tungsten grinding, gas, optional foot-pedal control, and the machine's lift-start TIG sequence.",
       "keywords": [

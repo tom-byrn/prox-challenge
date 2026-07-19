@@ -8,7 +8,7 @@ export type ResponseEvidence = {
 };
 
 const GROUNDING_TOOLS = new Set([
-  "search_manual",
+  "search_sources",
   "read_manual_pages",
   "lookup_duty_cycle",
   "lookup_polarity",

@@ -9,8 +9,9 @@ type Props = {
   showOverlay: boolean;
 };
 
-function toneClass(tone: VisualTone | undefined): string {
-  return `tone-${tone ?? "neutral"}`;
+function annotationToneClass(tone: VisualTone | undefined): string {
+  if (tone === "warning" || tone === "negative") return `tone-${tone}`;
+  return "tone-primary";
 }
 
 export const AnnotatedImageVisual = memo(function AnnotatedImageVisual({ spec, assets, visualId, overlayId, showOverlay }: Props) {
@@ -37,10 +38,10 @@ export const AnnotatedImageVisual = memo(function AnnotatedImageVisual({ spec, a
               </marker>
             </defs>
             {spec.annotations.map((annotation, index) => {
-              const className = `annotation-shape ${toneClass(annotation.tone)}${activeId === annotation.id ? " active" : ""}`;
+              const className = `annotation-shape ${annotationToneClass(annotation.tone)}${activeId === annotation.id ? " active" : ""}`;
               const interaction = {
                 role: "button",
-                tabIndex: 0,
+                tabIndex: showOverlay ? 0 : -1,
                 "aria-label": `${index + 1}. ${annotation.label}`,
                 "aria-pressed": selectedId === annotation.id,
                 onClick: () => select(annotation.id),
@@ -70,7 +71,7 @@ export const AnnotatedImageVisual = memo(function AnnotatedImageVisual({ spec, a
 
       <ol className="annotation-list" aria-label={`Annotations for ${spec.title}`}>
         {spec.annotations.map((annotation, index) => (
-          <li key={annotation.id} className={`${toneClass(annotation.tone)}${activeId === annotation.id ? " active" : ""}`}>
+          <li key={annotation.id} className={`${annotationToneClass(annotation.tone)}${activeId === annotation.id ? " active" : ""}`}>
             <button
               type="button"
               aria-describedby={`visual-title-${visualId}`}

@@ -71,6 +71,14 @@ test("uses a generic grounding contract for held-out product questions", () => {
   assert.equal(policy.requireCitation, true);
 });
 
+test("requires grounded annotation for a user photo diagnosis", () => {
+  const policy = getTurnPolicy("What should I check here?", { hasPhoto: true });
+  assert.deepEqual(policy.requiredTools, ["any_grounding_tool"]);
+  assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "visual" && requirement.kinds?.includes("annotated-image")), true);
+  assert.equal(policy.requireCitation, true);
+  assert.equal(policy.allowClarification, true);
+});
+
 test("does not mistake a general input-voltage question for a settings workflow", () => {
   const policy = getTurnPolicy("What input voltage does this welder support?");
   assert.equal(policy.requiredTools.includes("request_clarification"), false);
@@ -110,8 +118,14 @@ test("buffers a rejected answer and performs only one repair turn", async () => 
   });
 
   const text = events.filter((event): event is Extract<AgentEvent, { type: "text_delta" }> => event.type === "text_delta").map((event) => event.text).join("");
+  const done = events.find((event): event is Extract<AgentEvent, { type: "done" }> => event.type === "done");
   assert.equal(calls, 2);
   assert.equal(outcome.repaired, true);
   assert.equal(text, "Complete replacement answer.");
   assert.equal(text.includes("Unsourced first answer"), false);
+  assert.ok(done?.metrics);
+  assert.equal(done.metrics.repaired, true);
+  assert.equal(done.metrics.status, "degraded");
+  assert.equal(done.metrics.validationIssues > 0, true);
+  assert.equal(done.metrics.model, "claude-sonnet-4-6");
 });

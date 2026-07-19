@@ -52,7 +52,11 @@ function pixelAt(buffer: Buffer, width: number, channels: number, x: number, y: 
   return [buffer[offset] ?? 255, buffer[offset + 1] ?? 255, buffer[offset + 2] ?? 255];
 }
 
-async function prepare(assetBase: Omit<VisualAsset, "url" | "width" | "height" | "original" | "crop">, imagePath: string): Promise<PreparedVisualAsset> {
+async function prepare(
+  assetBase: Omit<VisualAsset, "url" | "width" | "height" | "original" | "crop">,
+  imagePath: string,
+  options: { trim: boolean }
+): Promise<PreparedVisualAsset> {
   const metadata = await sharp(imagePath).metadata();
   const originalWidth = metadata.width;
   const originalHeight = metadata.height;
@@ -60,22 +64,25 @@ async function prepare(assetBase: Omit<VisualAsset, "url" | "width" | "height" |
 
   const corner = await sharp(imagePath).ensureAlpha().extract({ left: 0, top: 0, width: 1, height: 1 }).raw().toBuffer();
   const background: [number, number, number] = [corner[0] ?? 255, corner[1] ?? 255, corner[2] ?? 255];
-  const trimmed = await sharp(imagePath)
-    .trim({ background: { r: background[0], g: background[1], b: background[2] }, threshold: TRIM_THRESHOLD })
-    .png()
-    .toBuffer({ resolveWithObject: true });
-  const trimLeft = Math.max(0, trimmed.info.trimOffsetLeft ?? 0);
-  const trimTop = Math.max(0, trimmed.info.trimOffsetTop ?? 0);
-  const cropLeft = Math.max(0, trimLeft - CROP_MARGIN);
-  const cropTop = Math.max(0, trimTop - CROP_MARGIN);
-  const cropRight = Math.min(originalWidth, trimLeft + trimmed.info.width + CROP_MARGIN);
-  const cropBottom = Math.min(originalHeight, trimTop + trimmed.info.height + CROP_MARGIN);
-  const crop = {
-    x: cropLeft,
-    y: cropTop,
-    width: Math.max(1, cropRight - cropLeft),
-    height: Math.max(1, cropBottom - cropTop)
-  };
+  let crop = { x: 0, y: 0, width: originalWidth, height: originalHeight };
+  if (options.trim) {
+    const trimmed = await sharp(imagePath)
+      .trim({ background: { r: background[0], g: background[1], b: background[2] }, threshold: TRIM_THRESHOLD })
+      .png()
+      .toBuffer({ resolveWithObject: true });
+    const trimLeft = Math.max(0, trimmed.info.trimOffsetLeft ?? 0);
+    const trimTop = Math.max(0, trimmed.info.trimOffsetTop ?? 0);
+    const cropLeft = Math.max(0, trimLeft - CROP_MARGIN);
+    const cropTop = Math.max(0, trimTop - CROP_MARGIN);
+    const cropRight = Math.min(originalWidth, trimLeft + trimmed.info.width + CROP_MARGIN);
+    const cropBottom = Math.min(originalHeight, trimTop + trimmed.info.height + CROP_MARGIN);
+    crop = {
+      x: cropLeft,
+      y: cropTop,
+      width: Math.max(1, cropRight - cropLeft),
+      height: Math.max(1, cropBottom - cropTop)
+    };
+  }
   const safeSize = visionSafeSize(crop.width, crop.height);
   const extracted = sharp(imagePath).extract({ left: crop.x, top: crop.y, width: crop.width, height: crop.height });
   const image = await (safeSize.width === crop.width && safeSize.height === crop.height
@@ -107,11 +114,12 @@ async function prepare(assetBase: Omit<VisualAsset, "url" | "width" | "height" |
 
 export function prepareVisualAsset(
   assetBase: Omit<VisualAsset, "url" | "width" | "height" | "original" | "crop">,
-  imagePath: string
+  imagePath: string,
+  options: { trim?: boolean } = {}
 ): Promise<PreparedVisualAsset> {
   const cached = preparedByAssetId.get(assetBase.assetId);
   if (cached) return cached;
-  const pending = prepare(assetBase, imagePath);
+  const pending = prepare(assetBase, imagePath, { trim: options.trim ?? true });
   preparedByAssetId.set(assetBase.assetId, pending);
   pending.catch(() => preparedByAssetId.delete(assetBase.assetId));
   return pending;

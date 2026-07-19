@@ -11,7 +11,7 @@ const tigDiagram: AgentEvent = {
     schemaVersion: 1,
     kind: "connection-diagram",
     title: "TIG cable hookup",
-    sourceRefs: [{ source: "quick-start", pages: [2] }],
+    sourceRefs: [{ kind: "document", sourceId: "quick-start", pages: [2] }],
     layout: { direction: "left-to-right" },
     nodes: [
       { id: "torch", role: "endpoint", label: "TIG torch", ports: [{ id: "lead", label: "Torch lead" }] },

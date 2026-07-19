@@ -3,6 +3,16 @@ import type { EvidenceSource } from "./evidence.js";
 
 export type Process = "MIG" | "FLUX_CORED" | "TIG" | "STICK";
 
+export type PhotoAttachment = {
+  id: string;
+  url: string;
+  mimeType: "image/jpeg";
+  width: number;
+  height: number;
+  sizeBytes: number;
+  alt: string;
+};
+
 export type SourceRef = {
   source: string;
   pages: number[];
@@ -42,6 +52,23 @@ export type ClarificationRequest = {
   allowOther: boolean;
 };
 
+export type TurnMetrics = {
+  status: "success" | "degraded" | "error";
+  model: string;
+  costUsd: number;
+  durationMs: number;
+  apiDurationMs: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadInputTokens: number;
+  cacheCreationInputTokens: number;
+  sdkTurns: number;
+  toolCalls: number;
+  toolErrors: number;
+  repaired: boolean;
+  validationIssues: number;
+};
+
 export type AgentEvent =
   | { type: "meta"; conversationId: string }
   | { type: "text_delta"; text: string }
@@ -56,6 +83,6 @@ export type AgentEvent =
   | { type: "visual"; visual: VisualPayload }
   | { type: "artifact"; artifact: ArtifactPayload }
   | { type: "error"; message: string; retryable: boolean }
-  | { type: "done"; sessionId?: string; costUsd?: number };
+  | { type: "done"; sessionId?: string; costUsd?: number; metrics?: TurnMetrics };
 
 export type EmitEvent = (event: AgentEvent) => void | Promise<void>;

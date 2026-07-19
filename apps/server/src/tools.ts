@@ -2,10 +2,13 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
+import { DocumentSourceIdSchema, EvidenceRefSchema, type EvidenceRef } from "./evidence.js";
 import { AnnotatedImageSchema, VisualAssetIdSchema, VisualSpecSchema } from "./visual-spec.js";
 import { buildAnnotationPreview, buildVisualPayload, resolveVisualAsset, visualSpecHash } from "./visuals.js";
 import {
   getFigure,
+  getKnowledgeAssetUrl,
+  getKnowledgeProductInfo,
   getPage,
   getSettingsGuide,
   getSpecs,
@@ -13,7 +16,8 @@ import {
   lookupDutyCycle,
   lookupPolarity,
   lookupTroubleshooting,
-  searchManual,
+  resolveEvidenceRefs,
+  searchSources,
   searchParts
 } from "./knowledge.js";
 import type { EmitEvent, Process, WidgetPayload } from "./types.js";
@@ -42,6 +46,8 @@ export type ManualToolContext = {
   process?: Process;
   inputVoltage?: 120 | 240;
   amps?: number;
+  photoAssetId?: string;
+  annotationPreviewState?: { attempts: number; approvedHashes: Set<string> };
 };
 
 export function resolveToolArgument<T>(requested: T | undefined, userContext: T | undefined): T | undefined {
@@ -79,10 +85,23 @@ function jsonResult(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
+function documentRef(sourceId: string, pages: number[]): EvidenceRef {
+  return { kind: "document", sourceId, pages };
+}
+
+function structuredRef(
+  dataset: string,
+  recordIds: string[],
+  pages: number[],
+  sourceId: string = "owner-manual"
+): EvidenceRef {
+  return { kind: "structured-data", dataset, recordIds, sourceId, pages };
+}
+
 function displayName(toolName: string): string {
   return ({
     request_clarification: "Asking one setup question",
-    search_manual: "Searching the manuals",
+    search_sources: "Searching manuals and video",
     read_manual_pages: "Reading source pages",
     list_figures: "Checking the figure library",
     inspect_visual_source: "Inspecting a source image",
@@ -94,6 +113,7 @@ function displayName(toolName: string): string {
     get_settings_guide: "Checking setup guidance",
     search_parts: "Searching the parts list",
     show_figure: "Opening a manual figure",
+    show_source: "Opening source evidence",
     show_widget: "Building an interactive guide",
     render_visual: "Drawing a source-grounded visual",
     render_artifact: "Rendering an interactive explanation"
@@ -101,8 +121,14 @@ function displayName(toolName: string): string {
 }
 
 export function createManualTools(emit: EmitEvent, context: ManualToolContext = { originalQuestion: "" }) {
+  const product = getKnowledgeProductInfo();
   const lookupCache = new Map<WidgetPayload["name"], unknown>();
-  const previewedAnnotations = new Set<string>();
+  const annotationPreviewState = context.annotationPreviewState ?? { attempts: 0, approvedHashes: new Set<string>() };
+  const previewedAnnotations = annotationPreviewState.approvedHashes;
+
+  async function emitEvidence(refs: EvidenceRef[]) {
+    if (refs.length > 0) await emit({ type: "evidence", sources: resolveEvidenceRefs(refs) });
+  }
 
   function instrument<T extends Record<string, unknown>>(
     name: string,
@@ -139,19 +165,29 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       { alwaysLoad: true }
     ),
     tool(
-      "search_manual",
-      "Search all supplied OmniPro 220 manual text and visual metadata. Use this for procedures, terminology, and finding relevant source pages or figure ids.",
+      "search_sources",
+      `Search the registered ${product.name} documents, generated figures, verified dataset records, and timestamped video transcripts. Respect each source's manifest authority; videos are supplemental demonstrations.`,
       { query: z.string().min(2).max(300), limit: z.number().int().min(1).max(10).optional() },
-      instrument("search_manual", async ({ query, limit }) => jsonResult(searchManual(query, limit ?? 6))),
+      instrument("search_sources", async ({ query, limit }) => {
+        const result = searchSources(query, limit ?? 6);
+        await emitEvidence([
+          ...result.documents.map((item) => item.ref),
+          ...result.figures.map((item) => item.ref),
+          ...result.videos.map((item) => item.ref),
+          ...result.datasets.map((item) => item.ref)
+        ].slice(0, 10));
+        return jsonResult(result);
+      }),
       { alwaysLoad: true }
     ),
     tool(
       "read_manual_pages",
-      "Read up to two exact PDF pages as both extracted text and page pixels. Use when a visual/table needs verification or search snippets are insufficient. Source is owner-manual, quick-start, or selection-chart.",
+      "Read up to two exact registered PDF pages as both extracted text and page pixels. Use when a visual/table needs verification or search snippets are insufficient.",
       {
-        pages: z.array(z.object({ source: z.enum(["owner-manual", "quick-start", "selection-chart"]), page: z.number().int().positive() })).min(1).max(2)
+        pages: z.array(z.object({ source: DocumentSourceIdSchema, page: z.number().int().positive() })).min(1).max(2)
       },
       instrument("read_manual_pages", async ({ pages }) => {
+        await emitEvidence(pages.map((request) => documentRef(request.source, [request.page])));
         const content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }> = [];
         for (const request of pages) {
           const page = getPage(request.source, request.page);
@@ -164,16 +200,16 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "list_figures",
-      "List the curated manual figure catalog and ids. Prefer search_manual first; use this only when choosing among visuals.",
+      "List the curated manual figure catalog and ids. Prefer search_sources first; use this only when choosing among visuals.",
       {},
       instrument("list_figures", async () => jsonResult(listFigures()))
     ),
     tool(
       "inspect_visual_source",
-      "Inspect the exact prepared pixels and dimensions for an approved visual before annotating it. Asset ids are figure:<figure-id> or page:<source>:<page>. Use absolute pixel coordinates relative to this exact trimmed and pre-sized image; do not use normalized coordinates.",
+      "Inspect the exact prepared pixels and dimensions for an approved visual before annotating it. Asset ids are figure:<figure-id>, page:<source>:<page>, or the upload:<photo-id> explicitly supplied in the current user message. Use absolute pixel coordinates relative to this exact prepared image; do not use normalized coordinates.",
       { assetId: VisualAssetIdSchema },
       instrument("inspect_visual_source", async ({ assetId }) => {
-        const prepared = await resolveVisualAsset(assetId);
+        const prepared = await resolveVisualAsset(assetId, context.photoAssetId);
         return {
           content: [
             { type: "text" as const, text: JSON.stringify({ ...prepared.asset, coordinateSystem: `absolute pixels: origin (0,0) at top-left; x 0–${prepared.asset.width}; y 0–${prepared.asset.height}` }, null, 2) },
@@ -185,14 +221,37 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "preview_visual_annotations",
-      "Validate and preview an annotated-image spec before displaying it. Use absolute pixel coordinates from inspect_visual_source. Review the returned image: each numbered mark must visibly touch the intended target. If it is wrong, revise and preview again. This tool rejects out-of-bounds and blank-background targets.",
+      "Preview and validate an annotated-image spec before displaying it. The tool always returns the numbered overlay with a temporary absolute-pixel coordinate grid, including when a marker is invalid, so use that image—not blind coordinate nudges—to revise only the named invalid annotations. A preview is approved for render_visual only when valid is true. At most four previews are allowed per turn.",
       { spec: AnnotatedImageSchema },
       instrument("preview_visual_annotations", async ({ spec }) => {
-        const result = await buildAnnotationPreview(spec);
-        previewedAnnotations.add(result.hash);
+        annotationPreviewState.attempts += 1;
+        if (annotationPreviewState.attempts > 4) {
+          return jsonResult({
+            valid: false,
+            attemptLimitReached: true,
+            instruction: "Stop revising coordinates. Do not narrate the failed attempts. Use an already approved spec if one exists; otherwise ask for a clearer photo or explain that a reliable overlay could not be produced."
+          });
+        }
+        const result = await buildAnnotationPreview(spec, context.photoAssetId);
+        if (result.valid) previewedAnnotations.add(result.hash);
         return {
           content: [
-            { type: "text" as const, text: JSON.stringify({ previewed: true, visualHash: result.hash, width: result.prepared.asset.width, height: result.prepared.asset.height, instruction: "Confirm every marker points to the named physical target. Only then call render_visual with the exact same spec." }, null, 2) },
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                previewed: true,
+                valid: result.valid,
+                attempt: annotationPreviewState.attempts,
+                attemptsRemaining: 4 - annotationPreviewState.attempts,
+                visualHash: result.hash,
+                width: result.prepared.asset.width,
+                height: result.prepared.asset.height,
+                issues: result.issues,
+                instruction: result.valid
+                  ? "Every marker passed placement checks. Call render_visual with this exact unchanged spec."
+                  : "Review the returned numbered overlay. Revise only the annotations listed in issues, preserving markers that are already on target. Do not call render_visual until valid is true."
+              }, null, 2)
+            },
             { type: "image" as const, data: result.preview.toString("base64"), mimeType: "image/png" }
           ]
         } as ReturnType<typeof jsonResult>;
@@ -214,6 +273,14 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
           resolveToolArgument(amps, context.amps) ?? amps
         );
         lookupCache.set("duty_cycle", data);
+        const ratings = data.exact && data.rating ? [data.rating] : (data.nearestPublishedRatings ?? []);
+        const pages = [...new Set(ratings.flatMap((rating) => rating.pages))];
+        if (ratings.length > 0 && pages.length > 0) {
+          await emitEvidence([
+            structuredRef("duty-cycles", ratings.map((rating) => `${rating.process}:${rating.inputVoltage}:${rating.amps}`), pages),
+            documentRef("owner-manual", pages)
+          ]);
+        }
         return jsonResult(data);
       }),
       { alwaysLoad: true }
@@ -225,6 +292,14 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       instrument("lookup_polarity", async ({ process }) => {
         const data = lookupPolarity(resolveToolArgument(process, context.process) ?? process);
         lookupCache.set("polarity", data);
+        const pageGroups = data.pages as { ownerManual?: number[]; quickStart?: number[] };
+        const ownerPages = pageGroups.ownerManual ?? [];
+        const quickPages = pageGroups.quickStart ?? [];
+        await emitEvidence([
+          structuredRef("polarity-setups", [data.id], ownerPages),
+          ...(ownerPages.length ? [documentRef("owner-manual", ownerPages)] : []),
+          ...(quickPages.length ? [documentRef("quick-start", quickPages)] : [])
+        ]);
         return jsonResult(data);
       }),
       { alwaysLoad: true }
@@ -236,6 +311,13 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       instrument("lookup_troubleshooting", async ({ symptom, process }) => {
         const data = lookupTroubleshooting(symptom, resolveToolArgument(process, context.process));
         lookupCache.set("troubleshooting", data);
+        const pages = [...new Set(data.matches.flatMap((match) => match.pages))];
+        if (pages.length > 0) {
+          await emitEvidence([
+            structuredRef("troubleshooting", data.matches.map((match) => match.id), pages),
+            documentRef("owner-manual", pages)
+          ]);
+        }
         return jsonResult(data);
       })
     ),
@@ -243,7 +325,12 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       "get_specs",
       "Get exact published machine specifications and current ranges, optionally for one process.",
       { process: z.string().optional().describe(PROCESS_DESCRIPTION) },
-      instrument("get_specs", async ({ process }) => jsonResult(getSpecs(process)))
+      instrument("get_specs", async ({ process }) => {
+        const data = getSpecs(process) as Record<string, unknown>;
+        const pages = Array.isArray(data.pages) ? data.pages.filter((page): page is number => typeof page === "number") : [7];
+        await emitEvidence([structuredRef("specifications", [process ?? "all"], pages), documentRef("owner-manual", pages)]);
+        return jsonResult(data);
+      })
     ),
     tool(
       "get_settings_guide",
@@ -252,6 +339,8 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       instrument("get_settings_guide", async ({ process }) => {
         const data = getSettingsGuide(resolveToolArgument(process, context.process) ?? process);
         lookupCache.set("settings_guide", data);
+        const pages = Array.isArray(data.pages) ? data.pages.filter((page): page is number => typeof page === "number") : [];
+        await emitEvidence([structuredRef("settings-guide", [data.mode.process], pages), documentRef("owner-manual", pages)]);
         return jsonResult(data);
       })
     ),
@@ -259,7 +348,17 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       "search_parts",
       "Search the numbered parts list by name or number and return assembly-diagram references.",
       { query: z.string().min(1).max(100) },
-      instrument("search_parts", async ({ query }) => jsonResult(searchParts(query)))
+      instrument("search_parts", async ({ query }) => {
+        const data = searchParts(query);
+        const pages = [data.listPage, data.diagramPage];
+        if (data.results.length > 0) {
+          await emitEvidence([
+            structuredRef("parts", data.results.map((part) => String(part.number)), pages),
+            documentRef("owner-manual", pages)
+          ]);
+        }
+        return jsonResult(data);
+      })
     ),
     tool(
       "show_figure",
@@ -267,18 +366,49 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       { id: z.string(), caption: z.string().max(300).optional() },
       instrument("show_figure", async ({ id, caption }) => {
         const figure = getFigure(id);
+        await emitEvidence([{ kind: "figure", figureId: id }]);
         await emit({
           type: "figure",
           figure: {
             id: figure.id,
             title: figure.title,
             caption: caption ?? figure.caption,
-            url: `/knowledge/${figure.file}`,
+            url: getKnowledgeAssetUrl(figure.file),
             source: figure.source,
             pages: figure.pages
           }
         });
         return jsonResult({ displayed: true, figureId: id, instruction: "Do not repeat every label in prose; explain the important routing or visual evidence." });
+      }),
+      { alwaysLoad: true }
+    ),
+    tool(
+      "show_source",
+      "Surface one retrieved evidence reference in chat. A video reference renders its exact timestamped segment; a figure reference renders the source figure; document and structured-data references are added to the Sources drawer. This accepts the generic evidence refs returned by search_sources.",
+      { ref: EvidenceRefSchema, caption: z.string().max(300).optional() },
+      instrument("show_source", async ({ ref, caption }) => {
+        const [source] = resolveEvidenceRefs([ref]);
+        if (!source) throw new Error("The requested source could not be resolved.");
+        await emit({ type: "evidence", sources: [source] });
+        if (source.kind === "video") {
+          await emit({ type: "video", video: { id: randomUUID(), source } });
+          return jsonResult({ displayed: true, kind: source.kind, sourceId: source.id, startSeconds: source.startSeconds, endSeconds: source.endSeconds });
+        }
+        if (source.kind === "figure" && ref.kind === "figure") {
+          const figure = getFigure(ref.figureId);
+          await emit({
+            type: "figure",
+            figure: {
+              id: figure.id,
+              title: figure.title,
+              caption: caption ?? figure.caption,
+              url: getKnowledgeAssetUrl(figure.file),
+              source: figure.source,
+              pages: figure.pages
+            }
+          });
+        }
+        return jsonResult({ displayed: source.kind === "figure", addedToSources: true, kind: source.kind, sourceId: source.id });
       }),
       { alwaysLoad: true }
     ),
@@ -307,13 +437,14 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "render_visual",
-      "Render a dynamic, source-grounded visual from semantic JSON. This is the generic presentation tool: use connection-diagram for relationships and cable/flow routing, annotated-image to explain a figure or page after inspecting it, procedure for ordered physical actions, or comparison for side-by-side choices. Image asset ids must be figure:<figure-id> or page:<source>:<page>. Do not invent facts to fill a visual.",
+      "Render a dynamic, source-grounded visual from semantic JSON. This is the generic presentation tool: use connection-diagram for relationships and cable/flow routing, annotated-image to explain an inspected figure, page, or current user upload, procedure for ordered physical actions, or comparison for side-by-side choices. Do not invent facts to fill a visual.",
       { spec: VisualSpecSchema },
       instrument("render_visual", async ({ spec }) => {
         if (spec.kind === "annotated-image" && !previewedAnnotations.has(visualSpecHash(spec))) {
           throw new Error("Annotated images must be validated with preview_visual_annotations using the exact same spec before display.");
         }
-        const visual = await buildVisualPayload(randomUUID(), spec);
+        await emitEvidence(spec.sourceRefs);
+        const visual = await buildVisualPayload(randomUUID(), spec, context.photoAssetId);
         await emit({ type: "visual", visual });
         return jsonResult({ displayed: true, visualId: visual.id, kind: visual.spec.kind });
       }),
@@ -333,29 +464,28 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     )
   ];
 
+  const specializedNames = new Set(["lookup_duty_cycle", "lookup_polarity", "lookup_troubleshooting", "get_specs", "get_settings_guide", "search_parts", "show_widget"]);
+  const runtimeTools = product.hasOmniProAdapter ? tools : tools.filter((candidate) => !specializedNames.has(candidate.name));
   return createSdkMcpServer({
-    name: "omnipro-manual",
+    name: "knowledge-runtime",
     version: "1.0.0",
-    instructions: "Use these tools as the only authority for Vulcan OmniPro 220 facts. Presentation tools render into the user's chat.",
-    tools
+    instructions: `Use these tools as the only authority for ${product.name} facts. Presentation tools render into the user's chat.`,
+    tools: runtimeTools
   });
 }
 
-export const MANUAL_TOOL_NAMES = [
+const GENERIC_TOOL_NAMES = [
   "request_clarification",
-  "search_manual",
+  "search_sources",
   "read_manual_pages",
   "list_figures",
   "inspect_visual_source",
   "preview_visual_annotations",
-  "lookup_duty_cycle",
-  "lookup_polarity",
-  "lookup_troubleshooting",
-  "get_specs",
-  "get_settings_guide",
-  "search_parts",
   "show_figure",
-  "show_widget",
+  "show_source",
   "render_visual",
   "render_artifact"
-].map((name) => `mcp__omnipro-manual__${name}`);
+];
+const OMNIPRO_TOOL_NAMES = ["lookup_duty_cycle", "lookup_polarity", "lookup_troubleshooting", "get_specs", "get_settings_guide", "search_parts", "show_widget"];
+export const MANUAL_TOOL_NAMES = [...GENERIC_TOOL_NAMES, ...(getKnowledgeProductInfo().hasOmniProAdapter ? OMNIPRO_TOOL_NAMES : [])]
+  .map((name) => `mcp__knowledge-runtime__${name}`);

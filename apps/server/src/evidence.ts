@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const DocumentSourceIdSchema = z.enum(["owner-manual", "quick-start", "selection-chart"]);
+export const DocumentSourceIdSchema = z.string().trim().min(1).max(80).regex(/^[a-z0-9][a-z0-9-]*$/);
 
 const DocumentEvidenceRefSchema = z.object({
   kind: z.literal("document"),

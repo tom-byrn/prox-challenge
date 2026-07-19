@@ -7,12 +7,22 @@ import { ConnectionDiagramVisual } from "./ConnectionDiagramVisual";
 import { ProcedureVisual } from "./ProcedureVisual";
 
 function sourceLabel(ref: VisualSourceRef): string {
+  if (ref.kind === "figure") return `Manual figure · ${ref.figureId}`;
+  if (ref.kind === "video") return `Video · ${ref.segmentId.replace("video:", "")}`;
   const source = ({
     "owner-manual": "Owner's Manual",
     "quick-start": "Quick Start Guide",
     "selection-chart": "Process Selection Chart"
-  } as const)[ref.source];
+  } as const)[ref.sourceId];
+  if (ref.kind === "structured-data") return `${source} verified data, p${ref.pages.length > 1 ? "p" : ""}. ${ref.pages.join(", ")}`;
   return `${source}, p${ref.pages.length > 1 ? "p" : ""}. ${ref.pages.join(", ")}`;
+}
+
+function sourceKey(ref: VisualSourceRef, index: number): string {
+  if (ref.kind === "figure") return `figure:${ref.figureId}:${index}`;
+  if (ref.kind === "video") return `video:${ref.segmentId}:${index}`;
+  if (ref.kind === "structured-data") return `table:${ref.dataset}:${ref.recordIds.join("-")}:${index}`;
+  return `document:${ref.sourceId}:${ref.pages.join("-")}:${index}`;
 }
 
 function VisualIcon({ kind }: { kind: VisualPayload["spec"]["kind"] }) {
@@ -22,9 +32,9 @@ function VisualIcon({ kind }: { kind: VisualPayload["spec"]["kind"] }) {
   return <Columns3 size={17} />;
 }
 
-export function VisualRenderer({ visual }: { visual: VisualPayload }) {
+export function VisualRenderer({ visual, onStepHelp, stepHelpDisabled }: { visual: VisualPayload; onStepHelp: (stepNumber: number) => void; stepHelpDisabled: boolean }) {
   const { spec } = visual;
-  const [showAnnotations, setShowAnnotations] = useState(false);
+  const [showAnnotations, setShowAnnotations] = useState(() => visual.assets.some((asset) => asset.source === "user-photo"));
   const annotationOverlayId = `annotation-overlay-${visual.id}`;
 
   return (
@@ -53,12 +63,12 @@ export function VisualRenderer({ visual }: { visual: VisualPayload }) {
 
       {spec.kind === "annotated-image" ? <AnnotatedImageVisual spec={spec} assets={visual.assets} visualId={visual.id} overlayId={annotationOverlayId} showOverlay={showAnnotations} /> : null}
       {spec.kind === "connection-diagram" ? <ConnectionDiagramVisual spec={spec} visualId={visual.id} /> : null}
-      {spec.kind === "procedure" ? <ProcedureVisual spec={spec} /> : null}
+      {spec.kind === "procedure" ? <ProcedureVisual spec={spec} onStepHelp={onStepHelp} helpDisabled={stepHelpDisabled} /> : null}
       {spec.kind === "comparison" ? <ComparisonVisual spec={spec} /> : null}
 
       <footer className="visual-sources">
         <strong>Sources</strong>
-        {spec.sourceRefs.map((ref, index) => <span key={`${ref.source}:${ref.pages.join("-")}:${index}`}>{sourceLabel(ref)}</span>)}
+        {spec.sourceRefs.map((ref, index) => <span key={sourceKey(ref, index)}>{sourceLabel(ref)}</span>)}
       </footer>
     </section>
   );

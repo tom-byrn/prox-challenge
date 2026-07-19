@@ -5,7 +5,7 @@ const IdSchema = z.string().min(1).max(60).regex(/^[a-z0-9][a-z0-9_-]*$/i, "Use 
 const ShortTextSchema = z.string().trim().min(1).max(120);
 const BodyTextSchema = z.string().trim().min(1).max(500);
 const PixelCoordinateSchema = z.number().finite().nonnegative();
-export const VisualAssetIdSchema = z.string().regex(/^(?:figure:[a-z0-9-]+|page:(?:owner-manual|quick-start|selection-chart):[1-9]\d*)$/i);
+export const VisualAssetIdSchema = z.string().regex(/^(?:figure:[a-z0-9][a-z0-9-]{0,79}|page:(?:[a-z0-9][a-z0-9-]{0,79}:)?[a-z0-9][a-z0-9-]{0,79}:[1-9]\d*|upload:photo-[a-f0-9]{24})$/i);
 
 export const VisualSourceRefSchema = EvidenceRefSchema;
 

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "productId": "omnipro-220",
+  "productName": "Vulcan OmniPro 220",
+  "documents": [
+    {
+      "path": "files/owner-manual.pdf",
+      "sourceId": "owner-manual",
+      "authority": "authoritative-manual"
+    },
+    {
+      "path": "files/quick-start-guide.pdf",
+      "sourceId": "quick-start",
+      "authority": "authoritative-quick-start"
+    },
+    {
+      "path": "files/selection-chart.pdf",
+      "sourceId": "selection-chart",
+      "authority": "authoritative-selection-chart"
+    }
+  ],
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw",
+      "sourceId": "setup-demo",
+      "authority": "supplemental-demonstration",
+      "captionLanguages": ["en"]
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "product": {
+    "id": "fixture-live",
+    "name": "Fixture Selection Chart"
+  },
+  "documents": [
+    {
+      "id": "selection-chart",
+      "title": "How to Choose a Welder",
+      "sourceFile": "selection-chart.pdf",
+      "sha256": "670497435b031e4b6c48e5cec5322979fe8ab80d4f8380406cc492fee5f710f4",
+      "pageCount": 1,
+      "authority": "authoritative-manual",
+      "outlineAvailable": false
+    }
+  ],
+  "sections": [
+    {
+      "id": "welder-selection-chart",
+      "documentId": "selection-chart",
+      "title": "How to Choose a Welder — Full Selection Chart",
+      "startPage": 1,
+      "endPage": 1,
+      "summary": "A single-page visual decision chart guiding users through six sequential criteria — skill level, shielding gas requirement, material type, material thickness, typical applications, and weld cleanliness — to select among four welding processes: Flux-Cored/FCAW, MIG/GMAW, Stick/SMAW, and TIG/GTAW. Includes a sidebar comparing MIG vs. Flux-Cored wire characteristics and a Duty Cycle explanation with a 165A @ 30% example. A callout instructs the user to first identify whether their input voltage is 120 V or 240 V.",
+      "headingEvidence": [
+        {
+          "page": 1,
+          "text": "HOW TO CHOOSE A WELDER",
+          "visualOnly": true
+        }
+      ],
+      "generatedBy": "run-fixture-live"
+    }
+  ],
+  "figures": [],
+  "datasets": [
+    {
+      "id": "welder-selection-decision-matrix",
+      "title": "How to Choose a Welder — Decision Matrix (6 Criteria × 4 Processes)",
+      "schema": {
+        "process_name": "string",
+        "process_abbreviation": "string",
+        "skill_level": "string",
+        "shielding_gas": "string",
+        "materials": "string",
+        "thickness_range": "string",
+        "weld_cleanliness": "string"
+      },
+      "recordsFile": "tables/welder-selection-decision-matrix.json",
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "pages": [
+            1
+          ]
+        }
+      ],
+      "verificationStatus": "verified",
+      "generatedBy": "run-fixture-live"
+    },
+    {
+      "id": "mig-vs-flux-cored-feature-comparison",
+      "title": "MIG or Flux Cored? — Feature Comparison Checklist",
+      "schema": {
+        "feature": "string",
+        "mig_gmaw": "boolean",
+        "flux_cored_fcaw": "boolean"
+      },
+      "recordsFile": "tables/mig-vs-flux-cored-feature-comparison.json",
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "pages": [
+            1
+          ]
+        }
+      ],
+      "verificationStatus": "verified",
+      "generatedBy": "run-fixture-live"
+    }
+  ],
+  "videos": [],
+  "videoSegments": [],
+  "ingestionRuns": [
+    {
+      "id": "run-fixture-live",
+      "createdAt": "2026-07-19T15:13:13.888Z",
+      "model": "claude-sonnet-4-6",
+      "promptVersion": "ingestion-v1",
+      "sourceHashes": {
+        "selection-chart": "670497435b031e4b6c48e5cec5322979fe8ab80d4f8380406cc492fee5f710f4"
+      },
+      "stages": [
+        {
+          "name": "prepare",
+          "status": "complete",
+          "attempts": 1
+        },
+        {
+          "name": "sections",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 29025,
+          "toolCalls": 4,
+          "failures": 0
+        },
+        {
+          "name": "figures",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 53721,
+          "toolCalls": 5,
+          "failures": 4
+        },
+        {
+          "name": "datasets",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 202434,
+          "toolCalls": 11,
+          "failures": 5
+        },
+        {
+          "name": "finalize",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 8106,
+          "toolCalls": 2,
+          "failures": 0
+        }
+      ],
+      "costUsd": 0.3937425,
+      "inputTokens": 3051,
+      "outputTokens": 16068,
+      "sdkTurns": 28,
+      "validation": {
+        "valid": true,
+        "issues": []
+      }
+    }
+  ]
+}

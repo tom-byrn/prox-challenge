@@ -1,22 +1,21 @@
 # Arcwell — OmniPro 220 field guide
 
-Arcwell is a visual, source-grounded support agent for the Vulcan OmniPro 220 welder. It uses the [Anthropic Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) to reason over the supplied owner’s manual, quick-start guide, and process-selection chart, then answers with the medium that makes the task easiest to execute: concise prose, an actual manual figure, a dynamically composed visual, a certified interactive widget, or a sandboxed generated artifact.
+Arcwell is a visual, source-grounded support agent for the Vulcan OmniPro 220 welder. It uses the [Anthropic Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) to reason over the supplied manuals and an indexed, timestamped product-video transcript, then answers with the medium that makes the task easiest to execute: concise prose, an actual manual figure, a bounded YouTube segment, a dynamically composed visual, a certified interactive widget, or a sandboxed generated artifact.
 
 ![Arcwell showing the TIG polarity diagram and source figure](docs/arcwell-polarity.png)
 
 ## Run it
 
-Requirements: Node.js 20 or newer, one Anthropic API key, and a Convex development deployment.
+Requirements: Node.js 20 or newer and one Anthropic API key.
 
 ```bash
 cp .env.example .env
 # Add ANTHROPIC_API_KEY to .env
 npm install
-npx convex dev --once
 npm run dev
 ```
 
-The first Convex command creates or selects a project, pushes the chat schema, and writes the deployment URL to the ignored `.env.local`. `npm run dev` subsequently runs Convex, the agent server, and Vite together.
+`npm run dev` starts the local agent server and Vite. The server creates an ignored SQLite database at `.arcwell/arcwell.sqlite` automatically; no database account, deployment, or second credential is required.
 
 Open [http://localhost:5173](http://localhost:5173). The web app proxies its API and source assets to the server on port 3000.
 
@@ -38,6 +37,7 @@ npm start
 - “My wire feeds, but I can’t strike an arc.”
 - “Show me which feed-roller groove to use for 0.035 flux-cored wire.”
 - “Can this machine TIG weld aluminum?”
+- Attach a weld, front-panel, cable, or wire-feed photo and ask “What should I check here?”
 
 The first three are also available as one-click prompts on the welcome screen.
 
@@ -60,32 +60,41 @@ flowchart TB
         validator -. "one repair turn" .-> runner
     end
 
-    access --> knowledge["Committed knowledge<br/>page text + images<br/>curated figures + JSON tables"]
+    access --> knowledge["Committed knowledge<br/>pages + figures + JSON tables<br/>video transcript + frames"]
     tools -->|clarification request| stream[Typed SSE stream]
     validator -->|pass| stream
     stream --> web
-    web <-->|"conversation + ordered message snapshots"| convex["Convex<br/>chat persistence"]
-    web --> render["Markdown + source figures<br/>VisualSpec renderers + widgets + sandboxed iframe"]
+    web <-->|"conversation snapshots<br/>+ per-turn telemetry"| api
+    api --> sqlite["Local SQLite<br/>.arcwell/arcwell.sqlite"]
+    web --> render["Markdown + source drawer<br/>figures + bounded video<br/>VisualSpec + widgets + artifacts"]
     render --> user
 
-    pdfs[Source PDFs] -. "offline extraction" .-> knowledge
+    sources["PDFs + video URLs"] -. "offline deterministic preparation" .-> staging[".arcwell/ingestion/&lt;run-id&gt;<br/>hashes + text + pixels + captions"]
+    staging -. "isolated Claude ingestion MCP<br/>semantic stages + visual previews" .-> validation["schema + evidence + asset validation"]
+    validation -. "atomic promotion on success only" .-> knowledge
 ```
 
-Each browser conversation resumes an Agent SDK session by its SDK session id. The SDK is intentionally isolated from Claude Code’s filesystem tools and local settings: it receives only the OmniPro MCP tool server, a product-specific system prompt, and a bounded turn/cost budget. Application policy can require genuinely missing setup details, but it does not write the question, perform lookups, or inject answers; Claude selects the clarification choices and every factual and presentation tool.
+Each browser conversation resumes an Agent SDK session by its SDK session id. The SDK is intentionally isolated from Claude Code’s filesystem tools and local settings: it receives only the active product's knowledge MCP server, a manifest-derived system prompt, and a bounded turn/cost budget. Application policy can require genuinely missing setup details, but it does not write the question, perform lookups, or inject answers; Claude selects the clarification choices and every factual and presentation tool.
 
 The server buffers typed answer parts until a generic response contract confirms the answer is grounded, cited, and appropriately visual. If it is not, the same Agent SDK session gets one bounded repair turn and the rejected content is never shown. Tool activity still streams immediately, and an accepted response can contain concise text, an interactive control, and primary-source evidence in one message.
 
-Completed user and assistant messages are stored in Convex as ordered snapshots. Each snapshot preserves text, tool calls and their inputs, source figures, widget data, dynamic visual specifications, clarification cards, artifacts, errors, and the resumable Agent SDK session id. A stable `?chat=` URL restores the conversation after reload or browser navigation. Until authentication is added, histories are scoped to a random owner id stored in that browser.
+Completed user and assistant messages are stored in local SQLite as ordered snapshots. Each snapshot preserves text, tool calls and their inputs, unified evidence sources, source figures, video segments, widget data, dynamic visual specifications, clarification cards, artifacts, errors, and the resumable Agent SDK session id. A stable `?chat=` URL restores the conversation after reload or browser navigation. Histories are scoped to a random owner id stored in that browser, while all data stays on the local machine.
+
+### Runtime telemetry
+
+The fixed **Settings** button in the lower-left opens a live usage and reliability panel. Every completed agent turn records the Agent SDK's reported cost, input/output and cache tokens, SDK turn count, API time, total wall time, tool calls and tool errors, response-contract catches, repair attempts, and final success/degraded/error state. The panel shows aggregate totals and averages plus the twelve most recent turns.
+
+Telemetry is stored in a separate local SQLite table and scoped to the same browser-local owner id. It records the conversation title and operational measurements needed to diagnose cost, latency, and reliability; it does not copy prompt or response content into the telemetry table. A validation catch is an observable guardrail event, not a claim that the model hallucinated—the live evaluation suite remains the place where factual and presentation quality are scored.
 
 ### Agent tools
 
 | Tool | Purpose |
 |---|---|
 | `request_clarification` | Emits one Claude-authored question with 2–4 likely choices and an optional free-text re-explanation field, then waits for the same conversation to continue |
-| `search_manual` | MiniSearch over page text and curated figure metadata |
+| `search_sources` | One MiniSearch entry point over manual pages, curated figure metadata, and timestamped video segments |
 | `read_manual_pages` | Up to two exact pages as extracted text plus page pixels for visual verification |
 | `inspect_visual_source` | Trims and pre-sizes an approved figure/page, then returns the exact pixels, dimensions, and absolute-pixel coordinate space |
-| `preview_visual_annotations` | Rejects blank/out-of-bounds targets and returns the source pixels with a deterministic numbered overlay for visual verification |
+| `preview_visual_annotations` | Returns the source pixels with a numbered coordinate-grid overlay plus per-marker placement issues; only a valid preview can be rendered |
 | `lookup_duty_cycle` | Exact published duty-cycle points; never interpolates |
 | `lookup_polarity` | Process → polarity, socket routing, gas, and source pages |
 | `lookup_troubleshooting` | Symptom matching across troubleshooting and weld-diagnosis data |
@@ -93,6 +102,7 @@ Completed user and assistant messages are stored in Convex as ordered snapshots.
 | `get_settings_guide` | Source-honest LCD/setup guidance without invented synergic values |
 | `search_parts` | Number/name search over the 61-part list |
 | `show_figure` | Emits a real manual crop into chat |
+| `show_source` | Resolves a generic evidence ref; displays a figure or exact video segment and adds any source type to the message drawer |
 | `show_widget` | Emits a certified calculator or checklist for exact duty-cycle, diagnostic, and settings flows |
 | `render_visual` | Validates and emits a dynamically composed annotated image, connection diagram, procedure, or comparison |
 | `render_artifact` | Emits constrained, inline-only HTML for a novel interactive explanation |
@@ -103,11 +113,19 @@ When missing context would materially change the answer, the response contract r
 
 ## Multimodal output
 
+### User-photo diagnostics
+
+The composer accepts one JPEG, PNG, or WebP photo by file picker, paste, or drag and drop. The server decodes the actual pixels with Sharp, rejects unsupported or malformed content, applies orientation, strips metadata, bounds the image dimensions, and stores a normalized JPEG under a content-derived id in the ignored `.arcwell/uploads/` directory. The chat request contains only that approved id—never an arbitrary file path or remote URL.
+
+For the first Agent SDK turn, Arcwell sends the normalized photo and question as native image and text content blocks. Claude must distinguish visible observations from inference, retrieve authoritative manual evidence for product claims, and ask for a better angle or missing setup state when the image is insufficient. A user photo is displayed as **Your photo**, not misrepresented as manual evidence.
+
+Uploaded photos also participate in the same generic visual grammar as manual pixels. The current turn can inspect its approved `upload:photo-…` asset, preview absolute-pixel annotations, and render the verified overlay. There is no weld-defect-specific image tool or fixed overlay. Upload ids from other turns are rejected by the model-facing visual tools, while normalized photos and completed overlays remain addressable when a saved conversation is reopened locally.
+
 ### Dynamic visual grammar
 
 Claude can call one content-agnostic `render_visual` tool with a `VisualSpec`: semantic JSON describing an annotated source image, connection graph, ordered procedure, or comparison. There are no topic-specific drawing tools such as `draw_tig_setup`. Claude retrieves the facts and composes the nodes, ports, connections, callouts, steps, and evidence for the current question.
 
-Annotated source images use a stricter fail-closed path. The server deterministically removes exterior whitespace, preserves the crop transform, and resizes only when necessary so Claude and the browser see the same controlled raster. Claude locates targets with absolute pixel coordinates, previews the numbered overlay, and must reuse that exact previewed spec for display. The server rejects unknown assets, coordinates outside the prepared image, and targets that land on visually blank background. If placement cannot be verified, the agent falls back to the unannotated source figure.
+Annotated source images use a stricter fail-closed path. The server deterministically removes exterior whitespace, preserves the crop transform, and resizes only when necessary so Claude and the browser see the same controlled raster. Claude locates targets with absolute pixel coordinates, previews the numbered overlay, and must reuse that exact previewed spec for display. A preview always returns its overlay, coordinate grid, and per-marker issues so Claude can revise the named placements instead of guessing blindly. Unknown assets, coordinates outside the prepared image, and targets on visually blank background remain invalid and cannot be rendered; annotation review is limited to four attempts per turn.
 
 The server also rejects invalid page references, duplicate ids, dangling graph connections, oversized structures, and comparison cells that do not belong to a declared column. React owns responsive layout, accessible text alternatives, keyboard behavior, graph geometry, and application styling; the model never emits executable code for these visuals. Connection arrows and labels are drawn as explicit geometry rather than model-generated pixels, so line weight, arrow attachment, and contrast remain consistent for arbitrary graph content.
 
@@ -121,30 +139,58 @@ Three prebuilt widgets remain for high-value flows where a fixed calculation or 
 
 Spatial answers such as polarity routing now use a newly composed connection diagram plus the real manual figure instead of selecting a fixed polarity drawing.
 
+Procedure visuals and troubleshooting checklists are interactive walkthroughs rather than static lists. They appear only after the assistant response is complete, unlock one step at a time, and expose a small **Stuck?** arrow for the current or completed step. That action sends `Help me with step N.` as the next user turn while resuming the same Agent SDK session, so Claude can answer with the walkthrough context intact.
+
 For questions that genuinely need a new interaction, Claude can call `render_artifact`. Generated documents run in `<iframe sandbox="allow-scripts">` without `allow-same-origin`. The frontend injects a strict CSP that blocks network, frames, forms, storage, external images, and external fonts. Runtime failures surface a repair affordance. The server also rejects common network, storage, and embedding primitives before emitting an artifact.
 
-## Knowledge extraction and provenance
+## Knowledge ingestion and provenance
 
-The committed `knowledge/` directory is produced by `scripts/extract/extract.py` using PyMuPDF. It renders every PDF page at 144 DPI, extracts per-page text, crops the figure library using reviewed page coordinates, and writes the manual map and search documents.
+Knowledge ingestion is an offline, fail-closed build. Normal server startup never calls Claude. `KNOWLEDGE_PRODUCT_ID` selects `knowledge/products/<product-id>/` and defaults to `omnipro-220`. The runtime still has a read-only fallback for the pre-migration root OmniPro artifacts until the resumable full-corpus run is finalized; newly ingested products use only the versioned package layout.
 
-To rebuild it (not required to run the app):
+The pipeline separates mechanics from interpretation:
+
+- `prepare-pdf.py` hashes and validates arbitrary PDFs, records metadata/outlines, extracts exact text and block geometry, lists image/drawing regions, and renders controlled page pixels.
+- `prepare-video.py` fetches the requested caption language through `youtube-transcript-api`, downloads the registered video only as a frame source, and extracts frames on demand. Transcript failure has no fallback provider.
+- The isolated Agent SDK runner exposes only stage- and source-appropriate ingestion tools. Claude discovers sections, useful figures, exact dataset candidates, and semantic video ranges; it has no filesystem or shell tool.
+- Figure crops and representative frames must be visually inspected. A figure save must repeat the exact bounds and SHA-256 preview hash returned by a valid crop preview.
+- Zod and cross-record validators check ids, paths, page/timestamp bounds, heading evidence, crop density/dimensions, dataset types/evidence, transcript overlap, hashes, and referenced assets.
+- Final materialization writes a temporary package and atomically promotes it only after the runtime loader accepts it. Failed and interrupted runs retain resumable checkpoints while the prior valid package remains untouched.
+
+Create the ingestion environment once:
 
 ```bash
-python3 -m venv .venv-extract
-.venv-extract/bin/pip install -r scripts/extract/requirements.txt
-.venv-extract/bin/python scripts/extract/extract.py
+python3 -m venv .venv-ingest
+.venv-ingest/bin/pip install -r scripts/ingest/requirements.txt
 ```
 
-The structured data under `knowledge/tables/` was transcribed and spot-checked against rendered page pixels:
+Prepare and ingest arbitrary documents without editing source code:
 
-- `duty_cycles.json` — 18 published points across MIG, TIG, stick, 120 V, and 240 V
-- `specs.json` — process ranges, inputs, supported materials, and wire capacities
-- `polarity.json` — MIG, self-shielded flux-cored, TIG, and stick routing
-- `troubleshooting.json` and `weld_diagnosis.json` — symptom/cause/action data with figure ids
-- `settings_guide.json` — documented LCD inputs and machine limitations
-- `parts.json` — all 61 numbered parts and diagram references
+```bash
+INGESTION_PYTHON=.venv-ingest/bin/python npm run ingest -- \
+  --product example-product \
+  --product-name "Example Product" \
+  --input files/owner-manual.pdf \
+  --input files/quick-start-guide.pdf
+```
 
-Every lookup result carries manual page provenance. The model is instructed to cite those pages and to use a lookup or exact page read for every operational number.
+For stable source ids, authority labels, caption languages, and mixed PDF/video packages, use a source-only config such as `ingestion/omnipro-220.json`:
+
+```bash
+INGESTION_PYTHON=.venv-ingest/bin/python npm run ingest -- \
+  --config ingestion/omnipro-220.json
+```
+
+Set `CLAUDE_INGESTION_MODEL`, `CLAUDE_INGESTION_MAX_TURNS`, or `CLAUDE_INGESTION_MAX_BUDGET_USD` to override bounded defaults. `--prepare-only` exercises deterministic extraction without an API key. If a model/API run is interrupted after preparation, resume it without downloading or rendering sources again:
+
+```bash
+INGESTION_PYTHON=.venv-ingest/bin/python npm run ingest -- \
+  --config ingestion/omnipro-220.json \
+  --resume-run <run-id>
+```
+
+Every finalized manifest records source hashes, model, prompt version, run timestamp, stage attempts/durations/tool counts, token/cost totals, validation status, evidence, and the generating run id. Generated figure records intentionally contain no sample-answer field. Human review is optional after validation and is not encoded as hidden source definitions.
+
+Pages, figures, structured rows, and video segments share one generic evidence-ref model. The Sources drawer resolves titles, filenames, authority, pixels, and timestamps from the active manifest rather than compile-time document ids. The OmniPro deployment can retain deterministic calculators through an optional product adapter; products without an adapter still receive generic grounded search, pages, figures, datasets, and video.
 
 ## Two deliberate accuracy decisions
 
@@ -174,15 +220,13 @@ Arcwell is a manual navigation and reasoning aid, not a replacement for training
 
 ```text
 apps/
-  server/src/       Agent SDK loop, MCP tools, SSE API, deterministic lookups
+  server/src/       Agent SDK loop, MCP tools, SSE API, SQLite persistence, deterministic lookups
   web/src/          chat UI, stream parser, dynamic visual renderers, widgets, artifact sandbox
-convex/              conversation schema, history queries, and persistence mutations
+.arcwell/            ignored local SQLite database and normalized user-photo storage
 knowledge/
-  pages/            51 committed page PNG/TXT pairs
-  figures/          reviewed visual crops
-  tables/           exact structured product data
-  index.json        compact section → page map for the system prompt
-scripts/extract/    reproducible offline PDF build
+  products/         finalized versioned product packages selected at runtime
+scripts/ingest/     CLI plus generic deterministic PDF/video preparation
+ingestion/          source-only configs without semantic definitions
 files/              original supplied PDFs
 ```
 
@@ -192,9 +236,12 @@ files/              original supplied PDFs
 npm run typecheck
 npm test
 npm run build
+npm run test:e2e
 ```
 
-The unit suite locks the marquee numeric and polarity answers, the non-interpolation rule, process-specific porosity filtering, generic clarification and response contracts, dynamic graph/annotation validation, deterministic crop geometry, blank-target rejection, approved source resolution, required tool-selected visuals, and the bounded repair path.
+The unit suite covers schema/path rejection, evidence/page/timestamp validation, crop preview approval and stale-hash rejection, atomic rollback, bounded repair behavior, plus the existing marquee numeric, polarity, visual, photo, and response-contract regressions. A live one-page package under `knowledge/products/fixture-live/` verifies the real SDK/tool loop; larger live ingestion runs require an Anthropic account with available credit.
+
+The browser suite starts the built local app and stubs only the Agent SDK SSE response, so it does not spend API credits. It verifies the welcome flow, streamed assistant rendering, the interactive duty-cycle widget, clarification choice submission, and the frontend's real production build/runtime path.
 
 The acceptance assertions test meaning, not one exact tool transcript or layout:
 
