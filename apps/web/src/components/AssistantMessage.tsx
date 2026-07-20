@@ -2,6 +2,7 @@ import { memo } from "react";
 import { TriangleAlert } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import type { ProcedureSpec } from "../visual-spec";
 import type { ChatMessage } from "../types";
 import { ArtifactFrame } from "./ArtifactFrame";
 import { ClarificationCard } from "./ClarificationCard";
@@ -16,7 +17,7 @@ type Props = {
   message: ChatMessage;
   onRepair: (message: string) => void;
   onClarify: (answer: string, originalQuestion: string) => void;
-  onStepHelp: (stepNumber: number) => void;
+  onStepHelp: (stepNumber: number, step: ProcedureSpec["steps"][number]) => void;
   stepHelpDisabled: boolean;
 };
 

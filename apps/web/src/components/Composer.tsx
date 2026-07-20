@@ -6,6 +6,7 @@ type Props = {
   value: string;
   photo?: PhotoDraft;
   photoError?: string;
+  photoUploadsAvailable?: boolean;
   onChange: (value: string) => void;
   onPhotoSelect: (file: File) => void;
   onPhotoRemove: () => void;
@@ -14,7 +15,7 @@ type Props = {
   busy: boolean;
 };
 
-export const Composer = memo(function Composer({ value, photo, photoError, onChange, onPhotoSelect, onPhotoRemove, onSubmit, onStop, busy }: Props) {
+export const Composer = memo(function Composer({ value, photo, photoError, photoUploadsAvailable = true, onChange, onPhotoSelect, onPhotoRemove, onSubmit, onStop, busy }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -31,28 +32,30 @@ export const Composer = memo(function Composer({ value, photo, photoError, onCha
     <div className="composer-wrap">
       <div
         className={`composer${dragging ? " is-dragging" : ""}`}
-        onDragEnter={(event) => { event.preventDefault(); if (!busy) setDragging(true); }}
+        onDragEnter={(event) => { event.preventDefault(); if (photoUploadsAvailable && !busy) setDragging(true); }}
         onDragOver={(event) => { event.preventDefault(); }}
         onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }}
         onDrop={(event) => {
           event.preventDefault();
           setDragging(false);
           const file = event.dataTransfer.files[0];
-          if (!busy && file) onPhotoSelect(file);
+          if (photoUploadsAvailable && !busy && file) onPhotoSelect(file);
         }}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          hidden
-          disabled={busy}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) onPhotoSelect(file);
-            event.target.value = "";
-          }}
-        />
+        {photoUploadsAvailable ? (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            disabled={busy}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onPhotoSelect(file);
+              event.target.value = "";
+            }}
+          />
+        ) : null}
         {photo ? (
           <div className="composer-photo-preview">
             <img src={photo.previewUrl} alt="Selected upload preview" />
@@ -62,16 +65,18 @@ export const Composer = memo(function Composer({ value, photo, photoError, onCha
         ) : null}
         {photoError ? <div className="composer-photo-error" role="alert">{photoError}</div> : null}
         <div className="composer-input-row">
-          <button
-            className="attach-photo-button"
-            type="button"
-            aria-label="Attach a photo"
-            title="Attach a photo"
-            disabled={busy}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <ImagePlus size={18} />
-          </button>
+          {photoUploadsAvailable ? (
+            <button
+              className="attach-photo-button"
+              type="button"
+              aria-label="Attach a photo"
+              title="Attach a photo"
+              disabled={busy}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <ImagePlus size={18} />
+            </button>
+          ) : null}
           <textarea
             ref={textareaRef}
             value={value}
@@ -81,7 +86,7 @@ export const Composer = memo(function Composer({ value, photo, photoError, onCha
             onChange={(event) => onChange(event.target.value)}
             onPaste={(event) => {
               const file = [...event.clipboardData.files].find((candidate) => candidate.type.startsWith("image/"));
-              if (file && !busy) {
+              if (photoUploadsAvailable && file && !busy) {
                 event.preventDefault();
                 onPhotoSelect(file);
               }

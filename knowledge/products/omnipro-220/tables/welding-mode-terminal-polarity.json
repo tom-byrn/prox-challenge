@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "welding-mode-terminal-polarity",
+  "records": [
+    {
+      "id": "polarity-stick",
+      "values": {
+        "welding_mode": "Stick",
+        "ground_clamp_terminal": "Negative",
+        "electrode_torch_wire_feed_terminal": "Positive (electrode holder)",
+        "wire_feed_power": "Disconnected",
+        "additional_connections": ""
+      },
+      "evidence": [
+        {
+          "documentId": "quick-start",
+          "page": 2,
+          "region": {
+            "x1": 0.052703,
+            "y1": 0.110652,
+            "x2": 0.324324,
+            "y2": 0.369699
+          }
+        }
+      ]
+    },
+    {
+      "id": "polarity-mig",
+      "values": {
+        "welding_mode": "MIG",
+        "ground_clamp_terminal": "Negative",
+        "electrode_torch_wire_feed_terminal": "Positive (wire feed power)",
+        "wire_feed_power": "Connected",
+        "additional_connections": "MIG gun to wire feed; wire feed control inside welder"
+      },
+      "evidence": [
+        {
+          "documentId": "quick-start",
+          "page": 2,
+          "region": {
+            "x1": 0.052703,
+            "y1": 0.397953,
+            "x2": 0.324324,
+            "y2": 0.657001
+          }
+        }
+      ]
+    },
+    {
+      "id": "polarity-flux",
+      "values": {
+        "welding_mode": "Flux",
+        "ground_clamp_terminal": "Positive",
+        "electrode_torch_wire_feed_terminal": "Negative (wire feed power)",
+        "wire_feed_power": "Connected",
+        "additional_connections": "Follow MIG cable setup except reversed terminal polarity"
+      },
+      "evidence": [
+        {
+          "documentId": "quick-start",
+          "page": 2,
+          "region": {
+            "x1": 0.487289,
+            "y1": 0.466205,
+            "x2": 0.957093,
+            "y2": 0.599625
+          }
+        }
+      ]
+    },
+    {
+      "id": "polarity-tig",
+      "values": {
+        "welding_mode": "TIG",
+        "ground_clamp_terminal": "Positive",
+        "electrode_torch_wire_feed_terminal": "Negative (TIG torch)",
+        "wire_feed_power": "Disconnected",
+        "additional_connections": "Gas line to gas regulator; foot pedal inside welder"
+      },
+      "evidence": [
+        {
+          "documentId": "quick-start",
+          "page": 2,
+          "region": {
+            "x1": 0.052703,
+            "y1": 0.685254,
+            "x2": 0.324324,
+            "y2": 0.944302
+          }
+        }
+      ]
+    }
+  ]
+}

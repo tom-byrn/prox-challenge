@@ -14,6 +14,7 @@ type ChatHistorySidebarProps = {
   deletingConversationId?: string;
   deleteDisabledConversationId?: string;
   open: boolean;
+  persistenceAvailable?: boolean;
   onClose: () => void;
   onDelete: (conversationId: string) => void;
   onNewChat: () => void;
@@ -45,6 +46,7 @@ export function ChatHistorySidebar({
   deletingConversationId,
   deleteDisabledConversationId,
   open,
+  persistenceAvailable,
   onClose,
   onDelete,
   onNewChat,
@@ -82,7 +84,9 @@ export function ChatHistorySidebar({
         </div>
 
         <nav className="history-list" aria-label="Saved conversations">
-          {conversations === undefined ? (
+          {persistenceAvailable === false ? (
+            <div className="history-status">Saved chat history is disabled for this deployment.</div>
+          ) : conversations === undefined ? (
             <div className="history-status">Loading history…</div>
           ) : conversations.length === 0 ? (
             <div className="history-status">Your saved chats will appear here.</div>

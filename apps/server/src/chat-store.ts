@@ -2,7 +2,39 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
+import { CHAT_STORE_SCHEMA } from "./chat-store-schema.js";
 import type { TurnMetrics } from "./types.js";
+
+type Awaitable<T> = T | Promise<T>;
+
+export type SaveMessageInput = {
+  ownerId: string;
+  conversationId: string;
+  title: string;
+  sessionId?: string;
+  messageId: string;
+  sequence: number;
+  payload: unknown;
+};
+
+export type RecordTelemetryInput = {
+  ownerId: string;
+  conversationId: string;
+  messageId: string;
+  conversationTitle: string;
+  metrics: TurnMetrics;
+};
+
+export interface ChatStoreLike {
+  readonly kind: "sqlite" | "turso";
+  listConversations(ownerId: string, limit?: number): Awaitable<ConversationSummary[]>;
+  getConversation(ownerId: string, conversationId: string): Awaitable<StoredConversation | null>;
+  saveMessage(input: SaveMessageInput): Awaitable<void>;
+  removeConversation(ownerId: string, conversationId: string): Awaitable<boolean>;
+  recordTelemetry(input: RecordTelemetryInput): Awaitable<void>;
+  telemetrySummary(ownerId: string, limit?: number): Awaitable<TelemetrySummary>;
+  close(): Awaitable<void>;
+}
 
 export type ConversationSummary = {
   conversationId: string;
@@ -52,7 +84,7 @@ export type TelemetrySummary = {
   }>;
 };
 
-type ConversationRow = {
+export type ConversationRow = {
   conversation_id: string;
   title: string;
   session_id: string | null;
@@ -61,8 +93,8 @@ type ConversationRow = {
   updated_at: number;
 };
 
-type MessageRow = { sequence: number; payload_json: string };
-type TelemetryRow = {
+export type MessageRow = { sequence: number; payload_json: string };
+export type TelemetryRow = {
   id: number;
   conversation_id: string;
   conversation_title: string;
@@ -88,7 +120,7 @@ function defaultDatabasePath(): string {
     || fileURLToPath(new URL("../../../.arcwell/arcwell.sqlite", import.meta.url));
 }
 
-function conversationFromRow(row: ConversationRow): ConversationSummary {
+export function conversationFromRow(row: ConversationRow): ConversationSummary {
   return {
     conversationId: row.conversation_id,
     title: row.title,
@@ -99,7 +131,57 @@ function conversationFromRow(row: ConversationRow): ConversationSummary {
   };
 }
 
-export class ChatStore {
+export function telemetrySummaryFromRows(events: TelemetryRow[]): TelemetrySummary {
+  const totals = events.reduce((summary, event) => {
+    summary.costUsd += event.cost_usd;
+    summary.durationMs += event.duration_ms;
+    summary.apiDurationMs += event.api_duration_ms;
+    summary.inputTokens += event.input_tokens;
+    summary.outputTokens += event.output_tokens;
+    summary.cacheReadInputTokens += event.cache_read_input_tokens;
+    summary.cacheCreationInputTokens += event.cache_creation_input_tokens;
+    summary.sdkTurns += event.sdk_turns;
+    summary.toolCalls += event.tool_calls;
+    summary.toolErrors += event.tool_errors;
+    summary.repairs += event.repaired ? 1 : 0;
+    summary.validationIssues += event.validation_issues;
+    summary.errors += event.status === "error" ? 1 : 0;
+    summary.degraded += event.status === "degraded" ? 1 : 0;
+    return summary;
+  }, {
+    costUsd: 0, durationMs: 0, apiDurationMs: 0, inputTokens: 0, outputTokens: 0,
+    cacheReadInputTokens: 0, cacheCreationInputTokens: 0, sdkTurns: 0, toolCalls: 0,
+    toolErrors: 0, repairs: 0, validationIssues: 0, errors: 0, degraded: 0
+  });
+  const count = events.length;
+  return {
+    sampledTurns: count,
+    totals,
+    averages: {
+      costUsd: count ? totals.costUsd / count : 0,
+      durationMs: count ? totals.durationMs / count : 0,
+      apiDurationMs: count ? totals.apiDurationMs / count : 0,
+      toolCalls: count ? totals.toolCalls / count : 0
+    },
+    recent: events.slice(0, 12).map((event) => ({
+      id: String(event.id),
+      conversationId: event.conversation_id,
+      conversationTitle: event.conversation_title,
+      status: event.status,
+      model: event.model,
+      costUsd: event.cost_usd,
+      durationMs: event.duration_ms,
+      toolCalls: event.tool_calls,
+      toolErrors: event.tool_errors,
+      repaired: Boolean(event.repaired),
+      validationIssues: event.validation_issues,
+      createdAt: event.created_at
+    }))
+  };
+}
+
+export class ChatStore implements ChatStoreLike {
+  readonly kind = "sqlite" as const;
   private readonly database: Database.Database;
 
   constructor(filePath = defaultDatabasePath()) {
@@ -107,63 +189,7 @@ export class ChatStore {
     this.database = new Database(filePath);
     this.database.pragma("journal_mode = WAL");
     this.database.pragma("foreign_keys = ON");
-    this.database.exec(`
-      CREATE TABLE IF NOT EXISTS conversations (
-        owner_id TEXT NOT NULL,
-        conversation_id TEXT NOT NULL,
-        title TEXT NOT NULL,
-        session_id TEXT,
-        message_count INTEGER NOT NULL,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        PRIMARY KEY (owner_id, conversation_id)
-      );
-      CREATE INDEX IF NOT EXISTS conversations_owner_updated
-        ON conversations (owner_id, updated_at DESC);
-
-      CREATE TABLE IF NOT EXISTS messages (
-        owner_id TEXT NOT NULL,
-        conversation_id TEXT NOT NULL,
-        message_id TEXT NOT NULL,
-        sequence INTEGER NOT NULL,
-        payload_json TEXT NOT NULL,
-        updated_at INTEGER NOT NULL,
-        PRIMARY KEY (owner_id, conversation_id, message_id),
-        FOREIGN KEY (owner_id, conversation_id)
-          REFERENCES conversations (owner_id, conversation_id) ON DELETE CASCADE
-      );
-      CREATE INDEX IF NOT EXISTS messages_owner_conversation_sequence
-        ON messages (owner_id, conversation_id, sequence);
-
-      CREATE TABLE IF NOT EXISTS telemetry (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        owner_id TEXT NOT NULL,
-        conversation_id TEXT NOT NULL,
-        message_id TEXT NOT NULL,
-        conversation_title TEXT NOT NULL,
-        status TEXT NOT NULL,
-        model TEXT NOT NULL,
-        cost_usd REAL NOT NULL,
-        duration_ms INTEGER NOT NULL,
-        api_duration_ms INTEGER NOT NULL,
-        input_tokens INTEGER NOT NULL,
-        output_tokens INTEGER NOT NULL,
-        cache_read_input_tokens INTEGER NOT NULL,
-        cache_creation_input_tokens INTEGER NOT NULL,
-        sdk_turns INTEGER NOT NULL,
-        tool_calls INTEGER NOT NULL,
-        tool_errors INTEGER NOT NULL,
-        repaired INTEGER NOT NULL,
-        validation_issues INTEGER NOT NULL,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        UNIQUE (owner_id, message_id)
-      );
-      CREATE INDEX IF NOT EXISTS telemetry_owner_created
-        ON telemetry (owner_id, created_at DESC);
-      CREATE INDEX IF NOT EXISTS telemetry_owner_conversation
-        ON telemetry (owner_id, conversation_id);
-    `);
+    this.database.exec(CHAT_STORE_SCHEMA);
   }
 
   listConversations(ownerId: string, limit = 100): ConversationSummary[] {
@@ -198,15 +224,7 @@ export class ChatStore {
     };
   }
 
-  saveMessage(input: {
-    ownerId: string;
-    conversationId: string;
-    title: string;
-    sessionId?: string;
-    messageId: string;
-    sequence: number;
-    payload: unknown;
-  }): void {
+  saveMessage(input: SaveMessageInput): void {
     const now = Date.now();
     this.database.transaction(() => {
       this.database.prepare(`
@@ -253,13 +271,7 @@ export class ChatStore {
     })();
   }
 
-  recordTelemetry(input: {
-    ownerId: string;
-    conversationId: string;
-    messageId: string;
-    conversationTitle: string;
-    metrics: TurnMetrics;
-  }): void {
+  recordTelemetry(input: RecordTelemetryInput): void {
     const now = Date.now();
     const metrics = input.metrics;
     this.database.prepare(`
@@ -304,52 +316,7 @@ export class ChatStore {
       ORDER BY created_at DESC
       LIMIT ?
     `).all(ownerId, boundedLimit) as TelemetryRow[];
-    const totals = events.reduce((summary, event) => {
-      summary.costUsd += event.cost_usd;
-      summary.durationMs += event.duration_ms;
-      summary.apiDurationMs += event.api_duration_ms;
-      summary.inputTokens += event.input_tokens;
-      summary.outputTokens += event.output_tokens;
-      summary.cacheReadInputTokens += event.cache_read_input_tokens;
-      summary.cacheCreationInputTokens += event.cache_creation_input_tokens;
-      summary.sdkTurns += event.sdk_turns;
-      summary.toolCalls += event.tool_calls;
-      summary.toolErrors += event.tool_errors;
-      summary.repairs += event.repaired ? 1 : 0;
-      summary.validationIssues += event.validation_issues;
-      summary.errors += event.status === "error" ? 1 : 0;
-      summary.degraded += event.status === "degraded" ? 1 : 0;
-      return summary;
-    }, {
-      costUsd: 0, durationMs: 0, apiDurationMs: 0, inputTokens: 0, outputTokens: 0,
-      cacheReadInputTokens: 0, cacheCreationInputTokens: 0, sdkTurns: 0, toolCalls: 0,
-      toolErrors: 0, repairs: 0, validationIssues: 0, errors: 0, degraded: 0
-    });
-    const count = events.length;
-    return {
-      sampledTurns: count,
-      totals,
-      averages: {
-        costUsd: count ? totals.costUsd / count : 0,
-        durationMs: count ? totals.durationMs / count : 0,
-        apiDurationMs: count ? totals.apiDurationMs / count : 0,
-        toolCalls: count ? totals.toolCalls / count : 0
-      },
-      recent: events.slice(0, 12).map((event) => ({
-        id: String(event.id),
-        conversationId: event.conversation_id,
-        conversationTitle: event.conversation_title,
-        status: event.status,
-        model: event.model,
-        costUsd: event.cost_usd,
-        durationMs: event.duration_ms,
-        toolCalls: event.tool_calls,
-        toolErrors: event.tool_errors,
-        repaired: Boolean(event.repaired),
-        validationIssues: event.validation_issues,
-        createdAt: event.created_at
-      }))
-    };
+    return telemetrySummaryFromRows(events);
   }
 
   close(): void {

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "welding-process-selection-chart",
+  "records": [
+    {
+      "id": "process-fcaw",
+      "values": {
+        "process_name": "Flux-Cored",
+        "abbreviation": "FCAW",
+        "skill_level_highlighted": "LOW",
+        "shielding_gas": "NO-GAS REQUIRED",
+        "materials": "STEEL, STAINLESS STEEL",
+        "material_thickness_range": "18 Gauge to 5/16\"",
+        "weld_cleanliness": "MORE SPATTER",
+        "typical_applications": "Galvanized steel, General fabrication, Pipe and tubing, Maintenance & repair"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.06,
+            "y1": 0.44,
+            "x2": 0.32,
+            "y2": 0.82
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-mig-gmaw",
+      "values": {
+        "process_name": "MIG",
+        "abbreviation": "GMAW",
+        "skill_level_highlighted": "LOW",
+        "shielding_gas": "GAS REQUIRED – Indoor welding recommended",
+        "materials": "STEEL, STAINLESS STEEL, ALUMINUM (Spool gun required)",
+        "material_thickness_range": "22 Gauge to 3/8\"",
+        "weld_cleanliness": "CLEAN / MINIMAL SPATTER",
+        "typical_applications": "Sheet metal, Automotive body, Tubing, Structural steel"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.32,
+            "y1": 0.44,
+            "x2": 0.56,
+            "y2": 0.82
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-stick-smaw",
+      "values": {
+        "process_name": "Stick",
+        "abbreviation": "SMAW",
+        "skill_level_highlighted": "MODERATE",
+        "shielding_gas": "NO-GAS REQUIRED",
+        "materials": "STEEL, STAINLESS STEEL, CASTINGS",
+        "material_thickness_range": "10 Gauge to 1/2\"",
+        "weld_cleanliness": "MORE SPATTER",
+        "typical_applications": "Pipe and tubing, Structural steel, Pressure vessels, Maintenance & repair"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.56,
+            "y1": 0.44,
+            "x2": 0.76,
+            "y2": 0.82
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-tig-gtaw",
+      "values": {
+        "process_name": "TIG",
+        "abbreviation": "GTAW",
+        "skill_level_highlighted": "HIGH",
+        "shielding_gas": "GAS REQUIRED – Indoor welding recommended",
+        "materials": "STEEL, STAINLESS STEEL, CHROME MOLY (DC TIG REQUIRED); ALUMINUM, MAGNESIUM ALLOYS (AC TIG REQUIRED)",
+        "material_thickness_range": "24 Gauge to 3/16\"",
+        "weld_cleanliness": "EXTREMELY CLEAN",
+        "typical_applications": "Stainless steel exhausts, Bicycle frames, Thin wall pipe & tubing, Metal art"
+      },
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "page": 1,
+          "region": {
+            "x1": 0.76,
+            "y1": 0.44,
+            "x2": 0.94,
+            "y2": 0.82
+          }
+        }
+      ]
+    }
+  ]
+}

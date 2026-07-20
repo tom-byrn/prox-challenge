@@ -84,6 +84,10 @@ function loadJson<T>(relativePath: string): T {
   return JSON.parse(readFileSync(new URL(relativePath, new URL(`file://${KNOWLEDGE_DIR}/`)), "utf8")) as T;
 }
 
+function loadLegacyJson<T>(relativePath: string): T {
+  return JSON.parse(readFileSync(join(KNOWLEDGE_DIR, relativePath), "utf8")) as T;
+}
+
 const searchDocuments: SearchDocument[] = activePackage
   ? activePackage.searchDocuments.map((document) => ({ ...document, source: document.documentId ?? document.source }))
   : loadJson<SearchDocument[]>("search-documents.json");
@@ -139,8 +143,12 @@ const manualIndex = activePackage ? {
 } : loadJson<{ product: string; item: string; sections: Array<{ title: string; source: string; pages: number[]; summary: string }> }>("index.json");
 
 function legacyTable<T>(path: string): T | undefined {
-  if (activePackage) return undefined;
-  return loadJson<T>(path);
+  // These tables back the deliberately product-specific OmniPro calculators.
+  // Generic documents, figures, datasets, and videos still come exclusively
+  // from the active manifest package. Other products do not inherit this
+  // adapter merely because an OmniPro fallback table exists on disk.
+  if (activeProductId() !== "omnipro-220") return undefined;
+  return loadLegacyJson<T>(path);
 }
 
 const dutyCycles = legacyTable<{ periodMinutes: number; policy: string; ratings: DutyRating[] }>("tables/duty_cycles.json");
@@ -277,7 +285,7 @@ export function getKnowledgeProductInfo() {
     id: activePackage?.manifest.product.id ?? "omnipro-220",
     name: manualIndex.product,
     documents: listDocuments(),
-    hasOmniProAdapter: !activePackage && activeProductId() === "omnipro-220"
+    hasOmniProAdapter: activeProductId() === "omnipro-220"
   };
 }
 
@@ -355,7 +363,22 @@ export function getPage(source: string, page: number) {
 }
 
 export function getFigure(id: string): FigureRecord {
-  const figure = figures.find((candidate) => candidate.id === id);
+  const omniProFigureAliases: Record<string, string> = {
+    "tig-cable-setup": "welder-cable-setup-stick-mig-flux-tig",
+    "stick-cable-setup": "welder-cable-setup-stick-mig-flux-tig",
+    "mig-flux-cable-setup": "welder-cable-setup-stick-mig-flux-tig",
+    "cable-setup-quick-guide": "welder-cable-setup-stick-mig-flux-tig",
+    "process-selection-chart": "welder-selection-chart",
+    "mig-duty-cycle": "rated-duty-cycle",
+    "tig-stick-duty-cycle": "rated-duty-cycle",
+    "wire-weld-defects-a": "wire-weld-defect-profiles",
+    "wire-weld-defects-b": "wire-weld-porosity-spatter",
+    "stick-weld-defects-a": "stick-weld-diagnosis",
+    "stick-weld-defects-b": "stick-weld-diagnosis",
+    "feed-roller-guide": "spool-installation-diagram"
+  };
+  const resolvedId = activePackage && activeProductId() === "omnipro-220" ? (omniProFigureAliases[id] ?? id) : id;
+  const figure = figures.find((candidate) => candidate.id === resolvedId);
   if (!figure) throw new Error(`Unknown figure id: ${id}`);
   return figure;
 }
@@ -365,7 +388,13 @@ export function listFigures() {
 }
 
 export function getVideoSegment(id: string): VideoSegmentRecord {
-  const segment = videoKnowledge.segments.find((candidate) => candidate.id === id);
+  const exact = videoKnowledge.segments.find((candidate) => candidate.id === id);
+  const legacyRange = id.match(/^(.+)@(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/);
+  const segment = exact ?? (legacyRange ? videoKnowledge.segments.find((candidate) =>
+    candidate.id.startsWith(`${legacyRange[1]}@`)
+    && Math.abs(candidate.startSeconds - Number(legacyRange[2])) <= 1
+    && Math.abs(candidate.endSeconds - Number(legacyRange[3])) <= 1
+  ) : undefined);
   if (!segment) throw new Error(`Unknown video segment: ${id}`);
   return segment;
 }

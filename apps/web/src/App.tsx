@@ -9,6 +9,7 @@ import { uploadPhoto, validatePhotoFile, type PhotoDraft } from "./lib/photos";
 import { streamChat } from "./lib/stream-chat";
 import type { EvidenceSource } from "./evidence";
 import type { ChatMessage, ChatPart, StreamEvent, ToolCall, TurnMetrics } from "./types";
+import type { ProcedureSpec } from "./visual-spec";
 
 const SAMPLE_QUESTIONS = [
   "What’s the duty cycle for MIG welding at 200A on 240V?",
@@ -95,6 +96,7 @@ export default function App() {
   const [input, setInput] = useState("");
   const [photoDraft, setPhotoDraft] = useState<PhotoDraft>();
   const [photoError, setPhotoError] = useState<string>();
+  const [photoUploadsAvailable, setPhotoUploadsAvailable] = useState(true);
   const [busy, setBusy] = useState(false);
   const [hydrating, setHydrating] = useState(initialRoute.loadStored);
   const [sessionId, setSessionId] = useState<string>();
@@ -103,7 +105,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deletingConversationId, setDeletingConversationId] = useState<string>();
-  const { conversations, loadConversation, ownerId, recordTelemetry, removeConversation, saveMessage: saveStoredMessage, storageError } = useChatPersistence();
+  const { conversations, loadConversation, ownerId, persistenceAvailable, recordTelemetry, removeConversation, saveMessage: saveStoredMessage, storageError } = useChatPersistence();
   const conversationId = conversationRoute.conversationId;
   const abortRef = useRef<AbortController | undefined>(undefined);
   const scrollAnchorRef = useRef<HTMLDivElement>(null);
@@ -134,6 +136,20 @@ export default function App() {
     });
     setPhotoError(undefined);
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/health", { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : undefined)
+      .then((health: { photoStorage?: "local" | "disabled" } | undefined) => {
+        if (health?.photoStorage === "disabled") {
+          setPhotoUploadsAvailable(false);
+          clearPhoto();
+        }
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [clearPhoto]);
 
   useEffect(() => {
     photoDraftRef.current = photoDraft;
@@ -347,7 +363,7 @@ export default function App() {
     messageSequencesRef.current.set(userMessage.id, userSequence);
     messageSequencesRef.current.set(assistantMessage.id, assistantSequence);
     if (!titleRef.current) titleRef.current = conversationTitle(displayText);
-    updateConversationUrl(conversationId);
+    if (persistenceAvailable !== false) updateConversationUrl(conversationId);
     persistMessage(userMessage, sessionId);
     followStreamRef.current = true;
     setMessages((current) => [...current, userMessage, assistantMessage]);
@@ -355,9 +371,22 @@ export default function App() {
     if (attachedDraft) clearPhoto();
 
     try {
+      const conversationContext = messages
+        .slice(-12)
+        .map((message) => ({
+          role: message.role,
+          content: message.parts
+            .filter((part): part is Extract<ChatPart, { type: "text" }> => part.type === "text")
+            .map((part) => part.text)
+            .join("")
+            .trim()
+            .slice(-8_000)
+        }))
+        .filter((message) => message.content.length > 0);
       await streamChat({
         message: text,
         sessionId,
+        conversationContext,
         conversationId,
         photoId: photo?.id,
         signal: controller.signal,
@@ -380,7 +409,7 @@ export default function App() {
       setBusy(false);
       abortRef.current = undefined;
     }
-  }, [busy, clearPhoto, conversationId, handleEvent, input, persistMessage, photoDraft, sessionId, updateAssistant]);
+  }, [busy, clearPhoto, conversationId, handleEvent, input, messages, persistMessage, persistenceAvailable, photoDraft, sessionId, updateAssistant]);
 
   const handleClarification = useCallback((answer: string, originalQuestion: string) => {
     const continuation = `The user is answering a clarification request. Continue the original task using this context:\n${JSON.stringify({ originalQuestion, answer })}`;
@@ -391,8 +420,9 @@ export default function App() {
     void sendMessage(message);
   }, [sendMessage]);
 
-  const handleStepHelp = useCallback((stepNumber: number) => {
-    void sendMessage(`Help me with step ${stepNumber}.`);
+  const handleStepHelp = useCallback((stepNumber: number, step: ProcedureSpec["steps"][number]) => {
+    const continuation = `The user wants help with one specific step from the current procedure. Explain how to carry out this exact step, what to look for, and what to do based on the result. Keep the answer tied to the existing conversation and source evidence:\n${JSON.stringify({ stepNumber, title: step.title, instruction: step.body, evidence: step.evidence })}`;
+    void sendMessage(continuation, `Help me with step ${stepNumber}: ${step.title}`);
   }, [sendMessage]);
 
   const resetChat = useCallback(() => {
@@ -462,6 +492,7 @@ export default function App() {
         deletingConversationId={deletingConversationId}
         deleteDisabledConversationId={busy ? conversationId : undefined}
         open={sidebarOpen}
+        persistenceAvailable={persistenceAvailable}
         onClose={hideSidebar}
         onDelete={deleteConversation}
         onNewChat={resetChat}
@@ -488,7 +519,11 @@ export default function App() {
       </header>
 
       <main className="chat-main">
-        {storageError ? <div className="storage-warning" role="status">Chat storage is temporarily unavailable. This conversation may not be saved.</div> : null}
+        {persistenceAvailable === false ? (
+          <div className="storage-warning" role="status">Saved chats are disabled here. This conversation will be lost when you refresh.</div>
+        ) : storageError ? (
+          <div className="storage-warning" role="status">Chat storage is temporarily unavailable. This conversation may not be saved.</div>
+        ) : null}
         {hydrating ? (
           <section className="empty-state"><p>Loading saved conversation…</p></section>
         ) : messages.length === 0 ? (
@@ -516,6 +551,7 @@ export default function App() {
             value={input}
             photo={photoDraft}
             photoError={photoError}
+            photoUploadsAvailable={photoUploadsAvailable}
             onChange={setInput}
             onPhotoSelect={selectPhoto}
             onPhotoRemove={clearPhoto}

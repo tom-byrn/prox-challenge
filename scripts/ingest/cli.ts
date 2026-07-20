@@ -27,6 +27,13 @@ type CliOptions = {
   restartAnalysis: boolean;
 };
 
+type PersistedStageResult = Omit<StageRunResult, "checkpoint">;
+
+type RunMetadata = {
+  createdAt: string;
+  prepareDurationMs: number;
+};
+
 function usage(): string {
   return `Usage:
   npm run ingest -- --product <id> [--product-name <name>] --input <file.pdf> [--input ...] [--url ...]
@@ -140,19 +147,27 @@ export async function runCli(argv = process.argv.slice(2)): Promise<void> {
   if (options.runId && options.resumeRun) throw new Error("Use either --run-id or --resume-run, not both.");
   const workspace = options.resumeRun ? existingIngestionWorkspace(config.productId, options.resumeRun) : createIngestionWorkspace(config.productId, options.runId);
   let prepareDurationMs = 0;
+  const runMetadataPath = join(workspace.root, "run-metadata.json");
+  let runMetadata: RunMetadata;
   let sources: PreparedSources;
   if (options.resumeRun) {
     const savedConfig = IngestionConfigSchema.parse(JSON.parse(readFileSync(join(workspace.root, "config.json"), "utf8")));
     if (JSON.stringify(savedConfig) !== JSON.stringify(config)) throw new Error("Resume config does not match the staged run config.");
     const reader = (await import("../../apps/server/src/ingestion/source-reader.js")).IngestionSourceReader.load(workspace.preparedDir);
     sources = { config, documents: [...reader.documents.values()], videos: [...reader.videos.values()] };
+    runMetadata = existsSync(runMetadataPath)
+      ? JSON.parse(readFileSync(runMetadataPath, "utf8")) as RunMetadata
+      : { createdAt: new Date().toISOString(), prepareDurationMs: 0 };
+    prepareDurationMs = runMetadata.prepareDurationMs;
     process.stdout.write(`Resuming prepared run in ${workspace.root}\n`);
   } else {
     process.stdout.write(`Preparing ${config.documents.length} document(s) and ${config.videos.length} video(s) in ${workspace.root}\n`);
     const prepareStartedAt = Date.now();
     sources = await prepareSources(config, workspace);
     prepareDurationMs = Date.now() - prepareStartedAt;
+    runMetadata = { createdAt: new Date().toISOString(), prepareDurationMs };
     writeJsonAtomic(join(workspace.root, "config.json"), config);
+    writeJsonAtomic(runMetadataPath, runMetadata);
   }
   if (options.prepareOnly) {
     process.stdout.write(`Prepared sources successfully; staging retained at ${workspace.root}\n`);
@@ -165,6 +180,12 @@ export async function runCli(argv = process.argv.slice(2)): Promise<void> {
     : emptyCheckpoint();
   const results: StageRunResult[] = [];
   const completedPath = join(workspace.checkpointsDir, "completed-stages.json");
+  const stageResultsPath = join(workspace.checkpointsDir, "stage-results.json");
+  const persistedResults = new Map<string, PersistedStageResult>(
+    options.resumeRun && !options.restartAnalysis && existsSync(stageResultsPath)
+      ? Object.entries(JSON.parse(readFileSync(stageResultsPath, "utf8")) as Record<string, PersistedStageResult>)
+      : []
+  );
   const completed = new Set<string>(options.resumeRun && !options.restartAnalysis && existsSync(completedPath)
     ? JSON.parse(readFileSync(completedPath, "utf8")) as string[]
     : []);
@@ -176,7 +197,8 @@ export async function runCli(argv = process.argv.slice(2)): Promise<void> {
   const run = async (stage: StageName, sourceId?: string) => {
     const key = `${stage}:${sourceId ?? "*"}`;
     if (completed.has(key)) {
-      const reused: StageRunResult = {
+      const persisted = persistedResults.get(key);
+      const reused: StageRunResult = persisted ? { ...persisted, checkpoint } : {
         stage,
         attempts: 1,
         model: process.env.CLAUDE_INGESTION_MODEL?.trim() || process.env.CLAUDE_MODEL?.trim() || "claude-sonnet-4-6",
@@ -197,6 +219,9 @@ export async function runCli(argv = process.argv.slice(2)): Promise<void> {
     const result = await runIngestionStage({ stage, sources, workspace, checkpoint, sourceId });
     checkpoint = result.checkpoint;
     results.push(result);
+    const { checkpoint: _checkpoint, ...persisted } = result;
+    persistedResults.set(key, persisted);
+    writeJsonAtomic(stageResultsPath, Object.fromEntries(persistedResults));
     completed.add(key);
     writeJsonAtomic(completedPath, [...completed].sort());
     logStage(result);
@@ -210,7 +235,7 @@ export async function runCli(argv = process.argv.slice(2)): Promise<void> {
   const model = results.at(-1)?.model ?? process.env.CLAUDE_INGESTION_MODEL?.trim() ?? process.env.CLAUDE_MODEL?.trim() ?? "claude-sonnet-4-6";
   const runRecord = IngestionRunSchema.parse({
     id: workspace.runId,
-    createdAt: new Date().toISOString(),
+    createdAt: runMetadata.createdAt,
     model,
     promptVersion: "ingestion-v1",
     sourceHashes: Object.fromEntries([...sources.documents, ...sources.videos].map((source) => [source.id, source.sha256])),

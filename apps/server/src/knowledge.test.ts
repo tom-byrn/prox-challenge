@@ -41,12 +41,12 @@ test("figure and parts catalogs resolve", () => {
 
 test("finds and resolves an exact timestamped product-video segment", () => {
   const result = searchSources("foot pedal lift start TIG");
-  assert.equal(result.videos[0]?.id, "video:setup-demo@249-334");
-  const source = resolveEvidenceRef({ kind: "video", segmentId: "video:setup-demo@249-334" });
+  assert.equal(result.videos[0]?.id, "video:setup-demo@249-333");
+  const source = resolveEvidenceRef({ kind: "video", segmentId: result.videos[0]!.id });
   assert.equal(source.kind, "video");
   if (source.kind === "video") {
     assert.equal(source.startSeconds, 249);
-    assert.equal(source.endSeconds, 334);
+    assert.equal(source.endSeconds, 333);
     assert.match(source.url ?? "", /t=249s/);
   }
 });

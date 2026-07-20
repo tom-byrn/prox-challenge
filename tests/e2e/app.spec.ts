@@ -38,15 +38,22 @@ function exactDutyCycleResponse() {
       }],
     },
     {
-      type: "widget",
-      widget: {
-        name: "duty_cycle",
-        title: "MIG duty cycle",
-        data: {
-          exact: true,
-          requested: { process: "MIG", inputVoltage: 240, amps: 200 },
-          rating: { process: "MIG", inputVoltage: 240, amps: 200, dutyPercent: 25, weldMinutes: 2.5, restMinutes: 7.5, pages: [7, 14, 23] },
-          periodMinutes: 10,
+      type: "visual",
+      visual: {
+        id: "duty-cycle-summary",
+        assets: [],
+        spec: {
+          schemaVersion: 1,
+          kind: "metric-summary",
+          title: "MIG duty cycle",
+          description: "MIG · 240 V · 200 A",
+          sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [7, 14, 23] }],
+          metrics: [
+            { id: "duty", label: "Published duty cycle", value: "25", unit: "%", tone: "primary" },
+            { id: "weld", label: "Maximum welding", value: "2.5", unit: "minutes" },
+            { id: "cool", label: "Cooling", value: "7.5", unit: "minutes" },
+          ],
+          callout: { title: "10-minute rating period", body: "Leave power on while cooling so the fan can run." },
         },
       },
     },
@@ -104,7 +111,7 @@ test("renders the welcome screen and example prompts", async ({ page }) => {
   await expect(page.getByRole("textbox", { name: "Message the OmniPro 220 assistant" })).toBeVisible();
 });
 
-test("streams a duty-cycle answer and renders the interactive widget", async ({ page }) => {
+test("streams a duty-cycle answer and renders the published rating summary", async ({ page }) => {
   await page.route("**/api/chat", async (route) => {
     await route.fulfill({
       status: 200,
@@ -117,15 +124,13 @@ test("streams a duty-cycle answer and renders the interactive widget", async ({ 
   await page.getByRole("button", { name: "Send message" }).click();
 
   await expect(page.getByText("the published rating is 25%", { exact: false })).toBeVisible();
-  await expect(page.getByRole("region", { name: "25 percent duty cycle" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "MIG duty cycle" })).toBeVisible();
   await expect(page.getByText("2.5", { exact: true })).toBeVisible();
   await expect(page.getByText("7.5", { exact: true })).toBeVisible();
-  await expect(page.getByText("Owner’s Manual, pp. 7, 14, 23", { exact: false })).toBeVisible();
-
-  const playCycle = page.getByRole("button", { name: "Play cycle" });
-  await expect(playCycle).toBeVisible();
-  await playCycle.click();
-  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+  await expect(page.getByText("Published duty cycle", { exact: true })).toBeVisible();
+  await expect(page.getByText("10-minute rating period", { exact: true })).toBeVisible();
+  await expect(page.getByText("Owner's Manual, pp. 7, 14, 23", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Play cycle" })).toHaveCount(0);
 });
 
 test("renders clarification choices and sends the selected context", async ({ page }) => {

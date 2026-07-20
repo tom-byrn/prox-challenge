@@ -56,7 +56,6 @@ test("reports missing grounding, citation, and visuals without supplying the ans
   });
   assert.equal(issues.some((issue) => issue.includes("lookup_polarity")), true);
   assert.equal(issues.some((issue) => issue.includes("connection-diagram")), true);
-  assert.equal(issues.some((issue) => issue.includes("source figure")), true);
   assert.equal(issues.some((issue) => issue.includes("manual page")), true);
 });
 

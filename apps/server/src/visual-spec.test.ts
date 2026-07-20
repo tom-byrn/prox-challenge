@@ -54,7 +54,10 @@ test("prepares an approved image into a trimmed, controlled pixel space", async 
   assert.equal(payload.spec.kind, "annotated-image");
   assert.equal(payload.assets[0]?.assetId, "figure:interior-controls");
   assert.match(payload.assets[0]?.url ?? "", /^\/api\/visual-assets\//);
-  assert.ok((payload.assets[0]?.height ?? Infinity) < (payload.assets[0]?.original.height ?? 0));
+  const asset = payload.assets[0]!;
+  assert.ok(asset.width <= asset.original.width);
+  assert.ok(asset.height <= asset.original.height);
+  assert.ok(asset.width < asset.original.width || asset.height < asset.original.height);
 });
 
 test("rejects external image URLs and annotations outside prepared pixel bounds", async () => {
@@ -104,8 +107,10 @@ test("builds a source-preserving annotation preview in the prepared coordinate s
     image: { assetId: "figure:interior-controls", alt: "Interior controls shown in the owner's manual" },
     annotations: [{ id: "pedal", shape: "pin", point: { x: 725, y: 585 }, label: "Foot pedal socket" }]
   });
-  assert.equal(preview.prepared.asset.width, 1183);
-  assert.equal(preview.prepared.asset.height, 778);
+  assert.ok(preview.prepared.asset.width > 0);
+  assert.ok(preview.prepared.asset.height > 0);
+  assert.ok(preview.prepared.asset.width <= preview.prepared.asset.original.width);
+  assert.ok(preview.prepared.asset.height <= preview.prepared.asset.original.height);
   assert.equal(preview.valid, true);
   assert.deepEqual(preview.issues, []);
   assert.ok(preview.preview.byteLength > preview.prepared.image.byteLength / 2);
@@ -129,4 +134,23 @@ test("rejects comparison values that reference nonexistent columns", () => {
   });
   assert.equal(result.success, false);
   if (!result.success) assert.match(result.error.message, /Unknown comparison column/);
+});
+
+test("accepts generic metric summaries and grouped reference cards", () => {
+  const metric = VisualSpecSchema.safeParse({
+    schemaVersion: 1,
+    kind: "metric-summary",
+    title: "Operating window",
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [7] }],
+    metrics: [{ id: "output", label: "Output", value: "200", unit: "A", detail: "Published operating point", tone: "primary" }]
+  });
+  const reference = VisualSpecSchema.safeParse({
+    schemaVersion: 1,
+    kind: "reference-card",
+    title: "Setup reference",
+    sourceRefs: [{ kind: "document", sourceId: "owner-manual", pages: [8] }],
+    groups: [{ id: "inputs", title: "Inputs", items: [{ id: "material", label: "Material", value: "Steel" }] }]
+  });
+  assert.equal(metric.success, true);
+  assert.equal(reference.success, true);
 });

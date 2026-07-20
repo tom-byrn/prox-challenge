@@ -4,7 +4,7 @@ import type { ProcedureSpec } from "../../visual-spec";
 
 type Props = {
   spec: ProcedureSpec;
-  onStepHelp: (stepNumber: number) => void;
+  onStepHelp: (stepNumber: number, step: ProcedureSpec["steps"][number]) => void;
   helpDisabled: boolean;
 };
 
@@ -45,7 +45,7 @@ export function ProcedureVisual({ spec, onStepHelp, helpDisabled }: Props) {
               disabled={!unlocked || helpDisabled}
               aria-label={`Get help with step ${stepNumber}`}
               data-tooltip="Stuck?"
-              onClick={() => onStepHelp(stepNumber)}
+              onClick={() => onStepHelp(stepNumber, step)}
             >
               <ArrowRight size={17} strokeWidth={2.5} />
             </button>

@@ -52,6 +52,12 @@ export const SettingsPanel = memo(function SettingsPanel({ ownerId, onClose }: P
 
         {telemetry === undefined ? (
           <div className="telemetry-loading"><RotateCw size={17} /><span>{telemetryError ?? "Loading telemetry…"}</span></div>
+        ) : telemetry.storage === "disabled" ? (
+          <div className="telemetry-unavailable">
+            <Database size={18} />
+            <strong>Persistent telemetry is disabled</strong>
+            <span>The assistant still works, but usage totals are not retained between requests.</span>
+          </div>
         ) : (
           <div className="settings-panel-body">
             <div className="telemetry-stat-grid">

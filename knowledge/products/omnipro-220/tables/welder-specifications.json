@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "welder-specifications",
+  "records": [
+    {
+      "id": "mig-120v",
+      "values": {
+        "welding_process": "MIG",
+        "input_voltage": "120VAC / 60 Hz",
+        "current_input_at_output": "20.8 A at 100 A",
+        "welding_current_range": "30–140 A",
+        "rated_duty_cycle_peak_pct": "40%",
+        "rated_duty_cycle_peak_a": 100,
+        "rated_duty_cycle_cont_pct": "100%",
+        "rated_duty_cycle_cont_a": 75,
+        "maximum_ocv_vdc": 86,
+        "weldable_materials": "Mild Steel, Stainless Steel, Aluminum (with optional Spool Gun)"
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 7,
+          "region": {
+            "x1": 0.080841,
+            "y1": 0.094882,
+            "x2": 0.864,
+            "y2": 0.32
+          }
+        }
+      ]
+    },
+    {
+      "id": "mig-240v",
+      "values": {
+        "welding_process": "MIG",
+        "input_voltage": "240VAC / 60 Hz",
+        "current_input_at_output": "25.5 A at 200 A",
+        "welding_current_range": "30–220 A",
+        "rated_duty_cycle_peak_pct": "25%",
+        "rated_duty_cycle_peak_a": 200,
+        "rated_duty_cycle_cont_pct": "100%",
+        "rated_duty_cycle_cont_a": 115,
+        "maximum_ocv_vdc": 86,
+        "weldable_materials": "Mild Steel, Stainless Steel, Aluminum (with optional Spool Gun)"
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 7,
+          "region": {
+            "x1": 0.080841,
+            "y1": 0.094882,
+            "x2": 0.864,
+            "y2": 0.32
+          }
+        }
+      ]
+    },
+    {
+      "id": "tig-120v",
+      "values": {
+        "welding_process": "TIG",
+        "input_voltage": "120VAC / 60 Hz",
+        "current_input_at_output": "20.6 A at 125 A",
+        "welding_current_range": "10 A–125 A",
+        "rated_duty_cycle_peak_pct": "40%",
+        "rated_duty_cycle_peak_a": 125,
+        "rated_duty_cycle_cont_pct": "100%",
+        "rated_duty_cycle_cont_a": 90,
+        "maximum_ocv_vdc": 86,
+        "weldable_materials": "Mild Steel, Stainless Steel, Chrome Moly"
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 7,
+          "region": {
+            "x1": 0.082058,
+            "y1": 0.362472,
+            "x2": 0.864,
+            "y2": 0.503834
+          }
+        }
+      ]
+    },
+    {
+      "id": "tig-240v",
+      "values": {
+        "welding_process": "TIG",
+        "input_voltage": "240VAC / 60 Hz",
+        "current_input_at_output": "15.6 A at 175 A",
+        "welding_current_range": "10 A–175 A",
+        "rated_duty_cycle_peak_pct": "30%",
+        "rated_duty_cycle_peak_a": 175,
+        "rated_duty_cycle_cont_pct": "100%",
+        "rated_duty_cycle_cont_a": 105,
+        "maximum_ocv_vdc": 86,
+        "weldable_materials": "Mild Steel, Stainless Steel, Chrome Moly"
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 7,
+          "region": {
+            "x1": 0.082058,
+            "y1": 0.362472,
+            "x2": 0.864,
+            "y2": 0.503834
+          }
+        }
+      ]
+    },
+    {
+      "id": "stick-120v",
+      "values": {
+        "welding_process": "Stick",
+        "input_voltage": "120VAC / 60 Hz",
+        "current_input_at_output": "19.5 A at 80 A",
+        "welding_current_range": "10 A–80 A",
+        "rated_duty_cycle_peak_pct": "40%",
+        "rated_duty_cycle_peak_a": 80,
+        "rated_duty_cycle_cont_pct": "100%",
+        "rated_duty_cycle_cont_a": 60,
+        "maximum_ocv_vdc": 86,
+        "weldable_materials": "Mild Steel, Stainless Steel"
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 7,
+          "region": {
+            "x1": 0.081308,
+            "y1": 0.545657,
+            "x2": 0.864,
+            "y2": 0.684335
+          }
+        }
+      ]
+    },
+    {
+      "id": "stick-240v",
+      "values": {
+        "welding_process": "Stick",
+        "input_voltage": "240VAC / 60 Hz",
+        "current_input_at_output": "23.7 A at 175 A",
+        "welding_current_range": "10 A–175 A",
+        "rated_duty_cycle_peak_pct": "25%",
+        "rated_duty_cycle_peak_a": 175,
+        "rated_duty_cycle_cont_pct": "100%",
+        "rated_duty_cycle_cont_a": 100,
+        "maximum_ocv_vdc": 86,
+        "weldable_materials": "Mild Steel, Stainless Steel"
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 7,
+          "region": {
+            "x1": 0.081308,
+            "y1": 0.545657,
+            "x2": 0.864,
+            "y2": 0.684335
+          }
+        }
+      ]
+    }
+  ]
+}

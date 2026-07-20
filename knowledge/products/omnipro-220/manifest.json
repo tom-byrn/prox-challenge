@@ -1,0 +1,1294 @@
+{
+  "schemaVersion": 1,
+  "product": {
+    "id": "omnipro-220",
+    "name": "Vulcan OmniPro 220"
+  },
+  "documents": [
+    {
+      "id": "owner-manual",
+      "title": "Vulcan OmniPro 220 Multiprocess Welding System – Owner's Manual & Safety Instructions (Item 57812)",
+      "sourceFile": "owner-manual.pdf",
+      "sha256": "52aa60b4e51e9671b85c1077c23c42fc5db852ec9626e1a3bf55f0d664964789",
+      "pageCount": 48,
+      "authority": "authoritative-manual",
+      "outlineAvailable": false
+    },
+    {
+      "id": "quick-start",
+      "title": "Vulcan OmniPro 220 Quick Start Guide (Item 57812)",
+      "sourceFile": "quick-start-guide.pdf",
+      "sha256": "4a44c4b18988c05b9dabaa953392f9ecd598dcc689d4a75ec2f54f06a6fa400e",
+      "pageCount": 2,
+      "authority": "authoritative-quick-start",
+      "outlineAvailable": false
+    },
+    {
+      "id": "selection-chart",
+      "title": "How to Choose a Welder — Selection Chart",
+      "sourceFile": "selection-chart.pdf",
+      "sha256": "670497435b031e4b6c48e5cec5322979fe8ab80d4f8380406cc492fee5f710f4",
+      "pageCount": 1,
+      "authority": "authoritative-selection-chart",
+      "outlineAvailable": false
+    }
+  ],
+  "sections": [
+    {
+      "id": "safety",
+      "documentId": "owner-manual",
+      "title": "Safety",
+      "startPage": 2,
+      "endPage": 6,
+      "summary": "Comprehensive safety section covering warning symbols and definitions, general safety rules, fume and gas safety (inhalation hazards, ventilation requirements), arc ray safety (PPE requirements), electrical safety (electric shock prevention, grounding, GFCI), fire safety (arc and slag hazards, fire prevention), welder use and care rules, maintenance safety precautions, gas-shielded welding cylinder safety, grounding instructions, symbology icon reference, and extension cord / replacement cord guidance. Also contains the Table of Contents.",
+      "headingEvidence": [
+        {
+          "page": 2,
+          "text": "Table of Contents"
+        },
+        {
+          "page": 2,
+          "text": "IMPORTANT SAFETY INFORMATION"
+        },
+        {
+          "page": 2,
+          "text": "General Safety"
+        },
+        {
+          "page": 3,
+          "text": "Fume and Gas Safety"
+        },
+        {
+          "page": 3,
+          "text": "Arc Ray Safety"
+        },
+        {
+          "page": 4,
+          "text": "Electrical Safety"
+        },
+        {
+          "page": 4,
+          "text": "Fire Safety"
+        },
+        {
+          "page": 5,
+          "text": "Welder Use and Care"
+        },
+        {
+          "page": 5,
+          "text": "Gas Shielded Welding - Cylinder Safety"
+        },
+        {
+          "page": 6,
+          "text": "Grounding"
+        },
+        {
+          "page": 6,
+          "text": "Symbology"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "specifications",
+      "documentId": "owner-manual",
+      "title": "Specifications",
+      "startPage": 7,
+      "endPage": 7,
+      "summary": "Technical specifications for all three welding processes. MIG: 120/240 VAC input, 30–140 A (120 V) or 30–220 A (240 V) range, 40% duty cycle at 100 A or 25% at 200 A, 50–500 IPM wire speed, up to 12 lb spool, solid/flux-cored wire sizes, aluminum capable with optional spool gun. TIG: 10–125 A (120 V) or 10–175 A (240 V), rated duty cycles 40%/30%. Stick: 10–80 A (120 V) or 10–175 A (240 V), rated duty cycles 40%/25%. Maximum OCV 86 VDC for all processes.",
+      "headingEvidence": [
+        {
+          "page": 7,
+          "text": "Specifications"
+        },
+        {
+          "page": 7,
+          "text": "MIG"
+        },
+        {
+          "page": 7,
+          "text": "TIG"
+        },
+        {
+          "page": 7,
+          "text": "Stick"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "controls",
+      "documentId": "owner-manual",
+      "title": "Controls",
+      "startPage": 8,
+      "endPage": 9,
+      "summary": "Labeled diagrams of all welder controls. Front panel controls include: Power Switch, LCD Display, Left Knob, Right Knob, Control Knob, Home Button, Back Button, MIG Gun/Spool Gun Cable Socket, Negative Socket, Positive Socket, Spool Gun Gas Outlet, Wire Feed Power Cable, and Storage Compartment. Interior controls (accessed through the door) include: Cold Wire Feed Switch, Idler Arm, Wire Feed Mechanism, Wire Spool, Spool Knob, Feed Tensioner, Wire Inlet Liner, Feed Roller Knob, Wire Feed Control Socket, and Foot Pedal Socket.",
+      "headingEvidence": [
+        {
+          "page": 8,
+          "text": "Controls"
+        },
+        {
+          "page": 8,
+          "text": "Front Panel Controls"
+        },
+        {
+          "page": 9,
+          "text": "Interior Controls"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "mig-flux-cored-wire-welding",
+      "documentId": "owner-manual",
+      "title": "MIG / Flux-Cored Wire Welding",
+      "startPage": 10,
+      "endPage": 23,
+      "summary": "Complete setup and operating guide for MIG and flux-cored wire welding. Covers wire spool installation for 1–2 lb and 10–12 lb spools, feed roller selection and installation (solid-core V-groove vs. flux-cored knurled groove, wire size matching), gun cable connector and wire feed control cable connection, DCEN and DCEP polarity setup, shielding gas connection, wire threading, feed tension adjustment, MIG gun assembly, LCD display navigation, process selection, settings charts for various materials and thicknesses, and operating procedures for both gas-shielded MIG and gasless flux-cored welding.",
+      "headingEvidence": [
+        {
+          "page": 10,
+          "text": "MIG / Flux-Cored Wire Welding"
+        },
+        {
+          "page": 10,
+          "text": "Wire Spool Installation / Wire Setup"
+        },
+        {
+          "page": 10,
+          "text": "1-2 lb Spool Loading"
+        },
+        {
+          "page": 11,
+          "text": "10-12 lb Spool Loading"
+        },
+        {
+          "page": 12,
+          "text": "Feed Roller Instructions:"
+        },
+        {
+          "page": 13,
+          "text": "DCEN \nFlux-Cored (Gasless) \nPolarity Setup"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "tig-stick-welding",
+      "documentId": "owner-manual",
+      "title": "TIG / Stick Welding",
+      "startPage": 24,
+      "endPage": 33,
+      "summary": "Setup and operating procedures for TIG (DCEN: TIG torch cable in Negative Socket, ground clamp in Positive Socket) and Stick welding modes. Covers TIG torch and foot pedal socket connections, shielding gas hose connection, LCD display settings for TIG process selection, foot pedal operation, electrode preparation, and arc initiation. Stick welding setup covers electrode holder connection, electrode selection, polarity, and operating techniques. Includes settings references for both processes.",
+      "headingEvidence": [
+        {
+          "page": 24,
+          "text": "TIG / Stick Welding"
+        },
+        {
+          "page": 24,
+          "text": "TIG Setup"
+        },
+        {
+          "page": 24,
+          "text": "Connect Cables"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "welding-tips",
+      "documentId": "owner-manual",
+      "title": "Welding Tips",
+      "startPage": 34,
+      "endPage": 40,
+      "summary": "Practical guidance for evaluating and improving weld quality. Topics include: the Strike Test procedure for assessing weld integrity on scrap material; weld cleaning methods (chipping hammer for slag, wire brush, angle grinder); wire weld diagnosis charts covering heat control and penetration (excess penetration/burn-through vs. inadequate penetration); and example wire weld diagrams diagnosing common problems such as incorrect voltage, wire feed speed, travel speed, contact-tip-to-work distance (CTWD), and wrong polarity, with corrective actions for each.",
+      "headingEvidence": [
+        {
+          "page": 34,
+          "text": "Welding Tips"
+        },
+        {
+          "page": 34,
+          "text": "Strike Test"
+        },
+        {
+          "page": 34,
+          "text": "Cleaning the Weld"
+        },
+        {
+          "page": 35,
+          "text": "Wire Weld Diagnosis – Workpiece Heat Control / Weld Penetration"
+        },
+        {
+          "page": 35,
+          "text": "Example Wire Weld Diagrams"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "maintenance",
+      "documentId": "owner-manual",
+      "title": "Maintenance",
+      "startPage": 41,
+      "endPage": 45,
+      "summary": "Routine maintenance procedures and troubleshooting tables. Maintenance covers: pre-use inspection checklist (hardware, cables, moving parts), periodic interior dust removal with compressed air, post-use storage, MIG gun nozzle and contact tip inspection/cleaning/replacement (9-step procedure), and LCD screen cover replacement. Troubleshooting tables for MIG/Flux-Cored welding address wire-not-feeding, bird's nest formation, wire stopping during welding, unstable arc, and weak arc strength. Additional troubleshooting covers TIG/Stick issues. Each problem lists possible causes and likely solutions.",
+      "headingEvidence": [
+        {
+          "page": 41,
+          "text": "Maintenance"
+        },
+        {
+          "page": 41,
+          "text": "MIG Gun Nozzle and Contact Tip Inspection and Cleaning"
+        },
+        {
+          "page": 41,
+          "text": "Replacing the LCD Screen Cover"
+        },
+        {
+          "page": 42,
+          "text": "Troubleshooting – MIG / Flux-Cored Welding"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "parts-list-and-diagram",
+      "documentId": "owner-manual",
+      "title": "Parts List and Diagram",
+      "startPage": 46,
+      "endPage": 47,
+      "summary": "Numbered parts list of 61 components with descriptions and quantities, covering all internal and external assemblies (covers, PCBs, wire feeder, spool, display, torch, cables, power cords, IGBTs, rectifiers, fans, transformer, solenoid valves, etc.). Accompanied by a labeled assembly diagram on page 47 keyed to the same part numbers. Disclaimer states the parts list is for reference only and repairs must be performed by certified technicians. UPC 193175422590 specified for ordering parts.",
+      "headingEvidence": [
+        {
+          "page": 46,
+          "text": "Parts List and Diagram"
+        },
+        {
+          "page": 46,
+          "text": "Parts List"
+        },
+        {
+          "page": 47,
+          "text": "Assembly Diagram"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "warranty",
+      "documentId": "owner-manual",
+      "title": "Warranty",
+      "startPage": 48,
+      "endPage": 48,
+      "summary": "Limited 90-Day Warranty from Harbor Freight Tools Co. covering defects in materials and workmanship for the original purchaser from date of purchase. Exclusions include misuse, abuse, negligence, accidents, unauthorized repairs, criminal activity, improper installation, normal wear and tear, and lack of maintenance. Liability for consequential or incidental damages is disclaimed. Return procedure requires prepaid shipping, proof of purchase date, and description of defect; remedy is repair, replacement, or refund at the manufacturer's election.",
+      "headingEvidence": [
+        {
+          "page": 48,
+          "text": "Limited 90 Day Warranty"
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "wire-feed-setup-steps",
+      "documentId": "quick-start",
+      "title": "Wire Feed Setup and Initial Power-On Steps",
+      "startPage": 1,
+      "endPage": 1,
+      "summary": "Six illustrated steps covering the complete initial setup sequence for flux-core/wire feed welding: (1) connect cables for flux wire welding; (2) install the wire spool, thread welding wire through both feed guides, and clamp into the feed mechanism; (3) remove nozzle and contact tip, plug the selected cord into the welder and wall, power on, and press the cold wire feed switch until wire emerges; (4) incrementally tighten the wire feed tension knob clockwise until wire bends at 2″–3″; (5) unplug the welder and replace the nozzle and tip; (6) hold the gun clear of the workpiece, plug in the welder, power on, and set weld thickness and other settings. Also includes a labeled 2 lb spool loading diagram (wingnut, spacer, spindle, brake pad, wire spool) with a note that an adapter and knob are required for 10–12 lb spools. Two safety warnings are prominent: read manual warnings before use, and keep torch and wire clear of grounded objects while the welder is plugged in.",
+      "headingEvidence": [
+        {
+          "page": 1,
+          "text": "VULCAN OMNIPRO 220 QUICK START GUIDE",
+          "visualOnly": true
+        },
+        {
+          "page": 1,
+          "text": "2 lb Spool Loading",
+          "visualOnly": false
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "cable-setup-configurations",
+      "documentId": "quick-start",
+      "title": "Cable Setup Configurations (Stick, MIG, Flux, TIG)",
+      "startPage": 2,
+      "endPage": 2,
+      "summary": "Four illustrated cable connection configurations, each showing numbered callouts on a diagram of the welder's terminal panel. Stick cable setup (3 steps): connect ground clamp to negative terminal, electrode holder to positive terminal, leave wire feed power disconnected. MIG cable setup (4 steps): connect ground clamp to negative terminal, wire feed power to positive terminal, MIG gun to wire feed, wire feed control inside the welder. Flux cable setup: follow MIG cable setup but reverse polarity — ground clamp to positive terminal and wire feed power to negative terminal. TIG cable setup (5 steps): connect ground clamp to positive terminal, TIG torch to negative terminal, gas line to gas regulator, foot pedal inside the welder, leave wire feed power disconnected.",
+      "headingEvidence": [
+        {
+          "page": 2,
+          "text": "STICK CABLE SETUP",
+          "visualOnly": true
+        },
+        {
+          "page": 2,
+          "text": "MIG CABLE SETUP",
+          "visualOnly": true
+        },
+        {
+          "page": 2,
+          "text": "FLUX CABLE SETUP",
+          "visualOnly": true
+        },
+        {
+          "page": 2,
+          "text": "TIG CABLE SETUP",
+          "visualOnly": true
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "welder-selection-chart",
+      "documentId": "selection-chart",
+      "title": "How to Choose a Welder",
+      "startPage": 1,
+      "endPage": 1,
+      "summary": "Single-page visual decision chart that guides a user through six criteria — (1) skill level (Low / Moderate / High), (2) shielding-gas requirement, (3) material type, (4) material thickness, (5) typical applications, and (6) desired weld cleanliness — to recommend one of four welding processes: Flux-Cored/FCAW (no gas, forgiving on dirty steel, 18 ga – 5/16 in), MIG/GMAW (gas required, easiest to learn, 22 ga – 3/8 in), Stick/SMAW (no gas, outdoor/windy, 10 ga – 1/2 in), or TIG/GTAW (gas required, highest quality, 24 ga – 3/16 in). A sidebar table compares MIG vs. Flux-Cored wire on six attributes (cored wire, solid wire, shielding gas, welds over mill scale/rust, minimal surface prep, outdoor use, deep penetration, handles material gaps, thin materials). A second sidebar explains the Duty Cycle concept using a 165 A @ 30% example (3 minutes welding / 7 minutes resting). The chart also prompts the user to identify input voltage: 120 V or 240 V.",
+      "headingEvidence": [
+        {
+          "page": 1,
+          "text": "HOW TO CHOOSE A WELDER",
+          "visualOnly": true
+        }
+      ],
+      "generatedBy": "run-omnipro-20260719"
+    }
+  ],
+  "figures": [
+    {
+      "id": "front-panel-controls",
+      "documentId": "owner-manual",
+      "page": 8,
+      "type": "controls",
+      "title": "Front Panel Controls",
+      "caption": "Labelled front-view diagram of the multiprocess welder's front panel identifying: Home Button, Back Button, Control Knob, LCD Display, Left Knob, Right Knob, Power Switch, MIG Gun/Spool Gun Cable Socket, Storage Compartment, Spool Gun Gas Outlet, Positive Socket, Negative Socket, and Wire Feed Power Cable.",
+      "bounds": {
+        "x1": 0.05,
+        "y1": 0.08,
+        "x2": 0.97,
+        "y2": 0.87
+      },
+      "keywords": [
+        "front panel",
+        "controls",
+        "LCD display",
+        "home button",
+        "back button",
+        "control knob",
+        "left knob",
+        "right knob",
+        "power switch",
+        "MIG gun socket",
+        "spool gun gas outlet",
+        "positive socket",
+        "negative socket",
+        "wire feed power cable"
+      ],
+      "asset": "figures/front-panel-controls.png",
+      "previewHash": "85398917b38b0180884cc41960a825cbf6e7d5efed7ac1000d01d4fd94f8b6d4",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "interior-controls",
+      "documentId": "owner-manual",
+      "page": 9,
+      "type": "controls",
+      "title": "Interior Controls",
+      "caption": "Labelled top-view diagram of the welder's interior compartment identifying: Wire Spool, Spool Knob, Wire Feed Mechanism, Wire Inlet Liner, Cold Wire Feed Switch, Feed Tensioner, Idler Arm, Feed Roller Knob, Foot Pedal Socket, and Wire Feed Control Socket.",
+      "bounds": {
+        "x1": 0,
+        "y1": 0.03,
+        "x2": 1,
+        "y2": 0.57
+      },
+      "keywords": [
+        "interior controls",
+        "wire spool",
+        "spool knob",
+        "wire feed mechanism",
+        "wire inlet liner",
+        "cold wire feed switch",
+        "feed tensioner",
+        "idler arm",
+        "feed roller knob",
+        "foot pedal socket",
+        "wire feed control socket"
+      ],
+      "asset": "figures/interior-controls.png",
+      "previewHash": "c349b62584ccd2bb92683be10053e5ac9f86d1b38f14b75e116ffb39afd233f5",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "wiring-schematic",
+      "documentId": "owner-manual",
+      "page": 45,
+      "type": "full-page",
+      "title": "Wiring Schematic",
+      "caption": "Full electrical wiring schematic showing the complete circuit topology of the multiprocess welding system, including: AC input (120–240V/50/60Hz), rectifier, PFC stage, IGBT power switching, transformer, MCU board, LCD screen, solenoid valves, wire feeder motor (M), fast wire feed switch, remote board, aviation plugs, and dual cooling fans.",
+      "bounds": {
+        "x1": 0,
+        "y1": 0,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "wiring schematic",
+        "electrical circuit",
+        "IGBT",
+        "PFC",
+        "MCU board",
+        "rectifier",
+        "transformer",
+        "solenoid valve",
+        "wire feeder",
+        "LCD screen",
+        "remote board",
+        "AC input",
+        "120VAC",
+        "240VAC"
+      ],
+      "asset": "figures/wiring-schematic.png",
+      "previewHash": "d7b7156e604754f32749f472b6aad0144a6f33062c94ad962bb19096adbcb26b",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "assembly-diagram",
+      "documentId": "owner-manual",
+      "page": 47,
+      "type": "full-page",
+      "title": "Assembly Diagram",
+      "caption": "Exploded-view assembly diagram of the multiprocess welding system showing all 61 numbered components and their spatial relationships, including the front panel, wire feed mechanism, internal circuit boards, chassis, cooling fan assembly, and connection hardware.",
+      "bounds": {
+        "x1": 0,
+        "y1": 0,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "assembly diagram",
+        "exploded view",
+        "parts",
+        "components",
+        "chassis",
+        "wire feed",
+        "front panel",
+        "circuit board",
+        "cooling fan",
+        "maintenance",
+        "disassembly"
+      ],
+      "asset": "figures/assembly-diagram.png",
+      "previewHash": "77952ee9e2fffecd74437c20a727914f1a1d53f8c614cf438af44e3c43863e09",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "wire-weld-diagnosis",
+      "documentId": "owner-manual",
+      "page": 35,
+      "type": "full-page",
+      "title": "Wire Weld Diagnosis – Heat Control and Example Weld Diagrams",
+      "caption": "Two-section diagnostic reference page. Top: cross-section profiles illustrating inadequate, proper, and excess/burn-through penetration with a \"not hot enough ↔ ideal heat ↔ too hot\" scale and corrective actions (adjust current, wire feed speed, travel speed, CTWD). Bottom: six example wire weld bead diagrams showing Good Weld, Voltage Too Low/Wire Feed Too Slow, Voltage Too High/Wire Feed Too Fast, Travel Speed Too Fast, Travel Speed Too Slow, and CTWD Too Long/Wrong Polarity — each with corrective instructions.",
+      "bounds": {
+        "x1": 0,
+        "y1": 0,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "wire weld",
+        "diagnosis",
+        "penetration",
+        "heat control",
+        "burn-through",
+        "bead appearance",
+        "voltage",
+        "wire feed speed",
+        "travel speed",
+        "CTWD",
+        "polarity",
+        "weld quality",
+        "troubleshooting"
+      ],
+      "asset": "figures/wire-weld-diagnosis.png",
+      "previewHash": "2f0800b79d308d64bc6c01dc3e262f54541af30805cc485af106d18738739122",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "tig-setup-cable-connection",
+      "documentId": "owner-manual",
+      "page": 24,
+      "type": "diagram",
+      "title": "TIG Setup – Connect Cables",
+      "caption": "Labelled connection diagram for TIG welding setup showing: TIG Torch Cable plugged into the Negative Socket, Ground Clamp Cable plugged into the Positive Socket, Foot Pedal Cable routed through the welder front to the Foot Pedal Socket (inside), and the Shielding Gas Hose connected to the TIG Torch Cable Connector.",
+      "bounds": {
+        "x1": 0.05,
+        "y1": 0.16,
+        "x2": 0.97,
+        "y2": 0.9
+      },
+      "keywords": [
+        "TIG setup",
+        "cable connection",
+        "TIG torch",
+        "negative socket",
+        "positive socket",
+        "ground clamp",
+        "foot pedal",
+        "shielding gas hose",
+        "DCEN",
+        "TIG welding"
+      ],
+      "asset": "figures/tig-setup-cable-connection.png",
+      "previewHash": "14838239471bad26ef84a368751936a3c81ad129b95f8465bc8095e2735bdf8e",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "stick-setup-cable-connection",
+      "documentId": "owner-manual",
+      "page": 27,
+      "type": "diagram",
+      "title": "Stick Setup – Connect Cables",
+      "caption": "Labelled connection diagram for stick welding setup showing: Ground Clamp Cable plugged into the Negative Socket and Electrode Holder Cable plugged into the Positive Socket, with Ground Clamp and Electrode Holder identified on the welder illustration.",
+      "bounds": {
+        "x1": 0.05,
+        "y1": 0.05,
+        "x2": 0.95,
+        "y2": 0.57
+      },
+      "keywords": [
+        "stick setup",
+        "SMAW",
+        "cable connection",
+        "ground clamp",
+        "electrode holder",
+        "negative socket",
+        "positive socket",
+        "stick welding"
+      ],
+      "asset": "figures/stick-setup-cable-connection.png",
+      "previewHash": "e451b2272ee9658bb21e58cd90d0267e370f10fe3ec699259a65136e82d153cf",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "stick-weld-diagnosis",
+      "documentId": "owner-manual",
+      "page": 38,
+      "type": "full-page",
+      "title": "Stick Weld Diagnosis – Heat Control and Example Weld Diagrams",
+      "caption": "Two-section diagnostic reference for stick welding. Top: cross-section profiles showing inadequate, proper, and excess/burn-through penetration with a heat scale and corrective actions (adjust current, travel speed). Bottom: seven photographic example stick weld bead comparisons — Good Weld, Current Too Low, Current Too High, Weld Speed Too Fast, Weld Speed Too Slow, Arc Length Too Short, and Arc Length Too Long — each with corrective instructions.",
+      "bounds": {
+        "x1": 0,
+        "y1": 0,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "stick weld",
+        "SMAW",
+        "diagnosis",
+        "penetration",
+        "heat control",
+        "burn-through",
+        "bead appearance",
+        "current",
+        "arc length",
+        "weld speed",
+        "weld quality",
+        "troubleshooting"
+      ],
+      "asset": "figures/stick-weld-diagnosis.png",
+      "previewHash": "fd937fd784565ff1251feeced849557d605885c4f3d4f35b311fff95237cc5e6",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "rated-duty-cycle",
+      "documentId": "owner-manual",
+      "page": 19,
+      "type": "chart",
+      "title": "Rated Duty Cycle Charts – 120VAC and 240VAC",
+      "caption": "Two duty cycle charts: (1) 120VAC — 40% duty cycle at 100A, equating to 4 minutes welding / 6 minutes resting per 10-minute period; 100% continuous use at 75A. (2) 240VAC — 25% duty cycle at 200A, equating to 2½ minutes welding / 7½ minutes resting per 10-minute period; 100% continuous use at 115A. Each chart includes a pie-diagram representation of the weld/rest ratio.",
+      "bounds": {
+        "x1": 0.48,
+        "y1": 0.03,
+        "x2": 0.98,
+        "y2": 0.52
+      },
+      "keywords": [
+        "duty cycle",
+        "120VAC",
+        "240VAC",
+        "amperage",
+        "overheating",
+        "continuous use",
+        "weld time",
+        "rest time",
+        "thermal protection"
+      ],
+      "asset": "figures/rated-duty-cycle.png",
+      "previewHash": "2087636eb819b5720b0b68a989b8e02fe4563d5ca52996b21b13a1c457656d71",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "spool-gun-setup",
+      "documentId": "owner-manual",
+      "page": 17,
+      "type": "diagram",
+      "title": "Optional Spool Gun Setup – Cable Connections",
+      "caption": "Labelled connection diagram for optional spool gun setup showing: Spool Gun Cable Connector inserted into the Wire Feed mechanism, Wire Feed Control Cable connected to the Wire Feed Control Socket, Gas Hose from Spool Gun connected to the Spool Gun Gas Outlet, Ground Clamp Cable in the Negative Socket, and Wire Feed Power Cable in the Positive Socket.",
+      "bounds": {
+        "x1": 0.05,
+        "y1": 0.47,
+        "x2": 1,
+        "y2": 0.92
+      },
+      "keywords": [
+        "spool gun",
+        "setup",
+        "cable connection",
+        "wire feed control cable",
+        "gas hose",
+        "spool gun gas outlet",
+        "ground clamp",
+        "negative socket",
+        "positive socket",
+        "aluminum welding"
+      ],
+      "asset": "figures/spool-gun-setup.png",
+      "previewHash": "f36dd147940bd6f17ae12d22a9e502a1579f70f0c28bf3d982a68576a2777bba",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "wire-weld-defect-profiles",
+      "documentId": "owner-manual",
+      "page": 36,
+      "type": "full-page",
+      "title": "Wire Weld Defect Profiles – Penetration, Bend at Joint, Slag, and Adhesion",
+      "caption": "Four wire weld defect diagnostic sections: (1) Wire Weld Penetration profile views showing excess/burn-through, proper, and inadequate penetration with 7 corrective causes; (2) Bend at Joint — profile view with 2 corrective causes; (3) Coat of Slag Over Weld — top view showing slag layer with cleaning instructions; (4) Weld Not Adhering Properly — profile view showing gaps between beads with 5 corrective causes.",
+      "bounds": {
+        "x1": 0,
+        "y1": 0,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "wire weld",
+        "penetration",
+        "burn-through",
+        "bend at joint",
+        "slag",
+        "flux-cored",
+        "weld adhesion",
+        "defect",
+        "troubleshooting",
+        "CTWD",
+        "MIG",
+        "weld quality"
+      ],
+      "asset": "figures/wire-weld-defect-profiles.png",
+      "previewHash": "f18ed789b7d0023d8dd8d37601200949bbddf90d4d85f8434832f92d195a48ee",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "spool-installation-diagram",
+      "documentId": "owner-manual",
+      "page": 10,
+      "type": "diagram",
+      "title": "1-2 lb Wire Spool Installation – Spindle Assembly Diagram",
+      "caption": "Exploded cross-section diagram of the 1-2 lb wire spool mounting assembly, identifying (top to bottom): Wingnut, Spacer, 1-2 lb Wire Spool, Spool Spindle, Spool Brake Pad, and Welder Wall. The spool must be oriented to unwind clockwise to prevent wire feed problems.",
+      "bounds": {
+        "x1": 0.3,
+        "y1": 0.58,
+        "x2": 1,
+        "y2": 0.98
+      },
+      "keywords": [
+        "wire spool",
+        "spool installation",
+        "spindle",
+        "wingnut",
+        "spacer",
+        "spool brake pad",
+        "1-2 lb spool",
+        "wire feed",
+        "MIG setup"
+      ],
+      "asset": "figures/spool-installation-diagram.png",
+      "previewHash": "3d920572615036928a9c3161c4ecf71db28b53dee74dedd656fc914575a00bea",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "wire-weld-porosity-spatter",
+      "documentId": "owner-manual",
+      "page": 37,
+      "type": "full-page",
+      "title": "Wire Weld Defect Diagnosis – Porosity, Excessive Spatter, Crooked Bead, and Burn-Through",
+      "caption": "Four wire weld defect diagnostic sections, each with a top-view bead illustration and corrective causes: (1) Porosity — small cavities/holes in bead; causes include incorrect polarity, insufficient/incorrect shielding gas, dirty wire/workpiece, inconsistent travel speed, CTWD too long. (2) Excessive Spatter — grainy/large spatter; causes include dirty wire/workpiece, incorrect polarity, insufficient shielding gas, wire feeding too fast, CTWD too long. (3) Crooked/Wavy Bead — inaccurate welding, inconsistent travel speed, CTWD too long. (4) Burn-Through — base material melts away; causes include workpiece overheating, travel speed too slow, excessive material at weld.",
+      "bounds": {
+        "x1": 0,
+        "y1": 0,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "wire weld",
+        "porosity",
+        "spatter",
+        "crooked bead",
+        "wavy bead",
+        "burn-through",
+        "defect",
+        "diagnosis",
+        "shielding gas",
+        "CTWD",
+        "polarity",
+        "MIG",
+        "flux-cored",
+        "troubleshooting"
+      ],
+      "asset": "figures/wire-weld-porosity-spatter.png",
+      "previewHash": "36fff47f81831e36852f9f0eacc34b735c7dca20d0155b02d84870c5642c21e4",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "dcen-polarity-setup",
+      "documentId": "owner-manual",
+      "page": 13,
+      "type": "diagram",
+      "title": "DCEN Polarity Setup – Flux-Cored (Gasless) Wire Welding",
+      "caption": "Cable polarity diagram for DCEN (Direct Current Electrode Negative) flux-cored gasless welding: Wire Feed Power Cable plugged into the Negative Socket (−) and Ground Clamp Cable plugged into the Positive Socket (+), shown on a labelled welder illustration with the MIG gun and ground clamp connected.",
+      "bounds": {
+        "x1": 0.05,
+        "y1": 0.6,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "DCEN",
+        "polarity",
+        "flux-cored",
+        "gasless",
+        "negative socket",
+        "positive socket",
+        "ground clamp",
+        "wire feed power cable",
+        "MIG setup",
+        "cable connection"
+      ],
+      "asset": "figures/dcen-polarity-setup.png",
+      "previewHash": "30916688d115c9059d7ea43fb943635d15cc0ac02e3290410695d0b8261be431",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "mig-lcd-settings-screens",
+      "documentId": "owner-manual",
+      "page": 20,
+      "type": "controls",
+      "title": "MIG Welding LCD Settings Screens",
+      "caption": "Three annotated LCD screen states for MIG welding setup: (1) Control panel overview with Left Knob, Main Control Knob, and Right Knob labelled; (2) Polarity/Gas screen showing \"Stainless Tri-Mix\" with cable polarity symbols; (3) Wire diameter/thickness selection screen showing .025\" diameter and 24Ga thickness; (4) Auto Weld Settings screen showing 121 in/min wire feed speed, 13.8V voltage, with Process (MIG Steel), Gas Type (C25), wire diameter (.030\"), material thickness (24Ga), Run-In WFS, Inductance, and Spot Timer fields labelled.",
+      "bounds": {
+        "x1": 0.05,
+        "y1": 0.22,
+        "x2": 1,
+        "y2": 1
+      },
+      "keywords": [
+        "MIG",
+        "LCD",
+        "settings",
+        "wire feed speed",
+        "voltage",
+        "wire diameter",
+        "material thickness",
+        "gas type",
+        "inductance",
+        "spot timer",
+        "run-in WFS",
+        "control knob",
+        "auto weld"
+      ],
+      "asset": "figures/mig-lcd-settings-screens.png",
+      "previewHash": "0e256567485b5867e72934c8e0e254854684413d3be096101c1a58879e16e8a5",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "welder-setup-steps-6-step-workflow",
+      "documentId": "quick-start",
+      "page": 1,
+      "type": "diagram",
+      "title": "6-Step Welder Initial Setup Workflow",
+      "caption": "Sequential six-step quick-start procedure for setting up a multi-process welder for flux-core wire welding. Step 1: connect cables as needed. Step 2: install 2 lb wire spool (wingnut, spacer, spindle, brake pad assembly) and insert wire through feed guides into feed mechanism. Step 3: remove nozzle and contact tip, plug in welder, power on, and press cold wire feed switch until wire emerges. Step 4: tighten wire feed tension knob clockwise incrementally until wire bends at 2″–3″ from a wood block. Step 5: unplug welder and replace nozzle and tip. Step 6: hold gun clear of workpiece, plug in, power on, and set weld thickness and other settings. Includes safety warnings about keeping gun and wire clear of grounded objects while plugged in.",
+      "bounds": {
+        "x1": 0.042905,
+        "y1": 0.104016,
+        "x2": 0.957095,
+        "y2": 0.957998
+      },
+      "keywords": [
+        "welder setup",
+        "wire spool loading",
+        "flux core welding",
+        "wire feed mechanism",
+        "feed tension",
+        "contact tip",
+        "nozzle",
+        "cold wire feed",
+        "2 lb spool",
+        "quick start",
+        "setup steps",
+        "weld thickness",
+        "wire feed guides"
+      ],
+      "asset": "figures/welder-setup-steps-6-step-workflow.png",
+      "previewHash": "c6e2b30030e74e8f0ba8727a50ac90a7328f3503db43313d4a675b146b099738",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "welder-cable-setup-stick-mig-flux-tig",
+      "documentId": "quick-start",
+      "page": 2,
+      "type": "diagram",
+      "title": "Cable Connection Diagrams for Stick, MIG, Flux, and TIG Welding Modes",
+      "caption": "Numbered cable connection diagrams for four welding processes. Stick: (1) ground clamp to negative, (2) electrode holder to positive, (3) leave wire feed power disconnected. MIG: (1) ground clamp to negative, (2) wire feed power to positive, (3) MIG gun to wire feed, (4) wire feed control inside welder. Flux: same as MIG but reversed polarity — ground clamp to positive, wire feed power to negative. TIG: (1) ground clamp to positive, (2) TIG torch to negative, (3) gas line to gas regulator, (4) foot pedal inside welder, (5) leave wire feed power disconnected. Each mode illustrated with a numbered cable routing diagram showing connections to the welder terminals.",
+      "bounds": {
+        "x1": 0.042906,
+        "y1": 0.10049,
+        "x2": 0.957093,
+        "y2": 0.952858
+      },
+      "keywords": [
+        "stick welding",
+        "MIG welding",
+        "flux core welding",
+        "TIG welding",
+        "cable setup",
+        "ground clamp",
+        "electrode holder",
+        "wire feed power",
+        "MIG gun",
+        "TIG torch",
+        "gas regulator",
+        "foot pedal",
+        "terminal connections",
+        "welder wiring",
+        "multi-process welder"
+      ],
+      "asset": "figures/welder-cable-setup-stick-mig-flux-tig.png",
+      "previewHash": "3f0d9c97317ae0460600d953e4e22d6d381d374b83f9bb4c9eb74a3391063895",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "welder-selection-chart",
+      "documentId": "selection-chart",
+      "page": 1,
+      "type": "chart",
+      "title": "How to Choose a Welding Process — 6-Step Selection Chart",
+      "caption": "A six-step decision chart for selecting a welding process. Rows address: (1) skill level (Low / Moderate / High), (2) shielding-gas requirement, (3) material type, (4) material thickness, (5) typical applications, and (6) required weld cleanliness / spatter tolerance. Four outcome columns map these criteria to Flux-Cored/FCAW (no gas, Steel/SS, 18 ga–5/16 in, more spatter), MIG/GMAW (gas required, Steel/SS/Aluminum, 22 ga–3/8 in, clean/minimal spatter), Stick/SMAW (no gas, Steel/SS/Castings, 10 ga–1/2 in, more spatter), and TIG/GTAW (gas required, Steel/SS/Chrome-Moly/Aluminum/Magnesium, 24 ga–3/16 in, extremely clean). A supplementary MIG-vs-Flux-Cored feature comparison table and a duty-cycle explanation (165 A @ 30% example) appear on the right side panel.",
+      "bounds": {
+        "x1": 0.02,
+        "y1": 0.27,
+        "x2": 0.98,
+        "y2": 0.67
+      },
+      "keywords": [
+        "welding process selection",
+        "FCAW",
+        "MIG",
+        "GMAW",
+        "SMAW",
+        "TIG",
+        "GTAW",
+        "flux-cored",
+        "stick welding",
+        "shielding gas",
+        "material thickness",
+        "skill level",
+        "duty cycle",
+        "spatter",
+        "steel",
+        "stainless steel",
+        "aluminum",
+        "decision chart"
+      ],
+      "asset": "figures/welder-selection-chart.png",
+      "previewHash": "3c759410ce26a02a965d89a4b23ac7733f25a851a3ff964ed24be7331266a4fd",
+      "generatedBy": "run-omnipro-20260719"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "welder-specifications",
+      "title": "Welding System Specifications by Process and Input Voltage",
+      "schema": {
+        "welding_process": "string",
+        "input_voltage": "string",
+        "current_input_at_output": "string",
+        "welding_current_range": "string",
+        "rated_duty_cycle_peak_pct": "string",
+        "rated_duty_cycle_peak_a": "number",
+        "rated_duty_cycle_cont_pct": "string",
+        "rated_duty_cycle_cont_a": "number",
+        "maximum_ocv_vdc": "number",
+        "weldable_materials": "string"
+      },
+      "recordsFile": "tables/welder-specifications.json",
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "pages": [
+            7
+          ]
+        }
+      ],
+      "verificationStatus": "verified",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "nameplate-duty-cycle-ratings",
+      "title": "Nameplate IEC 60974-1 Duty Cycle Output Ratings (I2 and U2 per Operating Point)",
+      "schema": {
+        "input_voltage": "string",
+        "output_range": "string",
+        "duty_cycle_pct": "number",
+        "i2_a": "number",
+        "u2_v": "number"
+      },
+      "recordsFile": "tables/nameplate-duty-cycle-ratings.json",
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "pages": [
+            14,
+            16,
+            25,
+            27
+          ]
+        }
+      ],
+      "verificationStatus": "verified",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "welding-mode-terminal-polarity",
+      "title": "Vulcan OmniPro 220 — Welding Mode Terminal Polarity Assignments",
+      "schema": {
+        "welding_mode": "string",
+        "ground_clamp_terminal": "string",
+        "electrode_torch_wire_feed_terminal": "string",
+        "wire_feed_power": "string",
+        "additional_connections": "string"
+      },
+      "recordsFile": "tables/welding-mode-terminal-polarity.json",
+      "evidence": [
+        {
+          "documentId": "quick-start",
+          "pages": [
+            2
+          ]
+        }
+      ],
+      "verificationStatus": "verified",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "welding-process-selection-chart",
+      "title": "How to Choose a Welder – Process Selection Chart",
+      "schema": {
+        "process_name": "string",
+        "abbreviation": "string",
+        "skill_level_highlighted": "string",
+        "shielding_gas": "string",
+        "materials": "string",
+        "material_thickness_range": "string",
+        "weld_cleanliness": "string",
+        "typical_applications": "string"
+      },
+      "recordsFile": "tables/welding-process-selection-chart.json",
+      "evidence": [
+        {
+          "documentId": "selection-chart",
+          "pages": [
+            1
+          ]
+        }
+      ],
+      "verificationStatus": "verified",
+      "generatedBy": "run-omnipro-20260719"
+    }
+  ],
+  "videos": [
+    {
+      "id": "setup-demo",
+      "videoId": "kxGDoGcnhBw",
+      "title": "Harbor Freight Welder Vulcan Omnipro 220// FLUX MIG STICK TIG",
+      "url": "https://www.youtube.com/watch?v=kxGDoGcnhBw",
+      "captionType": "auto-generated",
+      "transcriptFile": "video/setup-demo/transcript.json",
+      "sha256": "e9f3a97a3d8389c16c21e3e3ae7f44d1b101f78f3339ffcefdf7f47f4414d55a",
+      "authority": "supplemental-demonstration"
+    }
+  ],
+  "videoSegments": [
+    {
+      "id": "video:setup-demo@0-35",
+      "videoId": "setup-demo",
+      "title": "Introduction & Synergetic Settings Overview",
+      "startSeconds": 0,
+      "endSeconds": 35,
+      "summary": "Host introduces the OmniPro 220 multi-process welder and explains synergetic (auto-set) settings: the operator selects a welding process and material thickness, and the machine automatically configures the remaining parameters. Host states the plan to time each process setup and perform a test weld for each.",
+      "keywords": [
+        "omnipro 220",
+        "synergetic settings",
+        "auto-set",
+        "multi-process welder",
+        "process selection",
+        "material thickness",
+        "setup time"
+      ],
+      "frameSeconds": 15,
+      "frame": "video/setup-demo/frames/introduction-synergetic-settings-overview.jpg",
+      "previewHash": "03c3cc6fa5941627bc6c39eb07b5385e5ad17aadb8369c8777bb4b963ad40ec7",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "video:setup-demo@36-107",
+      "videoId": "setup-demo",
+      "title": "Flux Core Setup & Weld Test",
+      "startSeconds": 36,
+      "endSeconds": 107,
+      "summary": "Starting from a new spool not installed and all leads disconnected, flux core setup is completed in 4.5 minutes. A flat horizontal weld on 3/16-inch plate is tested first, then a fillet weld on 1/8-inch (approx. 11-gauge) coupons. Wire used is .035 Vulcan flux core. The OmniPro settings range from gauge 12 to 10 for that thickness; travel speed is adjusted accordingly. Both welds are described as turning out fine.",
+      "keywords": [
+        "flux core",
+        "setup time",
+        "fillet weld",
+        "3/16 inch plate",
+        "1/8 inch coupons",
+        ".035 flux core wire",
+        "synergetic settings",
+        "gauge selection"
+      ],
+      "frameSeconds": 70,
+      "frame": "video/setup-demo/frames/flux-core-setup-weld-test.jpg",
+      "previewHash": "6362175734ca379654f756b75dd4599fd32dd8f9c5acb8fd9fcadbab81adbf93",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "video:setup-demo@108-166",
+      "videoId": "setup-demo",
+      "title": "MIG Setup & Weld Test",
+      "startSeconds": 108,
+      "endSeconds": 166,
+      "summary": "MIG process setup takes approximately 5.5 minutes. Key steps noted include swapping the drive roller from a knurled wheel to a V-groove (both included), running the wire the same as flux core, connecting 100% CO2 shielding gas, and switching the polarity leads (incorrect leads produce poor welds). Wire used is .035 solid core Vulcan wire. The OmniPro display shows MIG Steel C100 with diameter and thickness selection. Synergetic settings are described as right on for the MIG welds.",
+      "keywords": [
+        "MIG",
+        "setup time",
+        "V-groove roller",
+        "knurled wheel",
+        "CO2 shielding gas",
+        "lead polarity",
+        ".035 solid core wire",
+        "synergetic settings",
+        "omnipro 220 display"
+      ],
+      "frameSeconds": 135,
+      "frame": "video/setup-demo/frames/mig-setup-weld-test.jpg",
+      "previewHash": "448e6d0344dcb01080b05763206245d4fc3ff6e4ba34093f705343023784781d",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "video:setup-demo@167-248",
+      "videoId": "setup-demo",
+      "title": "Stick Setup & Weld Test",
+      "startSeconds": 167,
+      "endSeconds": 248,
+      "summary": "Stick is described as the easiest setup because there is no wire to run; connecting the ground clamp and electrode holder takes approximately 30 seconds. The machine prompts for 60- or 70-series rod selection. Host notes uncertainty about 6010 rod compatibility. Welds are performed using 7018 1/8-inch rod on 3/16-inch flat plate and then on 1/8-inch coupons in a T-joint fillet configuration.",
+      "keywords": [
+        "stick welding",
+        "SMAW",
+        "setup time",
+        "7018 rod",
+        "electrode holder",
+        "ground clamp",
+        "T-joint fillet",
+        "rod series selection",
+        "3/16 inch plate",
+        "1/8 inch coupons"
+      ],
+      "frameSeconds": 210,
+      "frame": "video/setup-demo/frames/stick-setup-weld-test.jpg",
+      "previewHash": "02a75b82fba9968fb2c0fd1cea6e9cc25615f539b7b86399fd844d44770ab762",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "video:setup-demo@249-333",
+      "videoId": "setup-demo",
+      "title": "TIG Setup & Weld Test",
+      "startSeconds": 249,
+      "endSeconds": 333,
+      "summary": "TIG setup takes the longest at approximately 8 minutes due to torch assembly, tungsten grinding, and gas hookup. The machine uses lift-start TIG (not high-frequency start): the tungsten is touched to the workpiece, the foot pedal is pressed, and the arc initiates upon lifting the tungsten. The foot pedal provides amperage control throughout the weld. Scratch-start operation without the foot pedal is also possible. Host evaluates the preset synergetic settings as good on 1/8-inch coupons and positions the machine in the middle of the TIG feature spectrum.",
+      "keywords": [
+        "TIG welding",
+        "GTAW",
+        "lift-start TIG",
+        "high-frequency start",
+        "foot pedal",
+        "amperage control",
+        "tungsten grinding",
+        "setup time",
+        "torch setup",
+        "preset settings",
+        "1/8 inch coupons"
+      ],
+      "frameSeconds": 290,
+      "frame": "video/setup-demo/frames/tig-setup-weld-test.jpg",
+      "previewHash": "3c7ee95c0ddbc448941a7b4cca490d4ac4dcc84997ed78a35e4e692eaea6f784",
+      "generatedBy": "run-omnipro-20260719"
+    },
+    {
+      "id": "video:setup-demo@334-348.5",
+      "videoId": "setup-demo",
+      "title": "Conclusion & Overall Assessment",
+      "startSeconds": 334,
+      "endSeconds": 348.5,
+      "summary": "Host summarizes that the synergetic settings allow quality welds to be laid down within minutes across all four processes, and concludes that the OmniPro 220 is worth keeping.",
+      "keywords": [
+        "conclusion",
+        "overall assessment",
+        "synergetic settings",
+        "multi-process",
+        "weld quality",
+        "omnipro 220",
+        "recommendation"
+      ],
+      "frameSeconds": 340,
+      "frame": "video/setup-demo/frames/conclusion-overall-assessment.jpg",
+      "previewHash": "02ffd942a31570d887cd71e430ba097a44e4529ea699ca836f21206f21fa70a5",
+      "generatedBy": "run-omnipro-20260719"
+    }
+  ],
+  "ingestionRuns": [
+    {
+      "id": "run-omnipro-20260719",
+      "createdAt": "2026-07-19T21:32:47.622Z",
+      "model": "claude-sonnet-4-6",
+      "promptVersion": "ingestion-v1",
+      "sourceHashes": {
+        "owner-manual": "52aa60b4e51e9671b85c1077c23c42fc5db852ec9626e1a3bf55f0d664964789",
+        "quick-start": "4a44c4b18988c05b9dabaa953392f9ecd598dcc689d4a75ec2f54f06a6fa400e",
+        "selection-chart": "670497435b031e4b6c48e5cec5322979fe8ab80d4f8380406cc492fee5f710f4",
+        "setup-demo": "e9f3a97a3d8389c16c21e3e3ae7f44d1b101f78f3339ffcefdf7f47f4414d55a"
+      },
+      "stages": [
+        {
+          "name": "prepare",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 0
+        },
+        {
+          "name": "sections",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 0,
+          "toolCalls": 0,
+          "failures": 0
+        },
+        {
+          "name": "sections",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 0,
+          "toolCalls": 0,
+          "failures": 0
+        },
+        {
+          "name": "sections",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 0,
+          "toolCalls": 0,
+          "failures": 0
+        },
+        {
+          "name": "figures",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 0,
+          "toolCalls": 0,
+          "failures": 0
+        },
+        {
+          "name": "figures",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 0,
+          "toolCalls": 0,
+          "failures": 0
+        },
+        {
+          "name": "figures",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 0,
+          "toolCalls": 0,
+          "failures": 0
+        },
+        {
+          "name": "datasets",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 332181,
+          "toolCalls": 17,
+          "failures": 0
+        },
+        {
+          "name": "datasets",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 47987,
+          "toolCalls": 4,
+          "failures": 0
+        },
+        {
+          "name": "datasets",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 119693,
+          "toolCalls": 5,
+          "failures": 0
+        },
+        {
+          "name": "video",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 104138,
+          "toolCalls": 9,
+          "failures": 0
+        },
+        {
+          "name": "finalize",
+          "status": "complete",
+          "attempts": 1,
+          "durationMs": 10300,
+          "toolCalls": 2,
+          "failures": 0
+        }
+      ],
+      "costUsd": 1.3931175,
+      "inputTokens": 15258,
+      "outputTokens": 37417,
+      "sdkTurns": 44,
+      "validation": {
+        "valid": true,
+        "issues": []
+      }
+    }
+  ]
+}

@@ -27,6 +27,7 @@ export type FigurePayload = {
   pages: number[];
 };
 
+/** Legacy stream shape retained so previously persisted chat snapshots remain readable. */
 export type WidgetPayload = {
   name: "duty_cycle" | "polarity" | "troubleshooting" | "settings_guide";
   title: string;

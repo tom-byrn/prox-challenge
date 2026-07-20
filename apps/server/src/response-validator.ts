@@ -29,15 +29,13 @@ function hasPresentation(events: AgentEvent[]): boolean {
 function satisfiesVisual(requirement: VisualRequirement, events: AgentEvent[]): boolean {
   if (requirement.type === "presentation") return hasPresentation(events);
   if (requirement.type === "figure") return events.some((event) => event.type === "figure");
-  if (requirement.type === "visual") return events.some((event) => event.type === "visual" && (!requirement.kinds || requirement.kinds.includes(event.visual.spec.kind)));
-  return events.some((event) => event.type === "widget" && event.widget.name === requirement.name);
+  return events.some((event) => event.type === "visual" && (!requirement.kinds || requirement.kinds.includes(event.visual.spec.kind)));
 }
 
 function describeVisual(requirement: VisualRequirement): string {
   if (requirement.type === "presentation") return "a visual or interactive presentation";
   if (requirement.type === "figure") return "a relevant source figure";
-  if (requirement.type === "visual") return requirement.kinds?.length ? `a dynamic ${requirement.kinds.join(" or ")}` : "a dynamic visual";
-  return `the ${requirement.name.replaceAll("_", "-")} widget`;
+  return requirement.kinds?.length ? `a dynamic ${requirement.kinds.join(" or ")}` : "a dynamic visual";
 }
 
 export function validateAgentResponse(policy: TurnPolicy, evidence: ResponseEvidence): string[] {
@@ -77,7 +75,7 @@ export function makeRepairPrompt(originalMessage: string, issues: string[]): str
   return `<response-repair>
 The application withheld your previous response because it did not satisfy the response contract.
 Produce a complete replacement answer to the original user request below. Do not discuss validation or apologize.
-Repeat every figure, widget, dynamic visual, or artifact the user should see because prior presentation output was also withheld.
+Repeat every figure, dynamic visual, or artifact the user should see because prior presentation output was also withheld.
 
 Original request:
 ${originalMessage}

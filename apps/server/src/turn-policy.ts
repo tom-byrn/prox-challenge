@@ -1,15 +1,21 @@
-import type { Process, WidgetPayload } from "./types.js";
+import type { Process } from "./types.js";
 import type { VisualKind } from "./visual-spec.js";
 
 export type VisualRequirement =
-  | { type: "widget"; name: WidgetPayload["name"] }
   | { type: "figure" }
   | { type: "visual"; kinds?: VisualKind[] }
   | { type: "presentation" };
 
+export type PresentationPreference = {
+  level: "required" | "preferred" | "text-first";
+  kinds?: VisualKind[];
+  reason?: string;
+};
+
 export type TurnPolicy = {
   requiredTools: string[];
   requiredVisuals: VisualRequirement[];
+  presentation: PresentationPreference;
   requireCitation: boolean;
   allowClarification: boolean;
 };
@@ -71,6 +77,25 @@ function addUnique(items: string[], item: string) {
   if (!items.includes(item)) items.push(item);
 }
 
+function clarificationPolicy(): TurnPolicy {
+  return {
+    requiredTools: ["request_clarification"],
+    requiredVisuals: [],
+    presentation: { level: "text-first" },
+    requireCitation: false,
+    allowClarification: true
+  };
+}
+
+function preferPresentation(current: PresentationPreference, kinds: VisualKind[], reason: string): PresentationPreference {
+  if (current.level === "required") return { ...current, kinds: [...new Set([...(current.kinds ?? []), ...kinds])] };
+  return {
+    level: "preferred",
+    kinds: [...new Set([...(current.kinds ?? []), ...kinds])],
+    reason: current.reason ? `${current.reason} ${reason}` : reason
+  };
+}
+
 export function getTurnPolicy(message: string, options: { hasPhoto?: boolean } = {}): TurnPolicy {
   const requiredTools: string[] = [];
   const requiredVisuals: VisualRequirement[] = [];
@@ -79,10 +104,12 @@ export function getTurnPolicy(message: string, options: { hasPhoto?: boolean } =
   const polarityQuestion = isPolarityQuestion(message);
   const defectQuestion = isDefectQuestion(message);
   const settingsQuestion = !dutyCycleQuestion && !polarityQuestion && isSettingsQuestion(message);
+  let presentation: PresentationPreference = { level: "text-first" };
 
   if (options.hasPhoto) {
     addUnique(requiredTools, "any_grounding_tool");
     requiredVisuals.push({ type: "visual", kinds: ["annotated-image"] });
+    presentation = { level: "required", kinds: ["annotated-image"], reason: "The user supplied a photo that should be explained visually when the target is identifiable." };
   }
 
   if (dutyCycleQuestion) {
@@ -91,61 +118,57 @@ export function getTurnPolicy(message: string, options: { hasPhoto?: boolean } =
     if (!ampsFromMessage(message)) missing.push("output amperage");
     if (!inputVoltageFromMessage(message)) missing.push("input voltage (120 V or 240 V)");
     if (missing.length > 0) {
-      return {
-        requiredTools: ["request_clarification"],
-        requiredVisuals: [],
-        requireCitation: false,
-        allowClarification: true
-      };
+      return clarificationPolicy();
     }
     addUnique(requiredTools, "lookup_duty_cycle");
-    requiredVisuals.push({ type: "widget", name: "duty_cycle" });
+    presentation = preferPresentation(presentation, ["metric-summary"], "A compact metric summary makes the published rating and work/rest interval easier to scan.");
   }
 
   if (polarityQuestion) {
     if (!processFromMessage(message)) {
-      return {
-        requiredTools: ["request_clarification"],
-        requiredVisuals: [],
-        requireCitation: false,
-        allowClarification: true
-      };
+      return clarificationPolicy();
     }
     addUnique(requiredTools, "lookup_polarity");
-    requiredVisuals.push({ type: "visual", kinds: ["connection-diagram"] }, { type: "figure" });
+    requiredVisuals.push({ type: "visual", kinds: ["connection-diagram"] });
+    presentation = { level: "required", kinds: ["connection-diagram"], reason: "Cable routing is a spatial relationship and should be drawn." };
   }
 
   if (defectQuestion) {
     addUnique(requiredTools, "lookup_troubleshooting");
-    requiredVisuals.push({ type: "widget", name: "troubleshooting" }, { type: "figure" });
+    presentation = preferPresentation(presentation, ["procedure", "annotated-image"], "An ordered diagnostic walkthrough or relevant diagnosis image is easier to execute than a dense paragraph.");
   }
 
   if (settingsQuestion) {
     if (!processFromMessage(message)) {
-      return {
-        requiredTools: ["request_clarification"],
-        requiredVisuals: [],
-        requireCitation: false,
-        allowClarification: true
-      };
+      return clarificationPolicy();
     }
     addUnique(requiredTools, "get_settings_guide");
-    requiredVisuals.push({ type: "widget", name: "settings_guide" });
+    presentation = preferPresentation(presentation, ["reference-card"], "Grouped setup facts are easier to use as a reference card.");
   }
 
   if (isPartsQuestion(message)) addUnique(requiredTools, "search_parts");
-  if (relatesToManualFigure(message) && !requiredVisuals.some((requirement) => requirement.type === "figure")) {
-    requiredVisuals.push({ type: "figure" });
+  if (relatesToManualFigure(message)) {
+    presentation = preferPresentation(presentation, ["annotated-image", "reference-card"], "A source figure or visual reference is likely clearer for component location and identification.");
   }
-  if (/\b(?:walkthrough|step[-\s]?by[-\s]?step)\b/i.test(message)) requiredVisuals.push({ type: "visual", kinds: ["procedure"] });
-  if (/\b(?:compare|comparison|versus|\bvs\.?)\b/i.test(message)) requiredVisuals.push({ type: "visual", kinds: ["comparison"] });
-  if (asksForVisual(message)) requiredVisuals.push({ type: "presentation" });
+  if (/\b(?:walkthrough|step[-\s]?by[-\s]?step)\b/i.test(message)) {
+    requiredVisuals.push({ type: "visual", kinds: ["procedure"] });
+    presentation = { level: "required", kinds: ["procedure"], reason: "The user explicitly requested a walkthrough." };
+  }
+  if (/\b(?:compare|comparison|versus|\bvs\.?)\b/i.test(message)) {
+    requiredVisuals.push({ type: "visual", kinds: ["comparison"] });
+    presentation = { level: "required", kinds: ["comparison"], reason: "The user explicitly requested a comparison." };
+  }
+  if (asksForVisual(message)) {
+    requiredVisuals.push({ type: "presentation" });
+    presentation = { ...presentation, level: "required", reason: "The user explicitly requested a visual presentation." };
+  }
 
   if (productQuestion && requiredTools.length === 0) addUnique(requiredTools, "any_grounding_tool");
 
   return {
     requiredTools,
     requiredVisuals,
+    presentation,
     requireCitation: productQuestion || Boolean(options.hasPhoto),
     allowClarification: !dutyCycleQuestion && !polarityQuestion
   };

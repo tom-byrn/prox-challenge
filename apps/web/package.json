@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node ../../scripts/copy-web-assets.mjs",
     "typecheck": "tsc -b --pretty false",
     "preview": "vite preview"
   },

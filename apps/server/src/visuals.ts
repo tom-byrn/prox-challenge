@@ -76,8 +76,14 @@ function collectSourceRefs(spec: VisualSpec): VisualSourceRef[] {
     for (const connection of spec.connections) if (connection.evidence) refs.push(connection.evidence);
   } else if (spec.kind === "procedure") {
     for (const step of spec.steps) if (step.evidence) refs.push(step.evidence);
-  } else {
+  } else if (spec.kind === "comparison") {
     for (const row of spec.rows) if (row.evidence) refs.push(row.evidence);
+  } else if (spec.kind === "metric-summary") {
+    for (const metric of spec.metrics) if (metric.evidence) refs.push(metric.evidence);
+    if (spec.callout?.evidence) refs.push(spec.callout.evidence);
+  } else {
+    for (const group of spec.groups) for (const item of group.items) if (item.evidence) refs.push(item.evidence);
+    for (const callout of spec.callouts ?? []) if (callout.evidence) refs.push(callout.evidence);
   }
   return refs;
 }

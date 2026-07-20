@@ -128,11 +128,63 @@ const ComparisonSchema = z.object({
   })).min(1).max(16)
 });
 
+const MetricSummarySchema = z.object({
+  schemaVersion: z.literal(1),
+  kind: z.literal("metric-summary"),
+  title: ShortTextSchema,
+  description: BodyTextSchema.optional(),
+  sourceRefs: z.array(VisualSourceRefSchema).min(1).max(8),
+  metrics: z.array(z.object({
+    id: IdSchema,
+    label: ShortTextSchema,
+    value: z.string().trim().min(1).max(80),
+    unit: z.string().trim().min(1).max(30).optional(),
+    detail: z.string().trim().min(1).max(240).optional(),
+    tone: ToneSchema,
+    evidence: EvidenceSchema
+  })).min(1).max(8),
+  callout: z.object({
+    title: ShortTextSchema.optional(),
+    body: BodyTextSchema,
+    tone: ToneSchema,
+    evidence: EvidenceSchema
+  }).optional()
+});
+
+const ReferenceCardSchema = z.object({
+  schemaVersion: z.literal(1),
+  kind: z.literal("reference-card"),
+  title: ShortTextSchema,
+  description: BodyTextSchema.optional(),
+  sourceRefs: z.array(VisualSourceRefSchema).min(1).max(8),
+  groups: z.array(z.object({
+    id: IdSchema,
+    title: ShortTextSchema,
+    items: z.array(z.object({
+      id: IdSchema,
+      label: ShortTextSchema,
+      value: z.string().trim().min(1).max(120).optional(),
+      detail: z.string().trim().min(1).max(300).optional(),
+      tone: ToneSchema,
+      evidence: EvidenceSchema
+    }).refine((item) => item.value || item.detail, { message: "Reference items need a value or detail." })).min(1).max(12)
+  })).min(1).max(6),
+  callouts: z.array(z.object({
+    id: IdSchema,
+    title: ShortTextSchema.optional(),
+    body: BodyTextSchema,
+    tone: ToneSchema,
+    evidence: EvidenceSchema
+  })).max(6).optional()
+});
+
 const BaseVisualSpecSchema = z.discriminatedUnion("kind", [
   AnnotatedImageSchema,
   ConnectionDiagramSchema,
   ProcedureSchema,
-  ComparisonSchema
+  ComparisonSchema,
+  MetricSummarySchema,
+  ReferenceCardSchema
 ]);
 
 export const VisualSpecSchema = BaseVisualSpecSchema.superRefine((spec, context) => {
@@ -176,10 +228,30 @@ export const VisualSpecSchema = BaseVisualSpecSchema.superRefine((spec, context)
       }
     });
   }
+
+  if (spec.kind === "metric-summary" && !unique(spec.metrics.map((metric) => metric.id))) {
+    context.addIssue({ code: "custom", message: "Metric ids must be unique.", path: ["metrics"] });
+  }
+
+  if (spec.kind === "reference-card") {
+    if (!unique(spec.groups.map((group) => group.id))) {
+      context.addIssue({ code: "custom", message: "Reference group ids must be unique.", path: ["groups"] });
+    }
+    for (const [groupIndex, group] of spec.groups.entries()) {
+      if (!unique(group.items.map((item) => item.id))) {
+        context.addIssue({ code: "custom", message: "Reference item ids must be unique within a group.", path: ["groups", groupIndex, "items"] });
+      }
+    }
+    if (spec.callouts && !unique(spec.callouts.map((callout) => callout.id))) {
+      context.addIssue({ code: "custom", message: "Reference callout ids must be unique.", path: ["callouts"] });
+    }
+  }
 });
 
 export type VisualSpec = z.infer<typeof VisualSpecSchema>;
 export type AnnotatedImageSpec = z.infer<typeof AnnotatedImageSchema>;
+export type MetricSummarySpec = z.infer<typeof MetricSummarySchema>;
+export type ReferenceCardSpec = z.infer<typeof ReferenceCardSchema>;
 export type VisualKind = VisualSpec["kind"];
 export type VisualSourceRef = z.infer<typeof VisualSourceRefSchema>;
 

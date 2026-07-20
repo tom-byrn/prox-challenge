@@ -26,7 +26,8 @@ export function sourceIdFromPath(path: string): string {
 
 export function sourceIdFromUrl(url: string): string {
   const parsed = new URL(url);
-  const videoId = parsed.searchParams.get("v") ?? parsed.pathname.split("/").filter(Boolean).at(-1);
+  const pathParts = parsed.pathname.split("/").filter(Boolean);
+  const videoId = parsed.searchParams.get("v") ?? pathParts[pathParts.length - 1];
   return slugifyId(videoId ? `video-${videoId}` : parsed.hostname);
 }
 

@@ -86,7 +86,49 @@ export type ComparisonSpec = VisualBase & {
   }>;
 };
 
-export type VisualSpec = AnnotatedImageSpec | ConnectionDiagramSpec | ProcedureSpec | ComparisonSpec;
+export type MetricSummarySpec = VisualBase & {
+  kind: "metric-summary";
+  metrics: Array<{
+    id: string;
+    label: string;
+    value: string;
+    unit?: string;
+    detail?: string;
+    tone?: VisualTone;
+    evidence?: VisualSourceRef;
+  }>;
+  callout?: {
+    title?: string;
+    body: string;
+    tone?: VisualTone;
+    evidence?: VisualSourceRef;
+  };
+};
+
+export type ReferenceCardSpec = VisualBase & {
+  kind: "reference-card";
+  groups: Array<{
+    id: string;
+    title: string;
+    items: Array<{
+      id: string;
+      label: string;
+      value?: string;
+      detail?: string;
+      tone?: VisualTone;
+      evidence?: VisualSourceRef;
+    }>;
+  }>;
+  callouts?: Array<{
+    id: string;
+    title?: string;
+    body: string;
+    tone?: VisualTone;
+    evidence?: VisualSourceRef;
+  }>;
+};
+
+export type VisualSpec = AnnotatedImageSpec | ConnectionDiagramSpec | ProcedureSpec | ComparisonSpec | MetricSummarySpec | ReferenceCardSpec;
 
 export type VisualAsset = {
   assetId: string;

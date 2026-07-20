@@ -4,15 +4,13 @@ import { runAgentTurn, type AgentTurnInput } from "./agent.js";
 import { getTurnPolicy } from "./turn-policy.js";
 import type { AgentEvent } from "./types.js";
 
-function hasWidgetRequirement(message: string, name: string): boolean {
-  return getTurnPolicy(message).requiredVisuals.some((requirement) => requirement.type === "widget" && requirement.name === name);
-}
-
-test("requires agent-selected grounding and a widget for duty-cycle questions", () => {
+test("requires agent-selected grounding and prefers a metric summary for duty-cycle questions", () => {
   const policy = getTurnPolicy("What's the duty cycle for MIG welding at 200A on 240V?");
   assert.equal(policy.requiredTools.includes("request_clarification"), false);
   assert.deepEqual(policy.requiredTools, ["lookup_duty_cycle"]);
-  assert.equal(hasWidgetRequirement("What's the duty cycle for MIG welding at 200A on 240V?", "duty_cycle"), true);
+  assert.deepEqual(policy.requiredVisuals, []);
+  assert.equal(policy.presentation.level, "preferred");
+  assert.equal(policy.presentation.kinds?.includes("metric-summary"), true);
   assert.equal(policy.requireCitation, true);
 });
 
@@ -20,13 +18,15 @@ test("recognizes a paraphrased duty-cycle question", () => {
   const policy = getTurnPolicy("On 240 volts in MIG mode at 200 amps, how long can I weld before it needs to rest?");
   assert.equal(policy.requiredTools.includes("request_clarification"), false);
   assert.deepEqual(policy.requiredTools, ["lookup_duty_cycle"]);
-  assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "widget" && requirement.name === "duty_cycle"), true);
+  assert.equal(policy.presentation.level, "preferred");
+  assert.equal(policy.presentation.kinds?.includes("metric-summary"), true);
 });
 
 test("requires Claude to request interactive clarification for an ambiguous duty-cycle question", () => {
   const policy = getTurnPolicy("What's my duty cycle at 200 amps for MIG?");
   assert.deepEqual(policy.requiredTools, ["request_clarification"]);
   assert.deepEqual(policy.requiredVisuals, []);
+  assert.equal(policy.presentation.level, "text-first");
   assert.equal(policy.requireCitation, false);
 });
 
@@ -37,7 +37,8 @@ test("restores the original response contract after a clarification answer", () 
   })}`;
   const policy = getTurnPolicy(continuation);
   assert.deepEqual(policy.requiredTools, ["lookup_duty_cycle"]);
-  assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "widget" && requirement.name === "duty_cycle"), true);
+  assert.equal(policy.presentation.level, "preferred");
+  assert.equal(policy.presentation.kinds?.includes("metric-summary"), true);
   assert.equal(policy.requireCitation, true);
 });
 
@@ -45,7 +46,8 @@ test("requires agent-selected polarity tools and visuals for routing paraphrases
   const policy = getTurnPolicy("For lift TIG, where do I plug in the torch and work lead?");
   assert.deepEqual(policy.requiredTools, ["lookup_polarity"]);
   assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "visual" && requirement.kinds?.includes("connection-diagram")), true);
-  assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "figure"), true);
+  assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "figure"), false);
+  assert.equal(policy.presentation.level, "required");
 });
 
 test("requires appropriate presentations for held-out visual intents", () => {
@@ -53,16 +55,18 @@ test("requires appropriate presentations for held-out visual intents", () => {
   const procedure = getTurnPolicy("Give me a step-by-step walkthrough for loading wire.");
   const comparison = getTurnPolicy("Compare MIG versus flux-core welding setup.");
 
-  assert.equal(manualFigure.requiredVisuals.some((requirement) => requirement.type === "figure"), true);
+  assert.equal(manualFigure.requiredVisuals.some((requirement) => requirement.type === "presentation"), true);
+  assert.equal(manualFigure.presentation.level, "required");
   assert.equal(procedure.requiredVisuals.some((requirement) => requirement.type === "visual" && requirement.kinds?.includes("procedure")), true);
   assert.equal(comparison.requiredVisuals.some((requirement) => requirement.type === "visual" && requirement.kinds?.includes("comparison")), true);
 });
 
-test("requires grounded troubleshooting and visuals for defect paraphrases", () => {
+test("requires grounded troubleshooting and prefers a procedure for defect paraphrases", () => {
   const policy = getTurnPolicy("My gasless flux-core bead has tiny pinholes. What is going wrong?");
   assert.deepEqual(policy.requiredTools, ["lookup_troubleshooting"]);
-  assert.equal(hasWidgetRequirement("My gasless flux-core bead has tiny pinholes. What is going wrong?", "troubleshooting"), true);
-  assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "figure"), true);
+  assert.deepEqual(policy.requiredVisuals, []);
+  assert.equal(policy.presentation.level, "preferred");
+  assert.equal(policy.presentation.kinds?.includes("procedure"), true);
 });
 
 test("uses a generic grounding contract for held-out product questions", () => {
@@ -77,6 +81,7 @@ test("requires grounded annotation for a user photo diagnosis", () => {
   assert.equal(policy.requiredVisuals.some((requirement) => requirement.type === "visual" && requirement.kinds?.includes("annotated-image")), true);
   assert.equal(policy.requireCitation, true);
   assert.equal(policy.allowClarification, true);
+  assert.equal(policy.presentation.level, "required");
 });
 
 test("does not mistake a general input-voltage question for a settings workflow", () => {
@@ -88,6 +93,14 @@ test("does not mistake a general input-voltage question for a settings workflow"
 test("clarifies missing setup state for settings recommendations", () => {
   const policy = getTurnPolicy("What settings should I use for quarter-inch steel?");
   assert.deepEqual(policy.requiredTools, ["request_clarification"]);
+});
+
+test("prefers a generic reference card for a fully specified settings request", () => {
+  const policy = getTurnPolicy("What MIG settings should I use for quarter-inch steel?");
+  assert.deepEqual(policy.requiredTools, ["get_settings_guide"]);
+  assert.deepEqual(policy.requiredVisuals, []);
+  assert.equal(policy.presentation.level, "preferred");
+  assert.equal(policy.presentation.kinds?.includes("reference-card"), true);
 });
 
 test("buffers a rejected answer and performs only one repair turn", async () => {

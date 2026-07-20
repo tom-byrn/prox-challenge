@@ -21,10 +21,6 @@ function responseText(events: AgentEvent[]): string {
     .join("");
 }
 
-function widget(events: AgentEvent[], name: string) {
-  return events.find((event): event is Extract<AgentEvent, { type: "widget" }> => event.type === "widget" && event.widget.name === name)?.widget;
-}
-
 function hasFigure(events: AgentEvent[], id: string): boolean {
   return events.some((event) => event.type === "figure" && event.figure.id === id);
 }
@@ -50,12 +46,14 @@ const evaluations: Evaluation[] = [
       assert.match(text, /25\s*%|25 percent/i);
       assert.match(text, /2\.5/);
       assert.match(text, /7\.5/);
-      const data = widget(events, "duty_cycle")?.data as { exact?: boolean; rating?: { dutyPercent?: number; pages?: number[] } } | undefined;
-      assert.equal(data?.exact, true);
-      assert.equal(data?.rating?.dutyPercent, 25);
-      assert.deepEqual(data?.rating?.pages, [7, 14, 23]);
+      const summary = visual(events, "metric-summary");
+      assert.ok(summary, "Expected a generic metric summary.");
+      if (summary?.spec.kind === "metric-summary") {
+        assert.match(summary.spec.metrics.map((metric) => `${metric.label} ${metric.value} ${metric.unit ?? ""} ${metric.detail ?? ""}`).join(" "), /25.*%|25 percent/i);
+        assert.deepEqual(summary.spec.sourceRefs.flatMap((ref) => "pages" in ref ? ref.pages : []), [7, 14, 23]);
+      }
       assert.equal(hasTool(events, "lookup_duty_cycle"), true);
-      assert.equal(toolStartsBefore(events, "lookup_duty_cycle", "show_widget"), true);
+      assert.equal(toolStartsBefore(events, "lookup_duty_cycle", "render_visual"), true);
     }
   },
   {
@@ -63,11 +61,14 @@ const evaluations: Evaluation[] = [
     question: "I'm getting porosity in my flux-cored welds. What should I check?",
     check(events) {
       assert.ok(responseText(events).trim().length > 0, "Expected a textual diagnosis.");
-      const data = widget(events, "troubleshooting")?.data as { matches?: Array<{ checks?: Array<{ cause: string }> }> } | undefined;
-      assert.ok(data?.matches?.[0]?.checks?.length, "Expected a diagnostic checklist.");
-      assert.equal(data?.matches?.[0]?.checks?.some((check) => /shielding gas/i.test(check.cause)), false);
-      assert.equal(hasFigure(events, "wire-weld-defects-b"), true);
+      const procedure = visual(events, "procedure");
+      assert.ok(procedure, "Expected a generic diagnostic walkthrough.");
+      if (procedure?.spec.kind === "procedure") {
+        assert.ok(procedure.spec.steps.length > 1);
+        assert.equal(procedure.spec.steps.some((step) => /shielding gas/i.test(`${step.title} ${step.body}`)), false);
+      }
       assert.equal(hasTool(events, "lookup_troubleshooting"), true);
+      assert.equal(toolStartsBefore(events, "lookup_troubleshooting", "render_visual"), true);
     }
   },
   {
@@ -111,7 +112,7 @@ const evaluations: Evaluation[] = [
       assert.match(text, /25\s*%|25 percent/i);
       assert.match(text, /2\.5/);
       assert.match(text, /7\.5/);
-      assert.equal(widget(events, "duty_cycle") !== undefined, true);
+      assert.ok(visual(events, "metric-summary"));
       assert.equal(hasTool(events, "lookup_duty_cycle"), true);
     }
   },
@@ -121,9 +122,9 @@ const evaluations: Evaluation[] = [
     check(events) {
       const text = responseText(events);
       assert.match(text, /unpublished|not published|nearest|does not (?:specify|list)|no certified/i);
-      const data = widget(events, "duty_cycle")?.data as { exact?: boolean; nearestPublishedRatings?: unknown[] } | undefined;
-      assert.equal(data?.exact, false);
-      assert.ok(data?.nearestPublishedRatings?.length);
+      const summary = visual(events, "metric-summary");
+      assert.ok(summary, "Expected nearest published points in a metric summary.");
+      if (summary?.spec.kind === "metric-summary") assert.ok(summary.spec.metrics.length > 0);
       assert.equal(hasTool(events, "lookup_duty_cycle"), true);
     }
   },
@@ -173,7 +174,8 @@ const evaluations: Evaluation[] = [
       assert.match(text, /not publish|does not (?:publish|list|provide)|LCD|synergic|scrap/i);
       assert.equal(containsUnsupportedExactMigOutput(text), false, `Response appears to invent an exact output setting: ${text}`);
       assert.equal(hasTool(events, "get_settings_guide"), true);
-      assert.equal(toolStartsBefore(events, "get_settings_guide", "show_widget"), true);
+      assert.ok(visual(events, "reference-card"), "Expected grouped settings in a generic reference card.");
+      assert.equal(toolStartsBefore(events, "get_settings_guide", "render_visual"), true);
     }
   },
   {

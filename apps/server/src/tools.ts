@@ -20,7 +20,7 @@ import {
   searchSources,
   searchParts
 } from "./knowledge.js";
-import type { EmitEvent, Process, WidgetPayload } from "./types.js";
+import type { EmitEvent, Process } from "./types.js";
 
 const PROCESS_DESCRIPTION = "MIG, self-shielded flux-cored, TIG, or stick";
 const ClarificationOptionsSchema = z.array(z.object({
@@ -33,14 +33,6 @@ const ClarificationOptionsSchema = z.array(z.object({
   }
 });
 
-type WidgetArgs = {
-  name: WidgetPayload["name"];
-  process?: string;
-  inputVoltage?: 120 | 240;
-  amps?: number;
-  symptom?: string;
-};
-
 export type ManualToolContext = {
   originalQuestion: string;
   process?: Process;
@@ -52,33 +44,6 @@ export type ManualToolContext = {
 
 export function resolveToolArgument<T>(requested: T | undefined, userContext: T | undefined): T | undefined {
   return userContext ?? requested;
-}
-
-export function buildWidget(args: WidgetArgs, cachedData?: unknown): WidgetPayload {
-  const { name, process, inputVoltage, amps, symptom } = args;
-  if (cachedData !== undefined) {
-    const title = ({
-      duty_cycle: "Rated duty cycle",
-      polarity: "Cable hookup",
-      troubleshooting: "Diagnostic checklist",
-      settings_guide: "Setup guide"
-    } as const)[name];
-    return { name, title, data: cachedData };
-  }
-  if (name === "duty_cycle") {
-    if (!process || !inputVoltage || !amps) throw new Error("Duty-cycle widget requires process, inputVoltage, and amps.");
-    return { name, title: "Rated duty cycle", data: lookupDutyCycle(process, inputVoltage, amps) };
-  }
-  if (name === "polarity") {
-    if (!process) throw new Error("Polarity widget requires process.");
-    return { name, title: "Cable hookup", data: lookupPolarity(process) };
-  }
-  if (name === "troubleshooting") {
-    if (!symptom) throw new Error("Troubleshooting widget requires a symptom.");
-    return { name, title: "Diagnostic checklist", data: lookupTroubleshooting(symptom, process) };
-  }
-  if (!process) throw new Error("Settings guide requires process.");
-  return { name, title: "Setup guide", data: getSettingsGuide(process) };
 }
 
 function jsonResult(data: unknown) {
@@ -114,7 +79,6 @@ function displayName(toolName: string): string {
     search_parts: "Searching the parts list",
     show_figure: "Opening a manual figure",
     show_source: "Opening source evidence",
-    show_widget: "Building an interactive guide",
     render_visual: "Drawing a source-grounded visual",
     render_artifact: "Rendering an interactive explanation"
   } as Record<string, string>)[toolName] ?? toolName;
@@ -122,7 +86,6 @@ function displayName(toolName: string): string {
 
 export function createManualTools(emit: EmitEvent, context: ManualToolContext = { originalQuestion: "" }) {
   const product = getKnowledgeProductInfo();
-  const lookupCache = new Map<WidgetPayload["name"], unknown>();
   const annotationPreviewState = context.annotationPreviewState ?? { attempts: 0, approvedHashes: new Set<string>() };
   const previewedAnnotations = annotationPreviewState.approvedHashes;
 
@@ -260,7 +223,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "lookup_duty_cycle",
-      "Return certified duty-cycle points for a process, input voltage, and amperage. It never interpolates unpublished values. Flux-cored uses the manual's MIG/wire power ratings.",
+      "Return exact published duty-cycle points for a process, input voltage, and amperage. It never interpolates unpublished values. Flux-cored uses the manual's MIG/wire power ratings. Prefer presenting multi-value results with render_visual metric-summary.",
       {
         process: z.string().describe(PROCESS_DESCRIPTION),
         inputVoltage: z.union([z.literal(120), z.literal(240)]),
@@ -272,7 +235,6 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
           resolveToolArgument(inputVoltage, context.inputVoltage) ?? inputVoltage,
           resolveToolArgument(amps, context.amps) ?? amps
         );
-        lookupCache.set("duty_cycle", data);
         const ratings = data.exact && data.rating ? [data.rating] : (data.nearestPublishedRatings ?? []);
         const pages = [...new Set(ratings.flatMap((rating) => rating.pages))];
         if (ratings.length > 0 && pages.length > 0) {
@@ -287,11 +249,10 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "lookup_polarity",
-      "Return exact socket routing, polarity, gas, and source pages for MIG, self-shielded flux-cored, TIG, or stick.",
+      "Return exact socket routing, polarity, gas, and source pages for MIG, self-shielded flux-cored, TIG, or stick. Present routing with a render_visual connection-diagram when it improves clarity.",
       { process: z.string().describe(PROCESS_DESCRIPTION) },
       instrument("lookup_polarity", async ({ process }) => {
         const data = lookupPolarity(resolveToolArgument(process, context.process) ?? process);
-        lookupCache.set("polarity", data);
         const pageGroups = data.pages as { ownerManual?: number[]; quickStart?: number[] };
         const ownerPages = pageGroups.ownerManual ?? [];
         const quickPages = pageGroups.quickStart ?? [];
@@ -306,11 +267,10 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "lookup_troubleshooting",
-      "Match a symptom against the manual troubleshooting matrix and visual weld-diagnosis guide.",
+      "Match a symptom against the manual troubleshooting matrix and visual weld-diagnosis guide. Prefer a render_visual procedure when several checks should be performed in order.",
       { symptom: z.string().min(2).max(500), process: z.string().optional().describe(PROCESS_DESCRIPTION) },
       instrument("lookup_troubleshooting", async ({ symptom, process }) => {
         const data = lookupTroubleshooting(symptom, resolveToolArgument(process, context.process));
-        lookupCache.set("troubleshooting", data);
         const pages = [...new Set(data.matches.flatMap((match) => match.pages))];
         if (pages.length > 0) {
           await emitEvidence([
@@ -334,11 +294,10 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "get_settings_guide",
-      "Get supported setup inputs and limits for a process. The manuals do not publish the synergic algorithm's full numeric outputs, and this tool says so explicitly.",
+      "Get supported setup inputs and limits for a process. The manuals do not publish the synergic algorithm's full numeric outputs, and this tool says so explicitly. Prefer a render_visual reference-card for grouped setup facts.",
       { process: z.string().describe(PROCESS_DESCRIPTION) },
       instrument("get_settings_guide", async ({ process }) => {
         const data = getSettingsGuide(resolveToolArgument(process, context.process) ?? process);
-        lookupCache.set("settings_guide", data);
         const pages = Array.isArray(data.pages) ? data.pages.filter((page): page is number => typeof page === "number") : [];
         await emitEvidence([structuredRef("settings-guide", [data.mode.process], pages), documentRef("owner-manual", pages)]);
         return jsonResult(data);
@@ -413,31 +372,8 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       { alwaysLoad: true }
     ),
     tool(
-      "show_widget",
-      "Display a certified deterministic calculator or checklist for duty cycle, troubleshooting, or settings guidance. For spatial relationships such as cable routing, compose a dynamic connection-diagram with render_visual instead.",
-      {
-        name: z.enum(["duty_cycle", "troubleshooting", "settings_guide"]),
-        process: z.string().optional().describe(PROCESS_DESCRIPTION),
-        inputVoltage: z.union([z.literal(120), z.literal(240)]).optional(),
-        amps: z.number().positive().optional(),
-        symptom: z.string().max(500).optional()
-      },
-      instrument("show_widget", async ({ name, process, inputVoltage, amps, symptom }) => {
-        const widget = buildWidget({
-          name,
-          process: resolveToolArgument(process, context.process),
-          inputVoltage: resolveToolArgument(inputVoltage, context.inputVoltage),
-          amps: resolveToolArgument(amps, context.amps),
-          symptom
-        }, lookupCache.get(name));
-        await emit({ type: "widget", widget });
-        return jsonResult({ displayed: true, widget: name });
-      }),
-      { alwaysLoad: true }
-    ),
-    tool(
       "render_visual",
-      "Render a dynamic, source-grounded visual from semantic JSON. This is the generic presentation tool: use connection-diagram for relationships and cable/flow routing, annotated-image to explain an inspected figure, page, or current user upload, procedure for ordered physical actions, or comparison for side-by-side choices. Do not invent facts to fill a visual.",
+      "Render a dynamic, source-grounded visual from semantic JSON. Use metric-summary for compact numeric facts, reference-card for grouped reference facts, connection-diagram for relationships and routing, annotated-image to explain an inspected figure/page/current upload, procedure for ordered actions, or comparison for side-by-side choices. Do not invent facts to fill a visual.",
       { spec: VisualSpecSchema },
       instrument("render_visual", async ({ spec }) => {
         if (spec.kind === "annotated-image" && !previewedAnnotations.has(visualSpecHash(spec))) {
@@ -452,7 +388,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "render_artifact",
-      "Display a novel interactive single-file HTML explanation when a prebuilt widget cannot express an important multi-step relationship. Inline CSS/JS only; no external URLs, images, fonts, forms, storage, or network calls.",
+      "Display a novel interactive single-file HTML explanation when the generic visual language cannot express an important interaction. Inline CSS/JS only; no external URLs, images, fonts, forms, storage, or network calls.",
       { title: z.string().min(2).max(100), html: z.string().min(100).max(80_000) },
       instrument("render_artifact", async ({ title, html }) => {
         const forbidden = /<(?:iframe|object|embed|base)\b|https?:\/\/|fetch\s*\(|XMLHttpRequest|WebSocket|localStorage|sessionStorage/iu;
@@ -464,7 +400,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     )
   ];
 
-  const specializedNames = new Set(["lookup_duty_cycle", "lookup_polarity", "lookup_troubleshooting", "get_specs", "get_settings_guide", "search_parts", "show_widget"]);
+  const specializedNames = new Set(["lookup_duty_cycle", "lookup_polarity", "lookup_troubleshooting", "get_specs", "get_settings_guide", "search_parts"]);
   const runtimeTools = product.hasOmniProAdapter ? tools : tools.filter((candidate) => !specializedNames.has(candidate.name));
   return createSdkMcpServer({
     name: "knowledge-runtime",
@@ -486,6 +422,6 @@ const GENERIC_TOOL_NAMES = [
   "render_visual",
   "render_artifact"
 ];
-const OMNIPRO_TOOL_NAMES = ["lookup_duty_cycle", "lookup_polarity", "lookup_troubleshooting", "get_specs", "get_settings_guide", "search_parts", "show_widget"];
+const OMNIPRO_TOOL_NAMES = ["lookup_duty_cycle", "lookup_polarity", "lookup_troubleshooting", "get_specs", "get_settings_guide", "search_parts"];
 export const MANUAL_TOOL_NAMES = [...GENERIC_TOOL_NAMES, ...(getKnowledgeProductInfo().hasOmniProAdapter ? OMNIPRO_TOOL_NAMES : [])]
   .map((name) => `mcp__knowledge-runtime__${name}`);

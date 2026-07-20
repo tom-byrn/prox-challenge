@@ -2,6 +2,7 @@
   "name": "arcwell-omnipro-agent",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*"
   ],
@@ -23,6 +24,6 @@
     "concurrently": "^9.2.1"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }

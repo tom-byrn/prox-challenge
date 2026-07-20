@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Columns3, Eye, EyeOff, ListChecks, ScanSearch, Waypoints } from "lucide-react";
-import type { VisualPayload, VisualSourceRef } from "../../visual-spec";
+import { Columns3, Eye, EyeOff, Gauge, ListChecks, PanelsTopLeft, ScanSearch, Waypoints } from "lucide-react";
+import type { ProcedureSpec, VisualPayload, VisualSourceRef } from "../../visual-spec";
 import { AnnotatedImageVisual } from "./AnnotatedImageVisual";
 import { ComparisonVisual } from "./ComparisonVisual";
 import { ConnectionDiagramVisual } from "./ConnectionDiagramVisual";
+import { MetricSummaryVisual } from "./MetricSummaryVisual";
 import { ProcedureVisual } from "./ProcedureVisual";
+import { ReferenceCardVisual } from "./ReferenceCardVisual";
 
 function sourceLabel(ref: VisualSourceRef): string {
   if (ref.kind === "figure") return `Manual figure · ${ref.figureId}`;
@@ -29,10 +31,12 @@ function VisualIcon({ kind }: { kind: VisualPayload["spec"]["kind"] }) {
   if (kind === "annotated-image") return <ScanSearch size={17} />;
   if (kind === "connection-diagram") return <Waypoints size={17} />;
   if (kind === "procedure") return <ListChecks size={17} />;
-  return <Columns3 size={17} />;
+  if (kind === "comparison") return <Columns3 size={17} />;
+  if (kind === "metric-summary") return <Gauge size={17} />;
+  return <PanelsTopLeft size={17} />;
 }
 
-export function VisualRenderer({ visual, onStepHelp, stepHelpDisabled }: { visual: VisualPayload; onStepHelp: (stepNumber: number) => void; stepHelpDisabled: boolean }) {
+export function VisualRenderer({ visual, onStepHelp, stepHelpDisabled }: { visual: VisualPayload; onStepHelp: (stepNumber: number, step: ProcedureSpec["steps"][number]) => void; stepHelpDisabled: boolean }) {
   const { spec } = visual;
   const [showAnnotations, setShowAnnotations] = useState(() => visual.assets.some((asset) => asset.source === "user-photo"));
   const annotationOverlayId = `annotation-overlay-${visual.id}`;
@@ -65,6 +69,8 @@ export function VisualRenderer({ visual, onStepHelp, stepHelpDisabled }: { visua
       {spec.kind === "connection-diagram" ? <ConnectionDiagramVisual spec={spec} visualId={visual.id} /> : null}
       {spec.kind === "procedure" ? <ProcedureVisual spec={spec} onStepHelp={onStepHelp} helpDisabled={stepHelpDisabled} /> : null}
       {spec.kind === "comparison" ? <ComparisonVisual spec={spec} /> : null}
+      {spec.kind === "metric-summary" ? <MetricSummaryVisual spec={spec} /> : null}
+      {spec.kind === "reference-card" ? <ReferenceCardVisual spec={spec} /> : null}
 
       <footer className="visual-sources">
         <strong>Sources</strong>

@@ -3,17 +3,42 @@ import { createManualTools, MANUAL_TOOL_NAMES, type ManualToolContext } from "./
 import { getUploadedPhoto } from "./photos.js";
 import { SYSTEM_PROMPT } from "./prompt.js";
 import { makeRepairPrompt, validateAgentResponse } from "./response-validator.js";
-import { ampsFromMessage, getTurnPolicy, inputVoltageFromMessage, processFromMessage } from "./turn-policy.js";
+import { ampsFromMessage, getTurnPolicy, inputVoltageFromMessage, processFromMessage, type TurnPolicy } from "./turn-policy.js";
 import type { AgentEvent, EmitEvent, PhotoAttachment, TurnMetrics } from "./types.js";
 
 export type AgentTurnInput = {
   message: string;
   sessionId?: string;
+  conversationContext?: Array<{ role: "user" | "assistant"; content: string }>;
   photo?: PhotoAttachment;
   emit: EmitEvent;
   signal?: AbortSignal;
   queryAgent?: typeof query;
 };
+
+function promptWithConversationContext(
+  message: string,
+  conversationContext?: Array<{ role: "user" | "assistant"; content: string }>
+): string {
+  if (!conversationContext?.length) return message;
+  return [
+    "Use this bounded recent conversation transcript only as context for the current request.",
+    JSON.stringify(conversationContext),
+    "Current user request:",
+    message
+  ].join("\n\n");
+}
+
+function promptWithPresentationGuidance(message: string, policy: TurnPolicy): string {
+  const kinds = policy.presentation.kinds?.join(", ");
+  if (policy.presentation.level === "required") {
+    return `${message}\n\n<presentation-guidance>A visual presentation is required for this request.${kinds ? ` Prefer these generic visual kinds when appropriate: ${kinds}.` : ""} ${policy.presentation.reason ?? ""}</presentation-guidance>`;
+  }
+  if (policy.presentation.level === "preferred") {
+    return `${message}\n\n<presentation-guidance>Prefer a useful visual over a dense text-only answer.${kinds ? ` Suitable generic visual kinds: ${kinds}.` : ""} ${policy.presentation.reason ?? ""} Use concise text alone only when a visual would not improve comprehension.</presentation-guidance>`;
+  }
+  return `${message}\n\n<presentation-guidance>Lead with concise text for a simple fact, but still use a generic visual when it would materially improve scanning, comparison, sequence, or spatial understanding.</presentation-guidance>`;
+}
 
 export function multimodalPrompt(message: string, photo?: { attachment: PhotoAttachment; image: Buffer }): string | AsyncIterable<SDKUserMessage> {
   if (!photo) return message;
@@ -199,7 +224,7 @@ async function runAttempt({
   }
 }
 
-export async function runAgentTurn({ message, sessionId, photo, emit, signal, queryAgent = query }: AgentTurnInput) {
+export async function runAgentTurn({ message, sessionId, conversationContext, photo, emit, signal, queryAgent = query }: AgentTurnInput) {
   const turnStartedAt = Date.now();
   const policy = getTurnPolicy(message, { hasPhoto: Boolean(photo) });
   const uploadedPhoto = photo ? await getUploadedPhoto(photo.id) : undefined;
@@ -215,7 +240,7 @@ export async function runAgentTurn({ message, sessionId, photo, emit, signal, qu
   signal?.addEventListener("abort", () => abortController.abort(), { once: true });
   const model = process.env.CLAUDE_MODEL?.trim() || "claude-sonnet-4-6";
   const firstAttempt = await runAttempt({
-    prompt: message,
+    prompt: promptWithPresentationGuidance(promptWithConversationContext(message, conversationContext), policy),
     resume: sessionId,
     repair: false,
     emit,
@@ -248,7 +273,7 @@ export async function runAgentTurn({ message, sessionId, photo, emit, signal, qu
   if (validationIssues.length > 0 && !abortController.signal.aborted) {
     repaired = true;
     const repairAttempt = await runAttempt({
-      prompt: makeRepairPrompt(message, validationIssues),
+      prompt: promptWithPresentationGuidance(makeRepairPrompt(message, validationIssues), policy),
       resume: firstAttempt.sessionId,
       repair: true,
       emit,

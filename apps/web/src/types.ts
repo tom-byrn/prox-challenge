@@ -10,6 +10,7 @@ export type FigurePayload = {
   pages: number[];
 };
 
+/** Legacy saved-chat payload. New responses use generic VisualPayload parts. */
 export type WidgetPayload = {
   name: "duty_cycle" | "polarity" | "troubleshooting" | "settings_guide";
   title: string;

@@ -13,6 +13,7 @@ export type ConversationSummary = {
 };
 
 export type TelemetrySummary = {
+  storage?: "sqlite" | "turso" | "disabled";
   sampledTurns: number;
   totals: {
     costUsd: number;
@@ -77,17 +78,21 @@ export async function loadTelemetrySummary(ownerId: string, signal?: AbortSignal
 export function useChatPersistence() {
   const [ownerId] = useState(readOwnerId);
   const [conversations, setConversations] = useState<ConversationSummary[]>();
+  const [persistenceAvailable, setPersistenceAvailable] = useState<boolean>();
   const [storageError, setStorageError] = useState<string>();
 
   const refreshConversations = useCallback(async (signal?: AbortSignal) => {
     try {
       const query = new URLSearchParams({ ownerId, limit: "100" });
-      const result = await responseJson<{ conversations: ConversationSummary[] }>(await fetch(`/api/chats?${query}`, { signal }));
+      const result = await responseJson<{ conversations: ConversationSummary[]; storage?: "sqlite" | "turso" | "disabled" }>(await fetch(`/api/chats?${query}`, { signal }));
       setConversations(result.conversations);
+      setPersistenceAvailable(result.storage !== "disabled");
       setStorageError(undefined);
     } catch (error) {
       if ((error as Error).name === "AbortError") return;
-      setStorageError(error instanceof Error ? error.message : "Local chat storage is unavailable.");
+      setConversations([]);
+      setPersistenceAvailable(false);
+      setStorageError(error instanceof Error ? error.message : "Chat storage is unavailable.");
     }
   }, [ownerId]);
 
@@ -127,27 +132,34 @@ export function useChatPersistence() {
     message: ChatMessage;
   }) => {
     try {
-      await responseJson(await fetch(`/api/chats/${encodeURIComponent(conversationId)}/messages`, {
+      const result = await responseJson<{ persisted?: boolean; storage?: "sqlite" | "turso" | "disabled" }>(await fetch(`/api/chats/${encodeURIComponent(conversationId)}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ownerId, title, sessionId, messageId: message.id, sequence, payload: message })
       }));
+      if (result.storage === "disabled" || result.persisted === false) {
+        setPersistenceAvailable(false);
+        setStorageError(undefined);
+        return;
+      }
+      setPersistenceAvailable(true);
       setStorageError(undefined);
       await refreshConversations();
     } catch (error) {
-      setStorageError(error instanceof Error ? error.message : "This chat could not be saved locally.");
+      setStorageError(error instanceof Error ? error.message : "This chat could not be saved.");
     }
   }, [ownerId, refreshConversations]);
 
   const removeConversation = useCallback(async (conversationId: string) => {
     try {
       const query = new URLSearchParams({ ownerId });
-      const result = await responseJson<{ removed: boolean }>(await fetch(`/api/chats/${encodeURIComponent(conversationId)}?${query}`, { method: "DELETE" }));
+      const result = await responseJson<{ removed: boolean; storage?: "sqlite" | "turso" | "disabled" }>(await fetch(`/api/chats/${encodeURIComponent(conversationId)}?${query}`, { method: "DELETE" }));
+      if (result.storage === "disabled") setPersistenceAvailable(false);
       setStorageError(undefined);
       await refreshConversations();
       return result.removed;
     } catch (error) {
-      setStorageError(error instanceof Error ? error.message : "This chat could not be deleted locally.");
+      setStorageError(error instanceof Error ? error.message : "This chat could not be deleted.");
       return false;
     }
   }, [ownerId, refreshConversations]);
@@ -164,15 +176,16 @@ export function useChatPersistence() {
     metrics: TurnMetrics;
   }) => {
     try {
-      await responseJson(await fetch("/api/telemetry", {
+      const result = await responseJson<{ persisted?: boolean; storage?: "sqlite" | "turso" | "disabled" }>(await fetch("/api/telemetry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ownerId, conversationId, messageId, conversationTitle, metrics })
       }));
+      if (result.storage === "disabled" || result.persisted === false) setPersistenceAvailable(false);
     } catch (error) {
       setStorageError(error instanceof Error ? error.message : "Telemetry could not be saved locally.");
     }
   }, [ownerId]);
 
-  return { conversations, loadConversation, ownerId, recordTelemetry, removeConversation, saveMessage, storageError };
+  return { conversations, loadConversation, ownerId, persistenceAvailable, recordTelemetry, removeConversation, saveMessage, storageError };
 }

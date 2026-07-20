@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "nameplate-duty-cycle-ratings",
+  "records": [
+    {
+      "id": "240v-r1-25pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "30A/15.5V to 220A/25V",
+        "duty_cycle_pct": 25,
+        "i2_a": 200,
+        "u2_v": 24
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r1-60pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "30A/15.5V to 220A/25V",
+        "duty_cycle_pct": 60,
+        "i2_a": 130,
+        "u2_v": 20.5
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r1-100pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "30A/15.5V to 220A/25V",
+        "duty_cycle_pct": 100,
+        "i2_a": 115,
+        "u2_v": 19.75
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r2-25pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "10A/20.4V to 175A/27V",
+        "duty_cycle_pct": 25,
+        "i2_a": 175,
+        "u2_v": 27
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r2-60pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "10A/20.4V to 175A/27V",
+        "duty_cycle_pct": 60,
+        "i2_a": 115,
+        "u2_v": 24.6
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r2-100pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "10A/20.4V to 175A/27V",
+        "duty_cycle_pct": 100,
+        "i2_a": 100,
+        "u2_v": 24
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r3-30pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "10A/10.4V to 175A/17V",
+        "duty_cycle_pct": 30,
+        "i2_a": 175,
+        "u2_v": 17
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r3-60pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "10A/10.4V to 175A/17V",
+        "duty_cycle_pct": 60,
+        "i2_a": 125,
+        "u2_v": 15
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r3-100pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "10A/10.4V to 175A/17V",
+        "duty_cycle_pct": 100,
+        "i2_a": 105,
+        "u2_v": 14.2
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r4-40pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "30A/15.5V to 140A/21V",
+        "duty_cycle_pct": 40,
+        "i2_a": 100,
+        "u2_v": 19
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r4-60pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "30A/15.5V to 140A/21V",
+        "duty_cycle_pct": 60,
+        "i2_a": 85,
+        "u2_v": 18.25
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "240v-r4-100pct",
+      "values": {
+        "input_voltage": "240V",
+        "output_range": "30A/15.5V to 140A/21V",
+        "duty_cycle_pct": 100,
+        "i2_a": 75,
+        "u2_v": 17.75
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "120v-r1-40pct",
+      "values": {
+        "input_voltage": "120V",
+        "output_range": "10A/20.4V to 80A/23.2V",
+        "duty_cycle_pct": 40,
+        "i2_a": 80,
+        "u2_v": 23.2
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "120v-r1-60pct",
+      "values": {
+        "input_voltage": "120V",
+        "output_range": "10A/20.4V to 80A/23.2V",
+        "duty_cycle_pct": 60,
+        "i2_a": 70,
+        "u2_v": 22.8
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "120v-r1-100pct",
+      "values": {
+        "input_voltage": "120V",
+        "output_range": "10A/20.4V to 80A/23.2V",
+        "duty_cycle_pct": 100,
+        "i2_a": 60,
+        "u2_v": 22.4
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "120v-r2-40pct",
+      "values": {
+        "input_voltage": "120V",
+        "output_range": "10A/10.4V to 125A/15V",
+        "duty_cycle_pct": 40,
+        "i2_a": 125,
+        "u2_v": 15
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "120v-r2-60pct",
+      "values": {
+        "input_voltage": "120V",
+        "output_range": "10A/10.4V to 125A/15V",
+        "duty_cycle_pct": 60,
+        "i2_a": 105,
+        "u2_v": 14.2
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    },
+    {
+      "id": "120v-r2-100pct",
+      "values": {
+        "input_voltage": "120V",
+        "output_range": "10A/10.4V to 125A/15V",
+        "duty_cycle_pct": 100,
+        "i2_a": 90,
+        "u2_v": 13.6
+      },
+      "evidence": [
+        {
+          "documentId": "owner-manual",
+          "page": 14
+        }
+      ]
+    }
+  ]
+}

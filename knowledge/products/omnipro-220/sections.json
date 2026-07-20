@@ -1,0 +1,329 @@
+[
+  {
+    "id": "safety",
+    "documentId": "owner-manual",
+    "title": "Safety",
+    "startPage": 2,
+    "endPage": 6,
+    "summary": "Comprehensive safety section covering warning symbols and definitions, general safety rules, fume and gas safety (inhalation hazards, ventilation requirements), arc ray safety (PPE requirements), electrical safety (electric shock prevention, grounding, GFCI), fire safety (arc and slag hazards, fire prevention), welder use and care rules, maintenance safety precautions, gas-shielded welding cylinder safety, grounding instructions, symbology icon reference, and extension cord / replacement cord guidance. Also contains the Table of Contents.",
+    "headingEvidence": [
+      {
+        "page": 2,
+        "text": "Table of Contents"
+      },
+      {
+        "page": 2,
+        "text": "IMPORTANT SAFETY INFORMATION"
+      },
+      {
+        "page": 2,
+        "text": "General Safety"
+      },
+      {
+        "page": 3,
+        "text": "Fume and Gas Safety"
+      },
+      {
+        "page": 3,
+        "text": "Arc Ray Safety"
+      },
+      {
+        "page": 4,
+        "text": "Electrical Safety"
+      },
+      {
+        "page": 4,
+        "text": "Fire Safety"
+      },
+      {
+        "page": 5,
+        "text": "Welder Use and Care"
+      },
+      {
+        "page": 5,
+        "text": "Gas Shielded Welding - Cylinder Safety"
+      },
+      {
+        "page": 6,
+        "text": "Grounding"
+      },
+      {
+        "page": 6,
+        "text": "Symbology"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "specifications",
+    "documentId": "owner-manual",
+    "title": "Specifications",
+    "startPage": 7,
+    "endPage": 7,
+    "summary": "Technical specifications for all three welding processes. MIG: 120/240 VAC input, 30–140 A (120 V) or 30–220 A (240 V) range, 40% duty cycle at 100 A or 25% at 200 A, 50–500 IPM wire speed, up to 12 lb spool, solid/flux-cored wire sizes, aluminum capable with optional spool gun. TIG: 10–125 A (120 V) or 10–175 A (240 V), rated duty cycles 40%/30%. Stick: 10–80 A (120 V) or 10–175 A (240 V), rated duty cycles 40%/25%. Maximum OCV 86 VDC for all processes.",
+    "headingEvidence": [
+      {
+        "page": 7,
+        "text": "Specifications"
+      },
+      {
+        "page": 7,
+        "text": "MIG"
+      },
+      {
+        "page": 7,
+        "text": "TIG"
+      },
+      {
+        "page": 7,
+        "text": "Stick"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "controls",
+    "documentId": "owner-manual",
+    "title": "Controls",
+    "startPage": 8,
+    "endPage": 9,
+    "summary": "Labeled diagrams of all welder controls. Front panel controls include: Power Switch, LCD Display, Left Knob, Right Knob, Control Knob, Home Button, Back Button, MIG Gun/Spool Gun Cable Socket, Negative Socket, Positive Socket, Spool Gun Gas Outlet, Wire Feed Power Cable, and Storage Compartment. Interior controls (accessed through the door) include: Cold Wire Feed Switch, Idler Arm, Wire Feed Mechanism, Wire Spool, Spool Knob, Feed Tensioner, Wire Inlet Liner, Feed Roller Knob, Wire Feed Control Socket, and Foot Pedal Socket.",
+    "headingEvidence": [
+      {
+        "page": 8,
+        "text": "Controls"
+      },
+      {
+        "page": 8,
+        "text": "Front Panel Controls"
+      },
+      {
+        "page": 9,
+        "text": "Interior Controls"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "mig-flux-cored-wire-welding",
+    "documentId": "owner-manual",
+    "title": "MIG / Flux-Cored Wire Welding",
+    "startPage": 10,
+    "endPage": 23,
+    "summary": "Complete setup and operating guide for MIG and flux-cored wire welding. Covers wire spool installation for 1–2 lb and 10–12 lb spools, feed roller selection and installation (solid-core V-groove vs. flux-cored knurled groove, wire size matching), gun cable connector and wire feed control cable connection, DCEN and DCEP polarity setup, shielding gas connection, wire threading, feed tension adjustment, MIG gun assembly, LCD display navigation, process selection, settings charts for various materials and thicknesses, and operating procedures for both gas-shielded MIG and gasless flux-cored welding.",
+    "headingEvidence": [
+      {
+        "page": 10,
+        "text": "MIG / Flux-Cored Wire Welding"
+      },
+      {
+        "page": 10,
+        "text": "Wire Spool Installation / Wire Setup"
+      },
+      {
+        "page": 10,
+        "text": "1-2 lb Spool Loading"
+      },
+      {
+        "page": 11,
+        "text": "10-12 lb Spool Loading"
+      },
+      {
+        "page": 12,
+        "text": "Feed Roller Instructions:"
+      },
+      {
+        "page": 13,
+        "text": "DCEN \nFlux-Cored (Gasless) \nPolarity Setup"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "tig-stick-welding",
+    "documentId": "owner-manual",
+    "title": "TIG / Stick Welding",
+    "startPage": 24,
+    "endPage": 33,
+    "summary": "Setup and operating procedures for TIG (DCEN: TIG torch cable in Negative Socket, ground clamp in Positive Socket) and Stick welding modes. Covers TIG torch and foot pedal socket connections, shielding gas hose connection, LCD display settings for TIG process selection, foot pedal operation, electrode preparation, and arc initiation. Stick welding setup covers electrode holder connection, electrode selection, polarity, and operating techniques. Includes settings references for both processes.",
+    "headingEvidence": [
+      {
+        "page": 24,
+        "text": "TIG / Stick Welding"
+      },
+      {
+        "page": 24,
+        "text": "TIG Setup"
+      },
+      {
+        "page": 24,
+        "text": "Connect Cables"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "welding-tips",
+    "documentId": "owner-manual",
+    "title": "Welding Tips",
+    "startPage": 34,
+    "endPage": 40,
+    "summary": "Practical guidance for evaluating and improving weld quality. Topics include: the Strike Test procedure for assessing weld integrity on scrap material; weld cleaning methods (chipping hammer for slag, wire brush, angle grinder); wire weld diagnosis charts covering heat control and penetration (excess penetration/burn-through vs. inadequate penetration); and example wire weld diagrams diagnosing common problems such as incorrect voltage, wire feed speed, travel speed, contact-tip-to-work distance (CTWD), and wrong polarity, with corrective actions for each.",
+    "headingEvidence": [
+      {
+        "page": 34,
+        "text": "Welding Tips"
+      },
+      {
+        "page": 34,
+        "text": "Strike Test"
+      },
+      {
+        "page": 34,
+        "text": "Cleaning the Weld"
+      },
+      {
+        "page": 35,
+        "text": "Wire Weld Diagnosis – Workpiece Heat Control / Weld Penetration"
+      },
+      {
+        "page": 35,
+        "text": "Example Wire Weld Diagrams"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "maintenance",
+    "documentId": "owner-manual",
+    "title": "Maintenance",
+    "startPage": 41,
+    "endPage": 45,
+    "summary": "Routine maintenance procedures and troubleshooting tables. Maintenance covers: pre-use inspection checklist (hardware, cables, moving parts), periodic interior dust removal with compressed air, post-use storage, MIG gun nozzle and contact tip inspection/cleaning/replacement (9-step procedure), and LCD screen cover replacement. Troubleshooting tables for MIG/Flux-Cored welding address wire-not-feeding, bird's nest formation, wire stopping during welding, unstable arc, and weak arc strength. Additional troubleshooting covers TIG/Stick issues. Each problem lists possible causes and likely solutions.",
+    "headingEvidence": [
+      {
+        "page": 41,
+        "text": "Maintenance"
+      },
+      {
+        "page": 41,
+        "text": "MIG Gun Nozzle and Contact Tip Inspection and Cleaning"
+      },
+      {
+        "page": 41,
+        "text": "Replacing the LCD Screen Cover"
+      },
+      {
+        "page": 42,
+        "text": "Troubleshooting – MIG / Flux-Cored Welding"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "parts-list-and-diagram",
+    "documentId": "owner-manual",
+    "title": "Parts List and Diagram",
+    "startPage": 46,
+    "endPage": 47,
+    "summary": "Numbered parts list of 61 components with descriptions and quantities, covering all internal and external assemblies (covers, PCBs, wire feeder, spool, display, torch, cables, power cords, IGBTs, rectifiers, fans, transformer, solenoid valves, etc.). Accompanied by a labeled assembly diagram on page 47 keyed to the same part numbers. Disclaimer states the parts list is for reference only and repairs must be performed by certified technicians. UPC 193175422590 specified for ordering parts.",
+    "headingEvidence": [
+      {
+        "page": 46,
+        "text": "Parts List and Diagram"
+      },
+      {
+        "page": 46,
+        "text": "Parts List"
+      },
+      {
+        "page": 47,
+        "text": "Assembly Diagram"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "warranty",
+    "documentId": "owner-manual",
+    "title": "Warranty",
+    "startPage": 48,
+    "endPage": 48,
+    "summary": "Limited 90-Day Warranty from Harbor Freight Tools Co. covering defects in materials and workmanship for the original purchaser from date of purchase. Exclusions include misuse, abuse, negligence, accidents, unauthorized repairs, criminal activity, improper installation, normal wear and tear, and lack of maintenance. Liability for consequential or incidental damages is disclaimed. Return procedure requires prepaid shipping, proof of purchase date, and description of defect; remedy is repair, replacement, or refund at the manufacturer's election.",
+    "headingEvidence": [
+      {
+        "page": 48,
+        "text": "Limited 90 Day Warranty"
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "wire-feed-setup-steps",
+    "documentId": "quick-start",
+    "title": "Wire Feed Setup and Initial Power-On Steps",
+    "startPage": 1,
+    "endPage": 1,
+    "summary": "Six illustrated steps covering the complete initial setup sequence for flux-core/wire feed welding: (1) connect cables for flux wire welding; (2) install the wire spool, thread welding wire through both feed guides, and clamp into the feed mechanism; (3) remove nozzle and contact tip, plug the selected cord into the welder and wall, power on, and press the cold wire feed switch until wire emerges; (4) incrementally tighten the wire feed tension knob clockwise until wire bends at 2″–3″; (5) unplug the welder and replace the nozzle and tip; (6) hold the gun clear of the workpiece, plug in the welder, power on, and set weld thickness and other settings. Also includes a labeled 2 lb spool loading diagram (wingnut, spacer, spindle, brake pad, wire spool) with a note that an adapter and knob are required for 10–12 lb spools. Two safety warnings are prominent: read manual warnings before use, and keep torch and wire clear of grounded objects while the welder is plugged in.",
+    "headingEvidence": [
+      {
+        "page": 1,
+        "text": "VULCAN OMNIPRO 220 QUICK START GUIDE",
+        "visualOnly": true
+      },
+      {
+        "page": 1,
+        "text": "2 lb Spool Loading",
+        "visualOnly": false
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "cable-setup-configurations",
+    "documentId": "quick-start",
+    "title": "Cable Setup Configurations (Stick, MIG, Flux, TIG)",
+    "startPage": 2,
+    "endPage": 2,
+    "summary": "Four illustrated cable connection configurations, each showing numbered callouts on a diagram of the welder's terminal panel. Stick cable setup (3 steps): connect ground clamp to negative terminal, electrode holder to positive terminal, leave wire feed power disconnected. MIG cable setup (4 steps): connect ground clamp to negative terminal, wire feed power to positive terminal, MIG gun to wire feed, wire feed control inside the welder. Flux cable setup: follow MIG cable setup but reverse polarity — ground clamp to positive terminal and wire feed power to negative terminal. TIG cable setup (5 steps): connect ground clamp to positive terminal, TIG torch to negative terminal, gas line to gas regulator, foot pedal inside the welder, leave wire feed power disconnected.",
+    "headingEvidence": [
+      {
+        "page": 2,
+        "text": "STICK CABLE SETUP",
+        "visualOnly": true
+      },
+      {
+        "page": 2,
+        "text": "MIG CABLE SETUP",
+        "visualOnly": true
+      },
+      {
+        "page": 2,
+        "text": "FLUX CABLE SETUP",
+        "visualOnly": true
+      },
+      {
+        "page": 2,
+        "text": "TIG CABLE SETUP",
+        "visualOnly": true
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  },
+  {
+    "id": "welder-selection-chart",
+    "documentId": "selection-chart",
+    "title": "How to Choose a Welder",
+    "startPage": 1,
+    "endPage": 1,
+    "summary": "Single-page visual decision chart that guides a user through six criteria — (1) skill level (Low / Moderate / High), (2) shielding-gas requirement, (3) material type, (4) material thickness, (5) typical applications, and (6) desired weld cleanliness — to recommend one of four welding processes: Flux-Cored/FCAW (no gas, forgiving on dirty steel, 18 ga – 5/16 in), MIG/GMAW (gas required, easiest to learn, 22 ga – 3/8 in), Stick/SMAW (no gas, outdoor/windy, 10 ga – 1/2 in), or TIG/GTAW (gas required, highest quality, 24 ga – 3/16 in). A sidebar table compares MIG vs. Flux-Cored wire on six attributes (cored wire, solid wire, shielding gas, welds over mill scale/rust, minimal surface prep, outdoor use, deep penetration, handles material gaps, thin materials). A second sidebar explains the Duty Cycle concept using a 165 A @ 30% example (3 minutes welding / 7 minutes resting). The chart also prompts the user to identify input voltage: 120 V or 240 V.",
+    "headingEvidence": [
+      {
+        "page": 1,
+        "text": "HOW TO CHOOSE A WELDER",
+        "visualOnly": true
+      }
+    ],
+    "generatedBy": "run-omnipro-20260719"
+  }
+]
