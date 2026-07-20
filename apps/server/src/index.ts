@@ -9,6 +9,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { runAgentTurn } from "./agent.js";
+import { ArtifactContextSchema } from "./artifacts.js";
 import {
   ACCESS_COOKIE_MAX_AGE_SECONDS,
   ACCESS_COOKIE_NAME,
@@ -32,14 +33,14 @@ type ChatStorageMode = "sqlite" | "turso" | "disabled";
 type PhotoStorageMode = "local" | "disabled";
 
 function configuredChatStorageMode(): ChatStorageMode {
-  const configured = process.env.ARCWELL_CHAT_STORAGE?.trim().toLowerCase();
+  const configured = process.env.PROX_CHAT_STORAGE?.trim().toLowerCase();
   if (configured === "sqlite" || configured === "turso" || configured === "disabled") return configured;
   if (!process.env.VERCEL) return "sqlite";
   return process.env.TURSO_DATABASE_URL?.trim() && process.env.TURSO_AUTH_TOKEN?.trim() ? "turso" : "disabled";
 }
 
 function configuredPhotoStorageMode(): PhotoStorageMode {
-  const configured = process.env.ARCWELL_PHOTO_STORAGE?.trim().toLowerCase();
+  const configured = process.env.PROX_PHOTO_STORAGE?.trim().toLowerCase();
   if (configured === "local" || configured === "disabled") return configured;
   return process.env.VERCEL ? "disabled" : "local";
 }
@@ -298,7 +299,8 @@ const ChatRequest = z.object({
   conversationContext: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string().trim().min(1).max(8_000)
-  })).max(12).optional()
+  })).max(12).optional(),
+  artifacts: z.array(ArtifactContextSchema).max(4).optional()
 });
 
 app.post("/api/chat", async (context) => {
@@ -331,6 +333,7 @@ app.post("/api/chat", async (context) => {
         message: parsed.data.message,
         sessionId: process.env.VERCEL ? undefined : parsed.data.sessionId,
         conversationContext: process.env.VERCEL ? parsed.data.conversationContext : undefined,
+        artifacts: parsed.data.artifacts,
         photo,
         emit,
         signal: abortController.signal
@@ -374,7 +377,7 @@ if (existsSync(webDist)) {
 const port = Number(process.env.PORT ?? 3000);
 if (!process.env.VERCEL) {
   serve({ fetch: app.fetch, port }, (info) => {
-    console.log(`Arcwell server listening on http://localhost:${info.port}`);
+    console.log(`OmniPro assistant server listening on http://localhost:${info.port}`);
   });
 }
 

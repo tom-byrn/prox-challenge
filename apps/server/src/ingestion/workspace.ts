@@ -6,7 +6,7 @@ import { SafeIdSchema } from "./schemas.js";
 import type { IngestionWorkspace } from "./types.js";
 
 export const REPOSITORY_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
-export const DEFAULT_STAGING_ROOT = join(REPOSITORY_ROOT, ".arcwell", "ingestion");
+export const DEFAULT_STAGING_ROOT = join(REPOSITORY_ROOT, ".prox", "ingestion");
 export const DEFAULT_PRODUCTS_ROOT = join(REPOSITORY_ROOT, "knowledge", "products");
 
 export function slugifyId(value: string): string {

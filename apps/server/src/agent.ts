@@ -1,4 +1,5 @@
 import { query, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { ArtifactContext } from "./artifacts.js";
 import { createManualTools, MANUAL_TOOL_NAMES, type ManualToolContext } from "./tools.js";
 import { getUploadedPhoto } from "./photos.js";
 import { SYSTEM_PROMPT } from "./prompt.js";
@@ -10,6 +11,7 @@ export type AgentTurnInput = {
   message: string;
   sessionId?: string;
   conversationContext?: Array<{ role: "user" | "assistant"; content: string }>;
+  artifacts?: ArtifactContext[];
   photo?: PhotoAttachment;
   emit: EmitEvent;
   signal?: AbortSignal;
@@ -25,6 +27,16 @@ function promptWithConversationContext(
     "Use this bounded recent conversation transcript only as context for the current request.",
     JSON.stringify(conversationContext),
     "Current user request:",
+    message
+  ].join("\n\n");
+}
+
+function promptWithArtifactContext(message: string, artifacts?: ArtifactContext[]): string {
+  if (!artifacts?.length) return message;
+  return [
+    "The conversation currently contains these latest artifact revisions. Reuse an identifier only when the user asks to revise that same artifact. render_artifact expects a complete replacement, never a diff.",
+    JSON.stringify(artifacts),
+    "Current request:",
     message
   ].join("\n\n");
 }
@@ -114,7 +126,7 @@ function agentOptions({
     resume,
     env: {
       ...process.env,
-      CLAUDE_AGENT_SDK_CLIENT_APP: "arcwell-omnipro/1.0.0"
+      CLAUDE_AGENT_SDK_CLIENT_APP: "prox-omnipro/1.0.0"
     }
   };
 }
@@ -224,7 +236,7 @@ async function runAttempt({
   }
 }
 
-export async function runAgentTurn({ message, sessionId, conversationContext, photo, emit, signal, queryAgent = query }: AgentTurnInput) {
+export async function runAgentTurn({ message, sessionId, conversationContext, artifacts, photo, emit, signal, queryAgent = query }: AgentTurnInput) {
   const turnStartedAt = Date.now();
   const policy = getTurnPolicy(message, { hasPhoto: Boolean(photo) });
   const uploadedPhoto = photo ? await getUploadedPhoto(photo.id) : undefined;
@@ -234,13 +246,14 @@ export async function runAgentTurn({ message, sessionId, conversationContext, ph
     inputVoltage: inputVoltageFromMessage(message),
     amps: ampsFromMessage(message),
     photoAssetId: photo ? `upload:${photo.id}` : undefined,
+    artifacts,
     annotationPreviewState: { attempts: 0, approvedHashes: new Set<string>() }
   };
   const abortController = new AbortController();
   signal?.addEventListener("abort", () => abortController.abort(), { once: true });
   const model = process.env.CLAUDE_MODEL?.trim() || "claude-sonnet-4-6";
   const firstAttempt = await runAttempt({
-    prompt: promptWithPresentationGuidance(promptWithConversationContext(message, conversationContext), policy),
+    prompt: promptWithPresentationGuidance(promptWithArtifactContext(promptWithConversationContext(message, conversationContext), artifacts), policy),
     resume: sessionId,
     repair: false,
     emit,

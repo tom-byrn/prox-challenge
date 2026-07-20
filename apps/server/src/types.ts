@@ -1,5 +1,6 @@
 import type { VisualPayload } from "./visual-spec.js";
 import type { EvidenceSource } from "./evidence.js";
+import type { ArtifactPayload } from "./artifacts.js";
 
 export type Process = "MIG" | "FLUX_CORED" | "TIG" | "STICK";
 
@@ -32,12 +33,6 @@ export type WidgetPayload = {
   name: "duty_cycle" | "polarity" | "troubleshooting" | "settings_guide";
   title: string;
   data: unknown;
-};
-
-export type ArtifactPayload = {
-  id: string;
-  title: string;
-  html: string;
 };
 
 export type VideoPayload = {

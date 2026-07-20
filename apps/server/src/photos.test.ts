@@ -9,7 +9,7 @@ import { getUploadedPhoto, PhotoUploadError, storeUploadedPhoto } from "./photos
 import { buildAnnotationPreview, buildVisualPayload, resolveVisualAsset } from "./visuals.js";
 
 test("normalizes, stores, and reloads a supported user photo", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "arcwell-photo-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "prox-photo-"));
   try {
     const input = await sharp({ create: { width: 2200, height: 1100, channels: 3, background: "#c2633e" } }).png().toBuffer();
     const attachment = await storeUploadedPhoto(input, directory);
@@ -61,7 +61,7 @@ test("builds an Agent SDK user message with image and text blocks", async () => 
 });
 
 test("only exposes the current turn's upload to the visual pipeline", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "arcwell-photo-visual-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "prox-photo-visual-"));
   const previousDirectory = process.env.PHOTO_UPLOAD_DIR;
   process.env.PHOTO_UPLOAD_DIR = directory;
   try {

@@ -1,14 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm install",
-  "buildCommand": "npm run build -w @arcwell/web",
+  "buildCommand": "npm run build -w @prox/web",
   "outputDirectory": "apps/web/dist",
   "functions": {
     "api/handler.ts": {
       "maxDuration": 60,
       "supportsCancellation": true,
       "includeFiles": "{knowledge/**,node_modules/@anthropic-ai/claude-agent-sdk-linux-*/**}",
-      "excludeFiles": "{.arcwell/**,apps/web/dist/**,files/**}"
+      "excludeFiles": "{.prox/**,apps/web/dist/**,files/**}"
     }
   },
   "rewrites": [
@@ -17,7 +17,7 @@
       "destination": "/api/handler"
     },
     {
-      "source": "/((?!api/|assets/|knowledge/|files/|product.webp).*)",
+      "source": "/((?!api/|assets/|knowledge/|files/|artifact-runtime\\.html|product.webp).*)",
       "destination": "/index.html"
     }
   ]

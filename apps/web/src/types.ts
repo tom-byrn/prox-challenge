@@ -1,5 +1,6 @@
 import type { VisualPayload } from "./visual-spec";
 import type { EvidenceSource } from "./evidence";
+import type { StoredArtifactPayload } from "./artifacts";
 
 export type FigurePayload = {
   id: string;
@@ -15,12 +16,6 @@ export type WidgetPayload = {
   name: "duty_cycle" | "polarity" | "troubleshooting" | "settings_guide";
   title: string;
   data: unknown;
-};
-
-export type ArtifactPayload = {
-  id: string;
-  title: string;
-  html: string;
 };
 
 export type VideoPayload = {
@@ -70,7 +65,7 @@ export type ChatPart =
   | { id: string; type: "video"; video: VideoPayload }
   | { id: string; type: "widget"; widget: WidgetPayload }
   | { id: string; type: "visual"; visual: VisualPayload }
-  | { id: string; type: "artifact"; artifact: ArtifactPayload }
+  | { id: string; type: "artifact"; artifact: StoredArtifactPayload }
   | { id: string; type: "clarification"; clarification: ClarificationRequest };
 
 export type ToolCall = {
@@ -105,6 +100,6 @@ export type StreamEvent =
   | { type: "video"; video: VideoPayload }
   | { type: "widget"; widget: WidgetPayload }
   | { type: "visual"; visual: VisualPayload }
-  | { type: "artifact"; artifact: ArtifactPayload }
+  | { type: "artifact"; artifact: StoredArtifactPayload }
   | { type: "error"; message: string; retryable: boolean }
   | { type: "done"; sessionId?: string; costUsd?: number; metrics?: TurnMetrics };

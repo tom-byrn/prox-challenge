@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
+import { ArtifactTypeSchema, artifactRevision, validateArtifactContent, type ArtifactContext } from "./artifacts.js";
 import { DocumentSourceIdSchema, EvidenceRefSchema, type EvidenceRef } from "./evidence.js";
 import { AnnotatedImageSchema, VisualAssetIdSchema, VisualSpecSchema } from "./visual-spec.js";
 import { buildAnnotationPreview, buildVisualPayload, resolveVisualAsset, visualSpecHash } from "./visuals.js";
@@ -39,6 +40,7 @@ export type ManualToolContext = {
   inputVoltage?: 120 | 240;
   amps?: number;
   photoAssetId?: string;
+  artifacts?: ArtifactContext[];
   annotationPreviewState?: { attempts: number; approvedHashes: Set<string> };
 };
 
@@ -88,6 +90,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
   const product = getKnowledgeProductInfo();
   const annotationPreviewState = context.annotationPreviewState ?? { attempts: 0, approvedHashes: new Set<string>() };
   const previewedAnnotations = annotationPreviewState.approvedHashes;
+  let artifactRendered = false;
 
   async function emitEvidence(refs: EvidenceRef[]) {
     if (refs.length > 0) await emit({ type: "evidence", sources: resolveEvidenceRefs(refs) });
@@ -388,14 +391,30 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "render_artifact",
-      "Display a novel interactive single-file HTML explanation when the generic visual language cannot express an important interaction. Inline CSS/JS only; no external URLs, images, fonts, forms, storage, or network calls.",
-      { title: z.string().min(2).max(100), html: z.string().min(100).max(80_000) },
-      instrument("render_artifact", async ({ title, html }) => {
-        const forbidden = /<(?:iframe|object|embed|base)\b|https?:\/\/|fetch\s*\(|XMLHttpRequest|WebSocket|localStorage|sessionStorage/iu;
-        if (forbidden.test(html)) throw new Error("Artifact contains a forbidden network, embedding, or storage capability.");
+      "Create or fully replace one substantial, self-contained artifact. Give it a stable identifier and reuse that identifier for later revisions. Supported types are HTML, SVG, Markdown, Mermaid, React, and code. React artifacts receive a React global and must export a default component; do not import packages. Emit complete source, never a diff. Use at most one artifact per response and only when the content is useful beyond the prose answer.",
+      {
+        identifier: z.string().min(2).max(80).regex(/^[a-z0-9][a-z0-9_-]*$/i),
+        title: z.string().trim().min(2).max(100),
+        type: ArtifactTypeSchema,
+        content: z.string().min(1).max(50_000),
+        language: z.string().trim().min(1).max(30).optional()
+      },
+      instrument("render_artifact", async ({ identifier, title, type, content, language }) => {
+        if (artifactRendered) throw new Error("Only one artifact can be rendered in a response.");
+        const contentIssue = validateArtifactContent(type, content);
+        if (contentIssue) throw new Error(contentIssue);
+        const revisionState = artifactRevision(context.artifacts, identifier, type);
+        artifactRendered = true;
         const id = randomUUID();
-        await emit({ type: "artifact", artifact: { id, title, html } });
-        return jsonResult({ displayed: true, artifactId: id });
+        const { revision, operation } = revisionState;
+        await emit({ type: "artifact", artifact: { id, identifier, title, type, content, revision, language } });
+        return jsonResult({
+          displayed: true,
+          artifactId: id,
+          identifier,
+          revision,
+          operation
+        });
       })
     )
   ];

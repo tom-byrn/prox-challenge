@@ -508,14 +508,29 @@ a.source-entry:hover .source-entry-open { color: #d8d6ce; background: #2b2c27; }
 .reference-group .tone-warning dd strong { color: #d9b17f; }
 .reference-group .tone-negative dd strong { color: #d99586; }
 
-.artifact-card { margin: 24px 0; overflow: hidden; border: 1px solid #3c3d37; border-radius: 14px; background: #20211d; }
-.artifact-title { min-height: 53px; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #3c3d37; }
-.artifact-title span { display: flex; align-items: center; gap: 7px; color: #d38e6d; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-.artifact-title strong { color: #d9d7cf; font-size: 11px; }
-.artifact-card iframe { width: 100%; height: 440px; display: block; border: 0; background: #f4f1e8; }
+.artifact-card { margin: 24px 0; overflow: hidden; border: 1px solid #3c3d37; border-radius: 14px; background: #20211d; box-shadow: 0 18px 45px rgba(0, 0, 0, .12); }
+.artifact-title { min-height: 68px; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 12px 10px 14px; border-bottom: 1px solid #3c3d37; }
+.artifact-heading-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.artifact-heading-copy span { display: flex; align-items: center; gap: 7px; color: #d38e6d; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.artifact-heading-copy strong { overflow: hidden; max-width: 420px; color: #e3e1d9; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-heading-copy small { color: #777a72; font: 8px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.artifact-tabs { display: flex; gap: 2px; padding: 3px; border: 1px solid #383934; border-radius: 8px; background: #191a17; }
+.artifact-tabs button { display: flex; align-items: center; gap: 5px; padding: 6px 8px; border: 0; border-radius: 5px; color: #777a72; background: transparent; font-size: 9px; }
+.artifact-tabs button[aria-selected="true"] { color: #e4e2da; background: #30312c; }
+.artifact-preview { position: relative; min-height: 320px; background: #f4f1e8; }
+.artifact-card iframe { width: 100%; display: block; border: 0; background: #f4f1e8; transition: height .18s ease; }
+.artifact-runtime-status { position: absolute; z-index: 2; top: 8px; right: 8px; padding: 4px 7px; border: 1px solid rgba(35, 35, 31, .1); border-radius: 999px; color: #726f66; background: rgba(245, 242, 233, .9); font-size: 7px; letter-spacing: .02em; backdrop-filter: blur(6px); }
+.artifact-runtime-status.status-ready { color: #55785a; }
+.artifact-runtime-status.status-error { color: #a15342; }
+.artifact-source { position: relative; max-height: 560px; overflow: auto; background: #171815; }
+.artifact-source > button { position: sticky; z-index: 1; top: 9px; float: right; display: flex; align-items: center; gap: 5px; margin: 9px 9px -40px 0; padding: 6px 8px; border: 1px solid #41423c; border-radius: 6px; color: #b0b2aa; background: #282923; font-size: 8px; }
+.artifact-source pre { min-height: 320px; margin: 0; padding: 18px; color: #d7d5cd; font: 10px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 .artifact-error { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 25px; color: #d39b83; text-align: center; }
 .artifact-error small { color: #8d756b; }
 .artifact-error button { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding: 7px 9px; border: 1px solid #61453a; border-radius: 7px; color: #e6b49e; background: #31221c; font-size: 9px; }
+.artifact-console { border-top: 1px solid #353630; background: #191a17; }
+.artifact-console > button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 12px; border: 0; color: #898c83; background: transparent; font-size: 8px; text-align: left; }
+.artifact-console pre { max-height: 160px; margin: 0; overflow: auto; padding: 10px 12px; border-top: 1px solid #30312c; color: #aaa9a3; font: 9px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
 
 .composer-wrap { position: fixed; z-index: 30; inset: auto 0 0 var(--sidebar-width); padding: 16px; border-top: 1px solid var(--line); background: var(--bg); transition: left var(--sidebar-motion-duration) var(--sidebar-motion-ease); }
 .composer { position: relative; width: min(760px, 100%); min-height: 52px; margin: 0 auto; padding: 7px; border: 1px solid #41423c; border-radius: 12px; background: #20211d; }

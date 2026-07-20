@@ -113,7 +113,7 @@ Deterministic preparation
         |
         v
 Staging workspace
-  .arcwell/ingestion/<run-id>/
+  .prox/ingestion/<run-id>/
         |
         v
 Claude Agent SDK ingestion runner
@@ -175,7 +175,7 @@ knowledge/products/
     tables/
     video/
 
-.arcwell/ingestion/          Ignored staging/checkpoint data
+.prox/ingestion/             Ignored staging/checkpoint data
 ```
 
 Keeping the orchestration in TypeScript lets it reuse the existing Agent SDK and Zod patterns. Keep Python only for narrow media operations where PyMuPDF and the existing video packages are already effective.
@@ -669,7 +669,7 @@ At minimum:
 - update tool schemas that assume fixed source ids;
 - move generated knowledge under `knowledge/products/omnipro-220/`;
 - update README architecture, ingestion instructions, and provenance language;
-- add `.arcwell/ingestion/` to `.gitignore`.
+- add `.prox/ingestion/` to `.gitignore`.
 
 Do not overwrite unrelated changes. The worktree is currently dirty from ongoing application development. Inspect `git status`, preserve user changes, and make narrow patches.
 

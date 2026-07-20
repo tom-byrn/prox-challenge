@@ -17,7 +17,7 @@ test("local development is open when access control is not configured", () => {
 });
 
 test("Vercel fails closed when either access secret is missing", () => {
-  assert.deepEqual(readAccessControlConfig({ VERCEL: "1", ARCWELL_ACCESS_PASSWORD: "secret" }), {
+  assert.deepEqual(readAccessControlConfig({ VERCEL: "1", PROX_ACCESS_PASSWORD: "secret" }), {
     required: true,
     configured: false,
     password: "secret",
@@ -28,8 +28,8 @@ test("Vercel fails closed when either access secret is missing", () => {
 test("password and signed session token are validated", () => {
   const config = readAccessControlConfig({
     VERCEL: "1",
-    ARCWELL_ACCESS_PASSWORD: "correct horse battery staple",
-    ARCWELL_SESSION_SECRET: "a-different-server-only-secret"
+    PROX_ACCESS_PASSWORD: "correct horse battery staple",
+    PROX_SESSION_SECRET: "a-different-server-only-secret"
   });
   const token = createAccessSessionToken(config);
 

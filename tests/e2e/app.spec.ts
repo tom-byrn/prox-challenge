@@ -81,6 +81,25 @@ function clarificationResponse() {
   ]);
 }
 
+function artifactResponse() {
+  return sse([
+    { type: "meta", conversationId: "test-conversation" },
+    { type: "text_delta", text: "I made a reusable process selector." },
+    {
+      type: "artifact",
+      artifact: {
+        id: "artifact-test",
+        identifier: "process-selector",
+        title: "Process selector",
+        type: "application/vnd.ant.react",
+        revision: 1,
+        content: "const { useState } = React; export default function App(){ const [process,setProcess]=useState('MIG'); return <main><h1>Process selector</h1><label>Process <select value={process} onChange={event=>setProcess(event.target.value)}><option>MIG</option><option>TIG</option></select></label><p>Selected: <strong>{process}</strong></p></main> }",
+      },
+    },
+    { type: "done", sessionId: "00000000-0000-4000-8000-000000000003", metrics },
+  ]);
+}
+
 async function stubPersistence(page: Page) {
   await page.route("**/api/chats**", async (route: Route) => {
     if (route.request().method() === "GET") {
@@ -155,4 +174,36 @@ test("renders clarification choices and sends the selected context", async ({ pa
   await expect(page.getByText("Continuing with: 240 V", { exact: true })).toBeVisible();
   await expect.poll(() => requests.length).toBe(2);
   expect(requests[1]).toContain("240 V");
+});
+
+test("runs a typed React artifact in the isolated preview and carries its revision into follow-ups", async ({ page }) => {
+  const requests: Array<Record<string, unknown>> = [];
+  await page.route("**/api/chat", async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "text/event-stream", "cache-control": "no-cache" },
+      body: artifactResponse(),
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Message the OmniPro 220 assistant" }).fill("Build a process selector artifact.");
+  await page.getByRole("button", { name: "Send message" }).click();
+
+  await expect(page.getByText("process-selector · revision 1", { exact: true })).toBeVisible();
+  await expect(page.getByText("Preview ready", { exact: true })).toBeVisible();
+  const preview = page.frameLocator('iframe[title="Process selector preview"]');
+  await expect(preview.getByRole("heading", { name: "Process selector" })).toBeVisible();
+  await preview.getByRole("combobox", { name: "Process" }).selectOption("TIG");
+  await expect(preview.getByText("Selected: TIG", { exact: true })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Source" }).click();
+  await expect(page.getByText("export default function App()", { exact: false })).toBeVisible();
+
+  await page.getByRole("textbox", { name: "Message the OmniPro 220 assistant" }).fill("Add Stick to that artifact.");
+  await page.getByRole("button", { name: "Send message" }).click();
+  await expect.poll(() => requests.length).toBe(2);
+  const artifacts = requests[1]?.artifacts as Array<Record<string, unknown>>;
+  expect(artifacts[0]).toMatchObject({ identifier: "process-selector", type: "application/vnd.ant.react", revision: 1 });
+  expect(artifacts[0]?.content).toContain("export default function App()");
 });

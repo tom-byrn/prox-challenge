@@ -1,5 +1,5 @@
 {
-  "name": "arcwell-omnipro-agent",
+  "name": "prox-omnipro-agent",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,13 +7,13 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -n server,web -c '#f97316,#38bdf8' 'npm run dev -w @arcwell/server' 'npm run dev -w @arcwell/web'",
-    "build": "npm run build -w @arcwell/web && npm run build -w @arcwell/server",
-    "start": "npm run start -w @arcwell/server",
+    "dev": "concurrently -n server,web -c '#f97316,#38bdf8' 'npm run dev -w @prox/server' 'npm run dev -w @prox/web'",
+    "build": "npm run build -w @prox/web && npm run build -w @prox/server",
+    "start": "npm run start -w @prox/server",
     "test:e2e": "playwright test",
-    "typecheck": "npm run typecheck -w @arcwell/server && npm run typecheck -w @arcwell/web",
-    "test": "npm run test -w @arcwell/server",
-    "eval": "npm run eval -w @arcwell/server",
+    "typecheck": "npm run typecheck -w @prox/server && npm run typecheck -w @prox/web",
+    "test": "npm run test -w @prox/server",
+    "eval": "npm run eval -w @prox/server",
     "ingest": "tsx scripts/ingest/cli.ts",
     "ingest:video": "tsx scripts/ingest/cli.ts",
     "extract": "python3 scripts/ingest/prepare-pdf.py",

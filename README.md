@@ -1,22 +1,8 @@
-# Arcwell — OmniPro 220 field guide
+# OmniPro 220 Assistant
 
-Arcwell is a visual, source-grounded support agent for the Vulcan OmniPro 220 welder. It uses the [Anthropic Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) to reason over the supplied manuals and an indexed, timestamped product-video transcript, then answers with the medium that makes the task easiest to execute: concise prose, an actual manual figure, a bounded YouTube segment, a dynamically composed visual, or a sandboxed generated artifact.
+The OmniPro 220 Assistant is a visual, source-grounded support agent for the Vulcan OmniPro 220 welder. It uses the [Anthropic Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) to reason over the supplied manuals and an indexed, timestamped product-video transcript, then answers with the medium that makes the task easiest to execute: concise prose, an actual manual figure, a bounded YouTube segment, a dynamically composed visual, or a sandboxed generated artifact.
 
-![Arcwell showing the TIG polarity diagram and source figure](docs/arcwell-polarity.png)
-
-## Features at a glance
-
-- One bounded Claude Agent SDK agent with no shell, filesystem, or inherited Claude Code tools.
-- A live, expandable tool-call timeline showing each call's name, input, and running/completed/failed state.
-- Grounded search over three supplied documents, 51 prepared pages, 18 curated figures, four verified datasets, and six timestamped product-video segments.
-- Exact product adapters for duty cycle, polarity, troubleshooting, specifications, settings guidance, and parts.
-- Typed streaming responses containing Markdown, citations, source figures, bounded video, interactive clarification, generic dynamic visuals, and sandboxed HTML artifacts.
-- A response contract that withholds incomplete answers and allows one bounded repair turn.
-- Saved conversation URLs, history navigation, deletion, and per-turn cost/reliability telemetry.
-- Local SQLite persistence with a Turso adapter for durable Vercel history.
-- Local multimodal photo diagnosis with verified source/photo annotations.
-- A shared-password production gate enforced by the API, not only by the React page.
-- A resumable, fail-closed offline ingestion pipeline for adding versioned product knowledge packages.
+![The OmniPro assistant showing the TIG polarity diagram and source figure](docs/omnipro-polarity.png)
 
 ## Run it
 
@@ -29,7 +15,7 @@ npm install
 npm run dev
 ```
 
-`npm run dev` starts the local agent server and Vite. The server creates an ignored SQLite database at `.arcwell/arcwell.sqlite` automatically; no database account, deployment, or second credential is required.
+`npm run dev` starts the local agent server and Vite. The server creates an ignored SQLite database at `.prox/prox.sqlite` automatically; no database account, deployment, or second credential is required.
 
 Open [http://localhost:5173](http://localhost:5173). The web app proxies its API and source assets to the server on port 3000.
 
@@ -48,7 +34,7 @@ npm start
 The current production deployment is [prox-challenge-rouge.vercel.app](https://prox-challenge-rouge.vercel.app). It uses the shared-password gate and hosted Turso persistence described below; the password itself is intentionally not stored in this repository.
 
 The repository can be imported into Vercel as-is. Add `ANTHROPIC_API_KEY`,
-`ARCWELL_ACCESS_PASSWORD`, and a separate random `ARCWELL_SESSION_SECRET` in the
+`PROX_ACCESS_PASSWORD`, and a separate random `PROX_SESSION_SECRET` in the
 project's environment variables and deploy. The checked-in `vercel.json` builds
 the React app, routes `/api/*` to the Hono function, and includes the read-only
 product knowledge in that function.
@@ -79,7 +65,7 @@ generation, sources, tools, visuals, and artifacts continue to work.
 
 A local clone still defaults to SQLite automatically, so `npm run dev` retains
 chats and telemetry without a Turso account. To test the hosted database locally,
-set both Turso credentials and `ARCWELL_CHAT_STORAGE=turso`.
+set both Turso credentials and `PROX_CHAT_STORAGE=turso`.
 
 Hosted follow-up turns carry a bounded recent transcript from the current tab,
 so they do not depend on an Agent SDK session file surviving a serverless cold
@@ -92,10 +78,10 @@ durable hosted uploads can be added later with object storage such as Vercel Blo
 To exercise the same stateless mode locally, set:
 
 ```bash
-ARCWELL_CHAT_STORAGE=disabled npm run dev
+PROX_CHAT_STORAGE=disabled npm run dev
 ```
 
-Do not set `ARCWELL_CHAT_STORAGE=sqlite` on Vercel: function filesystems are
+Do not set `PROX_CHAT_STORAGE=sqlite` on Vercel: function filesystems are
 ephemeral, so a SQLite file would not provide durable or consistently shared
 history.
 
@@ -142,12 +128,15 @@ flowchart TB
     stream --> web
     web <-->|"conversation snapshots<br/>+ per-turn telemetry"| api
     api --> persistence{"Persistence adapter"}
-    persistence --> sqlite["Local SQLite<br/>.arcwell/arcwell.sqlite"]
+    persistence --> sqlite["Local SQLite<br/>.prox/prox.sqlite"]
     persistence --> turso["Hosted Turso<br/>Vercel deployment"]
-    web --> render["Markdown + source drawer<br/>figures + bounded video<br/>VisualSpec + artifacts"]
+    web --> render["Markdown + source drawer<br/>figures + bounded video<br/>VisualSpec"]
+    web --> artifact["Artifact workbench<br/>preview + source + console"]
+    artifact <-->|"postMessage protocol"| sandbox["Opaque-origin iframe runtime<br/>HTML + SVG + Markdown<br/>Mermaid + React + code"]
     render --> user
+    artifact --> user
 
-    sources["PDFs + video URLs"] -. "offline deterministic preparation" .-> staging[".arcwell/ingestion/&lt;run-id&gt;<br/>hashes + text + pixels + captions"]
+    sources["PDFs + video URLs"] -. "offline deterministic preparation" .-> staging[".prox/ingestion/&lt;run-id&gt;<br/>hashes + text + pixels + captions"]
     staging -. "isolated Claude ingestion MCP<br/>semantic stages + visual previews" .-> validation["schema + evidence + asset validation"]
     validation -. "atomic promotion on success only" .-> knowledge
 ```
@@ -156,12 +145,12 @@ This is a single-agent runtime. Tool calls are operations performed by that agen
 
 The server buffers typed answer parts until a generic response contract confirms the answer is grounded, cited, and appropriately visual. If it is not, the same Agent SDK session gets one bounded repair turn and the rejected content is never shown. Tool activity still streams immediately, and an accepted response can contain concise text, an interactive control, and primary-source evidence in one message.
 
-Completed user and assistant messages are stored as ordered snapshots in local SQLite or hosted Turso. Each snapshot preserves text, tool calls and their inputs, unified evidence sources, source figures, video segments, dynamic visual specifications, clarification cards, artifacts, errors, and the resumable Agent SDK session id. A compatibility adapter converts widget payloads in older saved chats into the current generic visual format. A stable `?chat=` URL restores the conversation after reload or browser navigation. Histories are scoped to a random owner id stored in that browser; local mode keeps the data on that machine, while Vercel stores it in the configured Turso database.
+Completed user and assistant messages are stored as ordered snapshots in local SQLite or hosted Turso. Each snapshot preserves text, tool calls and their inputs, unified evidence sources, source figures, video segments, dynamic visual specifications, clarification cards, complete artifact revisions, errors, and the resumable Agent SDK session id. A compatibility adapter converts widget payloads in older saved chats into the current generic visual format, while legacy HTML artifacts open as revision-one documents. A stable `?chat=` URL restores the conversation after reload or browser navigation. Histories are scoped to a random owner id stored in that browser; local mode keeps the data on that machine, while Vercel stores it in the configured Turso database.
 
 ### Runtime request lifecycle
 
 1. `AccessGate` checks `/api/auth/session`; local development opens automatically when access control is not configured.
-2. The browser app restores the requested `?chat=` snapshot, accepts text or a supported local photo, and sends `POST /api/chat`.
+2. The browser app restores the requested `?chat=` snapshot, accepts text or a supported local photo, and sends `POST /api/chat` with bounded recent text and the latest artifact revisions.
 3. Hono validates the request with Zod, creates an abortable SSE stream, and emits a conversation id.
 4. A deterministic turn policy identifies grounding requirements and assigns a presentation level: required, preferred, or text-first. It can suggest generic visual kinds without selecting a topic-specific component.
 5. The single Claude agent reasons with only the approved knowledge MCP tools. Tool start/end events stream immediately into the expandable timeline.
@@ -197,7 +186,7 @@ Telemetry is stored in a separate table in the selected persistence backend and 
 | `show_figure` | Emits a real manual crop into chat |
 | `show_source` | Resolves a generic evidence ref; displays a figure or exact video segment and adds any source type to the message drawer |
 | `render_visual` | Validates and emits a dynamically composed metric summary, reference card, annotated image, connection diagram, procedure, or comparison |
-| `render_artifact` | Emits constrained, inline-only HTML for a novel interactive explanation |
+| `render_artifact` | Creates or fully replaces one stable, typed artifact revision (HTML, SVG, Markdown, Mermaid, React, or code) |
 
 ### Interactive clarification
 
@@ -205,11 +194,39 @@ When missing context would materially change the answer, the response contract r
 
 ## Multimodal output
 
+### Output inventory
+
+The assistant has two deliberately separate generation paths. Routine product guidance uses schema-validated, source-grounded presentation components; a genuinely novel or reusable interaction uses the sandboxed artifact runtime. The complete response surface is:
+
+| Family | Available output | Typical use |
+|---|---|---|
+| Answer | Markdown prose, lists, and tables | Direct explanations, cautions, and concise instructions |
+| Structured visual | **Metric summary** | Related ratings, measurements, duty-cycle values, and work/rest intervals |
+| Structured visual | **Reference card** | Grouped settings, specifications, compatible materials, and limits |
+| Structured visual | **Connection diagram** | Polarity, socket routing, cable paths, gas paths, and other relationships |
+| Structured visual | **Annotated image** | Validated numbered markers over an inspected manual figure or current user photo |
+| Structured visual | **Procedure walkthrough** | Sequential setup or troubleshooting steps with per-step **Stuck?** help |
+| Structured visual | **Comparison** | Side-by-side processes, configurations, settings, or choices |
+| Primary source | Manual figure | The exact relevant curated crop from a supplied document |
+| Primary source | Bounded video segment | A product demonstration constrained to its indexed start and end timestamps |
+| Primary source | Uploaded photo | The user's normalized image, clearly distinguished from authoritative evidence |
+| Artifact | **React** | Stateful calculators, configurators, selectors, sliders, tabs, checklists, and simulations |
+| Artifact | **HTML** | Self-contained interactive HTML, CSS, and JavaScript documents |
+| Artifact | **SVG** | Custom illustrations, schematics, and static spatial explanations |
+| Artifact | **Mermaid** | Flowcharts, decision trees, sequences, timelines, and relationship diagrams |
+| Artifact | **Markdown** | Reusable guides, checklists, reference documents, and reports |
+| Artifact | **Code** | Source code when the source itself is the deliverable |
+| Conversation control | Clarification card | Claude-authored mutually exclusive choices plus optional free-text context |
+| Conversation control | Tool-call timeline | Live and saved expandable tool names, inputs, and running/completed/failed states |
+| Evidence control | Source drawer | Deduplicated document, structured-data, figure, and video provenance |
+
+The six structured visuals are generic renderers rather than product-specific widgets: Claude supplies semantic content retrieved from evidence, while React owns layout and interaction. Artifacts are open-ended revisioned documents with stable identifiers, complete source, preview/source modes, captured console output, and repair support. They are not used as a less reliable replacement for ordinary source-grounded welding guidance.
+
 ### User-photo diagnostics
 
-The composer accepts one JPEG, PNG, or WebP photo by file picker, paste, or drag and drop. The server decodes the actual pixels with Sharp, rejects unsupported or malformed content, applies orientation, strips metadata, bounds the image dimensions, and stores a normalized JPEG under a content-derived id in the ignored `.arcwell/uploads/` directory. The chat request contains only that approved id—never an arbitrary file path or remote URL.
+The composer accepts one JPEG, PNG, or WebP photo by file picker, paste, or drag and drop. The server decodes the actual pixels with Sharp, rejects unsupported or malformed content, applies orientation, strips metadata, bounds the image dimensions, and stores a normalized JPEG under a content-derived id in the ignored `.prox/uploads/` directory. The chat request contains only that approved id—never an arbitrary file path or remote URL.
 
-For the first Agent SDK turn, Arcwell sends the normalized photo and question as native image and text content blocks. Claude must distinguish visible observations from inference, retrieve authoritative manual evidence for product claims, and ask for a better angle or missing setup state when the image is insufficient. A user photo is displayed as **Your photo**, not misrepresented as manual evidence.
+For the first Agent SDK turn, the assistant sends the normalized photo and question as native image and text content blocks. Claude must distinguish visible observations from inference, retrieve authoritative manual evidence for product claims, and ask for a better angle or missing setup state when the image is insufficient. A user photo is displayed as **Your photo**, not misrepresented as manual evidence.
 
 Uploaded photos also participate in the same generic visual grammar as manual pixels. The current turn can inspect its approved `upload:photo-…` asset, preview absolute-pixel annotations, and render the verified overlay. There is no weld-defect-specific image tool or fixed overlay. Upload ids from other turns are rejected by the model-facing visual tools, while normalized photos and completed overlays remain addressable when a saved conversation is reopened locally.
 
@@ -238,7 +255,15 @@ This means duty cycle is not tied to a duty-cycle component, settings are not ti
 
 Procedure visuals remain interactive walkthroughs. They appear only after the assistant response is complete, unlock one step at a time, and expose a small **Stuck?** arrow for the current or completed step. That action sends the exact step number, title, instruction, and evidence as the next user turn while retaining a short human-readable message in chat, so Claude can explain the actual step rather than guessing what “step 2” referred to.
 
-For questions that genuinely need a new interaction, Claude can call `render_artifact`. Generated documents run in `<iframe sandbox="allow-scripts">` without `allow-same-origin`. The frontend injects a strict CSP that blocks network, frames, forms, storage, external images, and external fonts. Runtime failures surface a repair affordance. The server also rejects common network, storage, and embedding primitives before emitting an artifact.
+### Claude-style artifact runtime
+
+Artifacts are a distinct document lifecycle, not another collection of product widgets. The implementation follows the public behavior described in [Reverse Engineering Claude Artifacts](https://www.reidbarber.com/blog/reverse-engineering-claude-artifacts): each artifact has a stable model-authored identifier, MIME-like type, title, complete source, and monotonically increasing revision. A follow-up edit reuses the identifier and sends a full replacement rather than a patch. The latest revisions are returned as bounded turn context so this still works on Vercel, where an Agent SDK session may not survive a cold start.
+
+Claude can choose `text/html`, `image/svg+xml`, `text/markdown`, `application/vnd.ant.mermaid`, `application/vnd.ant.react`, or `application/vnd.ant.code`. React source is compiled in the browser with Sucrase and receives React as a scoped global; Mermaid uses its strict security mode. The chat workbench exposes **Preview** and **Source**, revision metadata, source copying, captured console output, automatic sizing, and a repair action that names the failed artifact and revision.
+
+The renderer is a separate Vite entry point emitted as one self-contained production document. It runs inside `<iframe sandbox="allow-scripts">` without `allow-same-origin`; a narrow versioned `postMessage` protocol is the only parent/runtime bridge. CSP blocks network connections, external frames, forms, storage, external media, and fonts, while the server rejects common active-capability primitives before streaming source. Development adds `allow-same-origin` only so Vite can load its module graph; the production build was browser-verified with the opaque-origin sandbox intact.
+
+This is an independent, behavior-compatible implementation based on public observation—not Anthropic source code, private APIs, or a proxy to Claude's hosted artifact service. The deterministic `VisualSpec` path still exists for source-grounded manual diagrams and walkthroughs because model-generated executable code is the wrong reliability boundary for routine welding guidance; artifacts are selected for substantial reusable documents or interactions.
 
 ## Knowledge ingestion and provenance
 
@@ -293,15 +318,15 @@ Pages, figures, structured rows, and video segments share one generic evidence-r
 
 ### Duty cycle is not interpolated
 
-The manual certifies discrete operating points. Treating values between those points as a smooth curve would produce a plausible but unsupported safety limit. Arcwell returns an exact rating or explicitly says that the requested point is unpublished and shows the nearest published ratings.
+The manual certifies discrete operating points. Treating values between those points as a smooth curve would produce a plausible but unsupported safety limit. The assistant returns an exact rating or explicitly says that the requested point is unpublished and shows the nearest published ratings.
 
 For the sample question, the published answer is **25% at 200 A on 240 V for MIG: 2.5 minutes welding and 7.5 minutes resting in each ten-minute period** (Owner’s Manual, pp. 7, 14, and 23).
 
 ### There is no published synergic output table
 
-The supplied documents explain how to choose wire diameter/material thickness and how the LCD indicates its recommended wire-speed and voltage starting points. They do not publish a complete thickness → wire speed / voltage matrix or the machine’s internal synergic algorithm. Arcwell does not pretend otherwise. Its deterministic settings lookup returns only documented inputs and limits, which can be presented in a generic reference card alongside the screen workflow and same-thickness scrap-test guidance.
+The supplied documents explain how to choose wire diameter/material thickness and how the LCD indicates its recommended wire-speed and voltage starting points. They do not publish a complete thickness → wire speed / voltage matrix or the machine’s internal synergic algorithm. The assistant does not pretend otherwise. Its deterministic settings lookup returns only documented inputs and limits, which can be presented in a generic reference card alongside the screen workflow and same-thickness scrap-test guidance.
 
-This also catches a subtle source conflict: the generic selection chart describes AC TIG aluminum in general, but the OmniPro 220 specifications list DC TIG materials only. Machine-specific documentation wins, so Arcwell does not claim this welder can AC TIG aluminum.
+This also catches a subtle source conflict: the generic selection chart describes AC TIG aluminum in general, but the OmniPro 220 specifications list DC TIG materials only. Machine-specific documentation wins, so the assistant does not claim this welder can AC TIG aluminum.
 
 ## Safety model
 
@@ -311,7 +336,7 @@ This also catches a subtle source conflict: the generic selection chart describe
 - Do not turn the wiring schematic into casual internal-repair instructions; the manual limits that work to qualified technicians.
 - Prefer a source figure for spatial claims and exact page pixels as the final retrieval backstop.
 
-Arcwell is a manual navigation and reasoning aid, not a replacement for training, the product manual, or a qualified welding/electrical professional.
+This assistant is a manual navigation and reasoning aid, not a replacement for training, the product manual, or a qualified welding/electrical professional.
 
 ## Persistence and data ownership
 
@@ -331,17 +356,17 @@ If Turso is absent or cannot initialize, the chat endpoint still works and persi
 
 ## Access control and security boundaries
 
-Production access uses `ARCWELL_ACCESS_PASSWORD` plus a separate `ARCWELL_SESSION_SECRET`. Password comparison is constant-time. A successful login creates a seven-day HMAC-signed cookie that is HttpOnly, SameSite=Lax, and Secure on Vercel. All non-public `/api/*` routes—including `/api/chat`—validate that cookie before doing work. `/api/health`, `/api/auth/session`, and `/api/auth/login` remain public. Vercel fails closed with a configuration error when either secret is absent.
+Production access uses `PROX_ACCESS_PASSWORD` plus a separate `PROX_SESSION_SECRET`. Password comparison is constant-time. A successful login creates a seven-day HMAC-signed cookie that is HttpOnly, SameSite=Lax, and Secure on Vercel. All non-public `/api/*` routes—including `/api/chat`—validate that cookie before doing work. `/api/health`, `/api/auth/session`, and `/api/auth/login` remain public. Vercel fails closed with a configuration error when either secret is absent.
 
 This gate is intentionally protection against casual/public token use rather than a user-auth system:
 
 - There are no accounts, roles, password resets, or per-user quotas.
 - Login attempts are not currently rate-limited; use a high-entropy shared password.
 - The owner id used to scope histories is client-supplied and should not be treated as authorization.
-- Rotating the password alone does not revoke existing cookies; rotate `ARCWELL_SESSION_SECRET` as well to invalidate every session.
+- Rotating the password alone does not revoke existing cookies; rotate `PROX_SESSION_SECRET` as well to invalidate every session.
 - A logout API exists, but there is not yet a logout control in the UI.
 - Static application and knowledge assets are public URLs; the protected boundary is the API and therefore the LLM-spending path.
-- Generated artifacts are separately sandboxed with a restrictive CSP and no network, forms, external embeds, or browser storage.
+- Generated artifacts run in an opaque-origin, script-only iframe with a restrictive CSP, validated source, and no network, forms, external embeds, or browser storage.
 
 ## API surface
 
@@ -366,9 +391,10 @@ This gate is intentionally protection against casual/public token use rather tha
 ```text
 apps/
   server/src/       Hono API, access control, Agent SDK loop, MCP tools, persistence, lookups, ingestion
-  web/src/          password gate, chat/history UI, tool timeline, stream parser, generic visuals, legacy adapter, artifact sandbox
+  web/src/          password gate, chat/history UI, tool timeline, stream parser, generic visuals, artifact workbench/runtime
+  web/artifact-runtime.html  self-contained production entry for the opaque-origin artifact iframe
 api/                Vercel function adapter for the Hono application
-.arcwell/            ignored local SQLite database and normalized user-photo storage
+.prox/               ignored local SQLite database and normalized user-photo storage
 knowledge/
   products/         finalized versioned product packages selected at runtime
 scripts/ingest/     CLI plus generic deterministic PDF/video preparation
@@ -422,12 +448,12 @@ It sends ten sample, paraphrased, ambiguous, adversarial, and held-out questions
 | Variable | Required | Purpose |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Yes for agent turns | Server-side Claude Agent SDK credential |
-| `ARCWELL_ACCESS_PASSWORD` | Vercel | Shared site password; optional locally |
-| `ARCWELL_SESSION_SECRET` | Vercel | Separate HMAC signing secret; optional locally |
+| `PROX_ACCESS_PASSWORD` | Vercel | Shared site password; optional locally |
+| `PROX_SESSION_SECRET` | Vercel | Separate HMAC signing secret; optional locally |
 | `TURSO_DATABASE_URL` | Hosted persistence | Turso/libSQL database URL |
 | `TURSO_AUTH_TOKEN` | Hosted persistence | Turso credential |
-| `ARCWELL_CHAT_STORAGE` | No | Force `sqlite`, `turso`, or `disabled` |
-| `ARCWELL_PHOTO_STORAGE` | No | Force `local` or `disabled` |
+| `PROX_CHAT_STORAGE` | No | Force `sqlite`, `turso`, or `disabled` |
+| `PROX_PHOTO_STORAGE` | No | Force `local` or `disabled` |
 | `PHOTO_UPLOAD_DIR` | No | Override ignored local photo directory |
 | `CLAUDE_MODEL` | No | Override the runtime model |
 | `KNOWLEDGE_PRODUCT_ID` | No | Select `knowledge/products/<id>` |

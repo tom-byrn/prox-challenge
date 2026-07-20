@@ -151,7 +151,7 @@ export async function runIngestionStage({
         maxBudgetUsd: attemptIndex === 0 ? budget.maxBudgetUsd : Math.min(0.5, budget.maxBudgetUsd),
         effort: "medium",
         resume: sessionId,
-        env: { ...process.env, CLAUDE_AGENT_SDK_CLIENT_APP: "arcwell-ingestion/1.0.0" }
+        env: { ...process.env, CLAUDE_AGENT_SDK_CLIENT_APP: "prox-ingestion/1.0.0" }
       }
     });
     let attempt: Attempt;

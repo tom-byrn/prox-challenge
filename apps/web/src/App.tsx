@@ -7,6 +7,7 @@ import { UserMessage } from "./components/UserMessage";
 import { useChatPersistence } from "./lib/chat-persistence";
 import { uploadPhoto, validatePhotoFile, type PhotoDraft } from "./lib/photos";
 import { streamChat } from "./lib/stream-chat";
+import { normalizeArtifact, type ArtifactPayload } from "./artifacts";
 import type { EvidenceSource } from "./evidence";
 import type { ChatMessage, ChatPart, StreamEvent, ToolCall, TurnMetrics } from "./types";
 import type { ProcedureSpec } from "./visual-spec";
@@ -62,6 +63,22 @@ function mergeSources(current: EvidenceSource[] | undefined, incoming: EvidenceS
   const sources = new Map((current ?? []).map((source) => [source.id, source]));
   for (const source of incoming) sources.set(source.id, source);
   return [...sources.values()].slice(0, 16);
+}
+
+function latestArtifacts(messages: ChatMessage[]): Array<Omit<ArtifactPayload, "id">> {
+  const latest = new Map<string, ArtifactPayload>();
+  for (const message of messages) {
+    for (const part of message.parts) {
+      if (part.type !== "artifact") continue;
+      const artifact = normalizeArtifact(part.artifact);
+      const current = latest.get(artifact.identifier);
+      if (!current || artifact.revision >= current.revision) latest.set(artifact.identifier, artifact);
+    }
+  }
+  return [...latest.values()]
+    .sort((left, right) => right.revision - left.revision)
+    .slice(0, 4)
+    .map(({ id: _id, ...artifact }) => ({ ...artifact, content: artifact.content.slice(0, 50_000) }));
 }
 
 function finalizeMetrics(message: ChatMessage, event: Extract<StreamEvent, { type: "done" }>): TurnMetrics {
@@ -387,6 +404,7 @@ export default function App() {
         message: text,
         sessionId,
         conversationContext,
+        artifacts: latestArtifacts(messages),
         conversationId,
         photoId: photo?.id,
         signal: controller.signal,

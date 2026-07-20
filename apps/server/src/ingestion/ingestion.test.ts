@@ -16,7 +16,7 @@ import { loadKnowledgePackage } from "../knowledge-package.js";
 const HASH = "a".repeat(64);
 
 function temporaryWorkspace(): { root: string; workspace: IngestionWorkspace; cleanup: () => void } {
-  const root = mkdtempSync(join(tmpdir(), "arcwell-ingestion-test-"));
+  const root = mkdtempSync(join(tmpdir(), "prox-ingestion-test-"));
   const workspace = {
     runId: "run-test",
     root,

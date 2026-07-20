@@ -116,8 +116,8 @@ export type TelemetryRow = {
 };
 
 function defaultDatabasePath(): string {
-  return process.env.ARCWELL_DB_PATH?.trim()
-    || fileURLToPath(new URL("../../../.arcwell/arcwell.sqlite", import.meta.url));
+  return process.env.PROX_DB_PATH?.trim()
+    || fileURLToPath(new URL("../../../.prox/prox.sqlite", import.meta.url));
 }
 
 export function conversationFromRow(row: ConversationRow): ConversationSummary {

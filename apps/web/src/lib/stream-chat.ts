@@ -1,9 +1,11 @@
 import type { StreamEvent } from "../types";
+import type { ArtifactPayload } from "../artifacts";
 
 type ChatRequest = {
   message: string;
   sessionId?: string;
   conversationContext?: Array<{ role: "user" | "assistant"; content: string }>;
+  artifacts?: Array<Omit<ArtifactPayload, "id">>;
   conversationId: string;
   photoId?: string;
   signal: AbortSignal;
@@ -20,11 +22,11 @@ function parseEventBlock(block: string): StreamEvent | undefined {
   return JSON.parse(data) as StreamEvent;
 }
 
-export async function streamChat({ message, sessionId, conversationContext, conversationId, photoId, signal, onEvent }: ChatRequest) {
+export async function streamChat({ message, sessionId, conversationContext, artifacts, conversationId, photoId, signal, onEvent }: ChatRequest) {
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify({ message, sessionId, conversationContext, conversationId, photoId }),
+    body: JSON.stringify({ message, sessionId, conversationContext, artifacts, conversationId, photoId }),
     signal
   });
 

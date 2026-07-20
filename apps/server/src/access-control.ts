@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export const ACCESS_COOKIE_NAME = "arcwell_access";
+export const ACCESS_COOKIE_NAME = "prox_access";
 export const ACCESS_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 export interface AccessControlConfig {
@@ -11,8 +11,8 @@ export interface AccessControlConfig {
 }
 
 export function readAccessControlConfig(environment: NodeJS.ProcessEnv = process.env): AccessControlConfig {
-  const password = environment.ARCWELL_ACCESS_PASSWORD?.trim() ?? "";
-  const sessionSecret = environment.ARCWELL_SESSION_SECRET?.trim() ?? "";
+  const password = environment.PROX_ACCESS_PASSWORD?.trim() ?? "";
+  const sessionSecret = environment.PROX_SESSION_SECRET?.trim() ?? "";
   const required = Boolean(environment.VERCEL || password || sessionSecret);
   return {
     required,
@@ -35,7 +35,7 @@ export function isValidAccessPassword(candidate: string, config: AccessControlCo
 
 export function createAccessSessionToken(config: AccessControlConfig): string {
   if (!config.configured) throw new Error("Access control is not configured.");
-  return createHmac("sha256", config.sessionSecret).update("arcwell-access-v1").digest("base64url");
+  return createHmac("sha256", config.sessionSecret).update("prox-access-v1").digest("base64url");
 }
 
 export function isValidAccessSession(token: string | undefined, config: AccessControlConfig): boolean {

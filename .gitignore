@@ -27,7 +27,7 @@ blob-report/
 *.local
 
 # Local application data (SQLite, uploads, and generated previews)
-.arcwell/
+.prox/
 
 # Logs and temporary files
 *.log

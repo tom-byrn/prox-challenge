@@ -6,7 +6,7 @@ import test from "node:test";
 import { ChatStore } from "./chat-store.js";
 
 test("stores, restores, summarizes, and deletes a complete local conversation", () => {
-  const directory = mkdtempSync(join(tmpdir(), "arcwell-chat-store-"));
+  const directory = mkdtempSync(join(tmpdir(), "prox-chat-store-"));
   const databasePath = join(directory, "test.sqlite");
   let store = new ChatStore(databasePath);
   try {

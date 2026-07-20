@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ChatMessage, TurnMetrics } from "../types";
 
-const OWNER_STORAGE_KEY = "arcwell-chat-owner";
+const OWNER_STORAGE_KEY = "prox-chat-owner";
 
 export type ConversationSummary = {
   conversationId: string;

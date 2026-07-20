@@ -9,7 +9,7 @@ export const MAX_PHOTO_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_PHOTO_INPUT_PIXELS = 40_000_000;
 const MAX_PHOTO_EDGE = 1568;
 const PHOTO_ID_PATTERN = /^photo-[a-f0-9]{24}$/;
-const DEFAULT_UPLOAD_DIR = fileURLToPath(new URL("../../../.arcwell/uploads/", import.meta.url));
+const DEFAULT_UPLOAD_DIR = fileURLToPath(new URL("../../../.prox/uploads/", import.meta.url));
 
 export class PhotoUploadError extends Error {
   constructor(message: string) {
