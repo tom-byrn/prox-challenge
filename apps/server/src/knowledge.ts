@@ -1,9 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import MiniSearch from "minisearch";
 import { evidenceRefId, uniqueEvidence, type EvidenceRef, type EvidenceSource } from "./evidence.js";
-import { activeProductId, hasActiveProductPackage, KNOWLEDGE_ROOT, loadKnowledgePackage, productPackageDirectory } from "./knowledge-package.js";
+import { activeProductId, loadKnowledgePackage, productPackageDirectory } from "./knowledge-package.js";
 import type { Process } from "./types.js";
 
 type SearchDocument = {
@@ -52,45 +49,11 @@ export type VideoSegmentRecord = {
   authority: "supplemental-demonstration";
 };
 
-type DutyRating = {
-  process: "MIG" | "TIG" | "STICK";
-  inputVoltage: number;
-  amps: number;
-  dutyPercent: number;
-  weldMinutes: number;
-  restMinutes: number;
-  pages: number[];
-};
-
-type TroubleshootingEntry = {
-  id: string;
-  processes: Process[];
-  symptom: string;
-  questions?: string[];
-  checks: Array<{
-    appliesTo?: Process[];
-    cause: string;
-    action: string;
-  }>;
-  pages: number[];
-  figureId?: string;
-};
-
-const KNOWLEDGE_DIR = KNOWLEDGE_ROOT;
-const activePackage = hasActiveProductPackage() ? loadKnowledgePackage(productPackageDirectory()) : undefined;
-
-function loadJson<T>(relativePath: string): T {
-  if (activePackage) return activePackage.readJson<T>(relativePath);
-  return JSON.parse(readFileSync(new URL(relativePath, new URL(`file://${KNOWLEDGE_DIR}/`)), "utf8")) as T;
-}
-
-function loadLegacyJson<T>(relativePath: string): T {
-  return JSON.parse(readFileSync(join(KNOWLEDGE_DIR, relativePath), "utf8")) as T;
-}
+const activePackage = loadKnowledgePackage(productPackageDirectory());
 
 const searchDocuments: SearchDocument[] = activePackage
   ? activePackage.searchDocuments.map((document) => ({ ...document, source: document.documentId ?? document.source }))
-  : loadJson<SearchDocument[]>("search-documents.json");
+  : [];
 const figures: FigureRecord[] = activePackage
   ? activePackage.manifest.figures.map((figure) => ({
     id: figure.id,
@@ -101,16 +64,7 @@ const figures: FigureRecord[] = activePackage
     caption: figure.caption,
     keywords: figure.keywords
   }))
-  : loadJson<FigureRecord[]>("figures.json");
-const legacyVideoKnowledge = activePackage ? undefined : loadJson<{
-  sourceId: string;
-  videoId: string;
-  title: string;
-  url: string;
-  captionType: string;
-  authority: "supplemental-demonstration";
-  segments: VideoSegmentRecord[];
-}>("video/segments.json");
+  : [];
 const videoKnowledge = activePackage ? {
   sourceId: activePackage.manifest.videos[0]?.id ?? "video",
   videoId: activePackage.manifest.videos[0]?.videoId ?? "video",
@@ -130,7 +84,7 @@ const videoKnowledge = activePackage ? {
       authority: "supplemental-demonstration"
     };
   })
-} : legacyVideoKnowledge!;
+} : { sourceId: "video", videoId: "video", title: "Video", url: "", captionType: "manual", authority: "supplemental-demonstration" as const, segments: [] as VideoSegmentRecord[] };
 const manualIndex = activePackage ? {
   product: activePackage.manifest.product.name,
   item: activePackage.manifest.product.id,
@@ -140,24 +94,7 @@ const manualIndex = activePackage ? {
     pages: Array.from({ length: section.endPage - section.startPage + 1 }, (_, index) => section.startPage + index),
     summary: section.summary
   }))
-} : loadJson<{ product: string; item: string; sections: Array<{ title: string; source: string; pages: number[]; summary: string }> }>("index.json");
-
-function legacyTable<T>(path: string): T | undefined {
-  // These tables back the deliberately product-specific OmniPro calculators.
-  // Generic documents, figures, datasets, and videos still come exclusively
-  // from the active manifest package. Other products do not inherit this
-  // adapter merely because an OmniPro fallback table exists on disk.
-  if (activeProductId() !== "omnipro-220") return undefined;
-  return loadLegacyJson<T>(path);
-}
-
-const dutyCycles = legacyTable<{ periodMinutes: number; policy: string; ratings: DutyRating[] }>("tables/duty_cycles.json");
-const specs = legacyTable<Record<string, unknown>>("tables/specs.json");
-const polarity = legacyTable<{ setups: Array<Record<string, unknown> & { id: string; process: Process; aliases: string[] }> }>("tables/polarity.json");
-const troubleshooting = legacyTable<{ entries: TroubleshootingEntry[] }>("tables/troubleshooting.json");
-const weldDiagnosis = legacyTable<{ entries: Array<Record<string, unknown> & { id: string; defect: string; processes: Process[] }> }>("tables/weld_diagnosis.json");
-const settingsGuide = legacyTable<{ modes: Array<Record<string, unknown> & { process: Process }> }>("tables/settings_guide.json");
-const parts = legacyTable<{ parts: Array<{ number: number; description: string; quantity: number }>; listPage: number; diagramPage: number; orderingNote: string }>("tables/parts.json");
+} : { product: "", item: "", sections: [] };
 
 const pageSearch = new MiniSearch<SearchDocument>({
   fields: ["title", "text", "source"],
@@ -211,16 +148,7 @@ const datasetSearch = new MiniSearch<DatasetSearchDocument>({
 });
 datasetSearch.addAll(datasetSearchDocuments);
 
-function titleFromId(id: string): string {
-  return id.split("-").map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`).join(" ");
-}
-
-const documentCatalog = activePackage?.manifest.documents ?? [...new Set(searchDocuments.map((document) => document.source))].map((id) => {
-  const exact = `${id}.pdf`;
-  const guideVariant = `${id}-guide.pdf`;
-  const sourceFile = existsSync(join(KNOWLEDGE_DIR, "..", "files", exact)) ? exact : existsSync(join(KNOWLEDGE_DIR, "..", "files", guideVariant)) ? guideVariant : exact;
-  return { id, title: titleFromId(id), sourceFile, sha256: "", pageCount: Math.max(...searchDocuments.filter((document) => document.source === id).map((document) => document.page)), authority: "authoritative-manual", outlineAvailable: false };
-});
+const documentCatalog = activePackage.manifest.documents;
 
 export function listDocuments() {
   return documentCatalog.map(({ id, title, sourceFile, pageCount, authority }) => ({ id, title, sourceFile, pageCount, authority }));
@@ -233,11 +161,11 @@ function documentRecord(sourceId: string) {
 }
 
 export function getKnowledgeAssetPath(relativePath: string): string {
-  return activePackage ? activePackage.assetPath(relativePath) : fileURLToPath(new URL(relativePath, new URL(`file://${KNOWLEDGE_DIR}/`)));
+  return activePackage.assetPath(relativePath);
 }
 
 export function getKnowledgeAssetUrl(relativePath: string): string {
-  return activePackage ? `/knowledge/products/${encodeURIComponent(activeProductId())}/${relativePath}` : `/knowledge/${relativePath}`;
+  return `/knowledge/products/${encodeURIComponent(activeProductId())}/${relativePath}`;
 }
 
 function normalizeProcess(value: string): Process | undefined {
@@ -477,12 +405,51 @@ export function resolveEvidenceRefs(refs: EvidenceRef[]): EvidenceSource[] {
   return uniqueEvidence(refs.map(resolveEvidenceRef));
 }
 
+type GeneratedRecord = {
+  id: string;
+  values: Record<string, string | number | boolean>;
+  evidence: Array<{ documentId: string; page: number }>;
+};
+
+function generatedRecords(datasetId: string): GeneratedRecord[] {
+  const dataset = activePackage.manifest.datasets.find((candidate) => candidate.id === datasetId);
+  if (!dataset) return [];
+  return activePackage.readJson<{ records: GeneratedRecord[] }>(dataset.recordsFile).records;
+}
+
+function pagesFor(records: GeneratedRecord[]): number[] {
+  return [...new Set(records.flatMap((record) => record.evidence.map((evidence) => evidence.page)))].sort((a, b) => a - b);
+}
+
 export function lookupDutyCycle(processInput: string, inputVoltage: number, amps: number) {
-  if (!dutyCycles) throw new Error(`Duty-cycle lookup is not configured for ${activeProductId()}.`);
   const normalized = normalizeProcess(processInput);
   if (!normalized) throw new Error(`Unknown welding process: ${processInput}`);
   const process = normalized === "FLUX_CORED" ? "MIG" : normalized;
-  const candidates = dutyCycles.ratings.filter((rating) => rating.process === process && rating.inputVoltage === inputVoltage);
+  const spec = generatedRecords("welder-specifications").find((record) => {
+    const values = record.values;
+    return String(values.welding_process).toUpperCase() === process
+      && String(values.input_voltage).startsWith(`${inputVoltage}VAC`);
+  });
+  const range = spec?.values.welding_current_range;
+  const rangeEndpoints = typeof range === "string" ? range.match(/\d+/g)?.map(Number) : undefined;
+  const candidates = generatedRecords("nameplate-duty-cycle-ratings")
+    .filter((record) => String(record.values.input_voltage).startsWith(`${inputVoltage}V`))
+    .filter((record) => {
+      if (!rangeEndpoints || rangeEndpoints.length < 2) return true;
+      const outputRange = String(record.values.output_range);
+      return outputRange.includes(`${rangeEndpoints[0]}A`) && outputRange.includes(`${rangeEndpoints.at(-1)}A`);
+    })
+    .map((record) => ({
+      process,
+      inputVoltage,
+      amps: Number(record.values.i2_a),
+      dutyPercent: Number(record.values.duty_cycle_pct),
+      weldMinutes: Number(record.values.duty_cycle_pct) / 10,
+      restMinutes: 10 - Number(record.values.duty_cycle_pct) / 10,
+      pages: record.evidence.map((evidence) => evidence.page),
+      recordId: record.id
+    }))
+    .filter((rating) => Number.isFinite(rating.amps));
   if (candidates.length === 0) throw new Error(`No published ${process} duty-cycle ratings for ${inputVoltage} V input.`);
   const exact = candidates.find((rating) => rating.amps === amps);
   if (exact) {
@@ -491,7 +458,8 @@ export function lookupDutyCycle(processInput: string, inputVoltage: number, amps
       requested: { process: normalized, inputVoltage, amps },
       rating: exact,
       note: normalized === "FLUX_CORED" ? "The manual rates flux-cored output in the MIG/wire process section." : undefined,
-      periodMinutes: dutyCycles.periodMinutes
+      periodMinutes: 10,
+      dataset: "nameplate-duty-cycle-ratings"
     };
   }
   const nearest = [...candidates]
@@ -501,72 +469,56 @@ export function lookupDutyCycle(processInput: string, inputVoltage: number, amps
     exact: false,
     requested: { process: normalized, inputVoltage, amps },
     nearestPublishedRatings: nearest,
-    policy: dutyCycles.policy,
-    periodMinutes: dutyCycles.periodMinutes
+    policy: "Only published points are returned. Do not interpolate duty cycle between published amperages.",
+    periodMinutes: 10,
+    dataset: "nameplate-duty-cycle-ratings"
   };
 }
 
 export function lookupPolarity(processInput: string) {
-  if (!polarity) throw new Error(`Polarity lookup is not configured for ${activeProductId()}.`);
   const normalized = normalizeProcess(processInput);
-  const query = processInput.toLowerCase();
-  const setup = polarity.setups.find((candidate) => candidate.process === normalized)
-    ?? polarity.setups.find((candidate) => candidate.aliases.some((alias) => query.includes(alias.toLowerCase())));
-  if (!setup) throw new Error(`No polarity setup found for ${processInput}. Specify MIG, self-shielded flux-cored, TIG, or stick.`);
-  return setup;
+  if (!normalized) throw new Error(`Unknown welding process: ${processInput}`);
+  const process = normalized === "FLUX_CORED" ? "Flux" : normalized.charAt(0) + normalized.slice(1).toLowerCase();
+  const record = generatedRecords("welding-mode-terminal-polarity").find((candidate) => String(candidate.values.welding_mode).toLowerCase() === process.toLowerCase());
+  if (!record) throw new Error(`No generated polarity setup found for ${processInput}.`);
+  const values = record.values;
+  const electrode = String(values.electrode_torch_wire_feed_terminal);
+  return {
+    id: record.id,
+    process: normalized,
+    polarity: /positive/i.test(electrode) ? "DCEP" : "DCEN",
+    polarityMeaning: /positive/i.test(electrode) ? "Direct Current Electrode Positive" : "Direct Current Electrode Negative",
+    groundClampSocket: String(values.ground_clamp_terminal).toLowerCase(),
+    electrodeSocket: /positive/i.test(electrode) ? "positive" : "negative",
+    electrodeLead: electrode,
+    wireFeedConnected: String(values.wire_feed_power).toLowerCase() === "connected",
+    additionalConnections: values.additional_connections,
+    pages: { quickStart: record.evidence.map((evidence) => evidence.page) },
+    dataset: "welding-mode-terminal-polarity"
+  };
 }
 
 export function lookupTroubleshooting(symptom: string, processInput?: string) {
-  if (!troubleshooting || !weldDiagnosis) throw new Error(`Troubleshooting lookup is not configured for ${activeProductId()}.`);
   const process = processInput ? normalizeProcess(processInput) : undefined;
-  const matches = troubleshooting.entries
-    .filter((entry) => !process || entry.processes.includes(process))
-    .map((entry) => ({ entry, score: tokenOverlapScore(symptom, `${entry.symptom} ${entry.checks.map((check) => `${check.cause} ${check.action}`).join(" ")}`) }))
-    .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score)
-    .slice(0, 3)
-    .map(({ entry, score }) => ({
-      ...entry,
-      score,
-      checks: entry.checks.filter((check) => !process || !check.appliesTo || check.appliesTo.includes(process))
-    }));
-
-  const diagnosisMatches = weldDiagnosis.entries
-    .filter((entry) => !process || entry.processes.includes(process))
-    .map((entry) => ({ ...entry, score: tokenOverlapScore(symptom, entry.defect) }))
-    .filter((entry) => entry.score > 0)
-    .sort((left, right) => right.score - left.score)
-    .slice(0, 2);
-  return { symptom, process, matches, diagnosisMatches };
+  const result = searchSources(`${process ?? ""} troubleshooting ${symptom}`.trim(), 5);
+  return { symptom, process, matches: result.documents, diagnosisMatches: result.figures, source: "generated knowledge package" };
 }
 
 export function getSpecs(processInput?: string) {
-  if (!specs) throw new Error(`Specifications lookup is not configured for ${activeProductId()}.`);
-  if (!processInput) return specs;
-  const process = normalizeProcess(processInput);
-  if (!process) throw new Error(`Unknown process: ${processInput}`);
-  const specProcess = process === "FLUX_CORED" ? "MIG" : process;
-  const processMap = (specs.processes ?? {}) as Record<string, unknown>;
-  return { source: specs.source, pages: specs.pages, process, specs: processMap[specProcess] };
+  const process = processInput ? normalizeProcess(processInput) : undefined;
+  if (processInput && !process) throw new Error(`Unknown process: ${processInput}`);
+  const records = generatedRecords("welder-specifications").filter((record) => !process || String(record.values.welding_process).toUpperCase() === (process === "FLUX_CORED" ? "MIG" : process));
+  return { source: "generated knowledge package", dataset: "welder-specifications", process, records, pages: pagesFor(records) };
 }
 
 export function getSettingsGuide(processInput: string) {
-  if (!settingsGuide) throw new Error(`Settings lookup is not configured for ${activeProductId()}.`);
   const process = normalizeProcess(processInput);
   if (!process) throw new Error(`Unknown process: ${processInput}`);
-  const mode = settingsGuide.modes.find((candidate) => candidate.process === process);
-  if (!mode) throw new Error(`No settings guidance found for ${processInput}.`);
-  return { accuracyNote: (settingsGuide as Record<string, unknown>).accuracyNote, mode, source: (settingsGuide as Record<string, unknown>).source, pages: (settingsGuide as Record<string, unknown>).pages };
+  const result = searchSources(`${process} settings setup wire material thickness`, 5);
+  return { process, source: "generated knowledge package", documents: result.documents, datasets: result.datasets, figures: result.figures };
 }
 
 export function searchParts(query: string) {
-  if (!parts) throw new Error(`Parts lookup is not configured for ${activeProductId()}.`);
-  const directNumber = Number.parseInt(query, 10);
-  const results = parts.parts
-    .map((part) => ({ part, score: Number.isFinite(directNumber) && part.number === directNumber ? 100 : tokenOverlapScore(query, part.description) }))
-    .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score)
-    .slice(0, 10)
-    .map(({ part }) => part);
-  return { query, results, listPage: parts.listPage, diagramPage: parts.diagramPage, orderingNote: parts.orderingNote, figureId: "assembly-diagram" };
+  const result = searchSources(`parts assembly ${query}`, 5);
+  return { query, source: "generated knowledge package", results: result.documents, figures: result.figures };
 }

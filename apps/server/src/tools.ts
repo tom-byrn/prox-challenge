@@ -274,10 +274,9 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       { symptom: z.string().min(2).max(500), process: z.string().optional().describe(PROCESS_DESCRIPTION) },
       instrument("lookup_troubleshooting", async ({ symptom, process }) => {
         const data = lookupTroubleshooting(symptom, resolveToolArgument(process, context.process));
-        const pages = [...new Set(data.matches.flatMap((match) => match.pages))];
+        const pages = [...new Set(data.matches.map((match) => match.page))];
         if (pages.length > 0) {
           await emitEvidence([
-            structuredRef("troubleshooting", data.matches.map((match) => match.id), pages),
             documentRef("owner-manual", pages)
           ]);
         }
@@ -301,8 +300,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       { process: z.string().describe(PROCESS_DESCRIPTION) },
       instrument("get_settings_guide", async ({ process }) => {
         const data = getSettingsGuide(resolveToolArgument(process, context.process) ?? process);
-        const pages = Array.isArray(data.pages) ? data.pages.filter((page): page is number => typeof page === "number") : [];
-        await emitEvidence([structuredRef("settings-guide", [data.mode.process], pages), documentRef("owner-manual", pages)]);
+        await emitEvidence(data.documents.map((document) => document.ref));
         return jsonResult(data);
       })
     ),
@@ -312,13 +310,10 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       { query: z.string().min(1).max(100) },
       instrument("search_parts", async ({ query }) => {
         const data = searchParts(query);
-        const pages = [data.listPage, data.diagramPage];
-        if (data.results.length > 0) {
-          await emitEvidence([
-            structuredRef("parts", data.results.map((part) => String(part.number)), pages),
-            documentRef("owner-manual", pages)
-          ]);
-        }
+        await emitEvidence([
+          ...data.results.map((result) => result.ref),
+          ...data.figures.map((result) => result.ref)
+        ]);
         return jsonResult(data);
       })
     ),
