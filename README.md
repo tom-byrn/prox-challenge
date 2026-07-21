@@ -2,18 +2,16 @@
 
 The OmniPro 220 Assistant is a source-grounded support agent for the Vulcan OmniPro 220 welder. Ask questions in plain language and get concise answers backed by the supplied manual and product-video transcript.
 
-![The OmniPro assistant showing the TIG polarity diagram and source figure](docs/omnipro-polarity.png)
-
 ## Features
 
 - Answers questions about setup, welding processes, settings, specifications, parts, and troubleshooting.
 - Uses the product manual, structured lookup data, figures, and timestamped video segments as evidence.
 - Shows citations and the relevant source figure or video segment when helpful.
-- Accepts a local weld, front-panel, cable, or wire-feed photo for grounded visual guidance.
+- Accepts a weld, front-panel, cable, or wire-feed photo for grounded visual guidance.
 - Presents complex answers as metric summaries, reference cards, connection diagrams, annotated images, procedures, or comparisons.
 - Generates sandboxed artifacts such as HTML, SVG, Mermaid, Markdown, React, or code when a reusable interactive document is useful.
 - Asks for missing context—such as process, input voltage, or wire type—when it changes the answer.
-- Preserves conversations and per-turn telemetry locally, or in Turso when deployed.
+- Preserves conversations, normalized photos, and per-turn telemetry locally, or in Turso when deployed.
 
 ## How it works
 
@@ -98,7 +96,7 @@ The repository can be imported into Vercel as-is. Configure these server-side en
 - `ANTHROPIC_API_KEY` — required for agent turns.
 - `PROX_ACCESS_PASSWORD` — shared password for the deployed app.
 - `PROX_SESSION_SECRET` — separate random secret used to sign session cookies.
-- `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` — durable hosted chat history and telemetry.
+- `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` — durable hosted chat history, photos, and telemetry.
 
 Add Turso to the linked Vercel project with:
 
@@ -106,7 +104,7 @@ Add Turso to the linked Vercel project with:
 npx vercel integration add tursocloud
 ```
 
-The application creates its schema automatically. If Turso is unavailable, chat still works but the UI reports that history is disabled. Hosted photo uploads are currently disabled because local filesystem storage is not durable on Vercel.
+The application creates its schema automatically. Uploaded images are normalized to JPEG before being stored as binary Turso rows and are removed with their conversation. If Turso is unavailable, chat still works but saved history and photo uploads are disabled.
 
 Local development remains password-free when the access-control variables are not set. To test the stateless hosted-style mode locally:
 
@@ -163,7 +161,7 @@ scripts/ingest/        PDF/video preparation and ingestion CLI
 ingestion/             Source-only ingestion configs
 files/                 Supplied source PDFs
 tests/e2e/             Playwright browser coverage
-.prox/                 Ignored local database and photo storage
+.prox/                 Ignored local SQLite database
 ```
 
 ## Verification
@@ -183,7 +181,6 @@ npm run eval
 
 ## Current limitations
 
-- Hosted photo uploads require object storage such as Vercel Blob and are currently disabled.
 - Hosted follow-up turns use a bounded recent transcript rather than durable Agent SDK session files.
 - The shared password is not user authentication and has no per-user spending limits or login throttling.
 - The Vercel function must complete each turn within 60 seconds.
@@ -199,8 +196,7 @@ npm run eval
 | `TURSO_DATABASE_URL` | Hosted Turso database URL |
 | `TURSO_AUTH_TOKEN` | Hosted Turso credential |
 | `PROX_CHAT_STORAGE` | Force `sqlite`, `turso`, or `disabled` |
-| `PROX_PHOTO_STORAGE` | Force `local` or `disabled` photo storage |
-| `PHOTO_UPLOAD_DIR` | Override the ignored local photo directory |
+| `PROX_PHOTO_STORAGE` | Optionally disable photo storage; otherwise it follows chat storage |
 | `CLAUDE_MODEL` | Override the runtime Claude model |
 | `KNOWLEDGE_PRODUCT_ID` | Select `knowledge/products/<id>` |
 

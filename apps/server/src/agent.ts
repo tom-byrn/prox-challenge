@@ -1,18 +1,19 @@
 import { query, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { ArtifactContext } from "./artifacts.js";
 import { createManualTools, MANUAL_TOOL_NAMES, type ManualToolContext } from "./tools.js";
-import { getUploadedPhoto } from "./photos.js";
 import { SYSTEM_PROMPT } from "./prompt.js";
 import { makeRepairPrompt, validateAgentResponse } from "./response-validator.js";
 import { ampsFromMessage, getTurnPolicy, inputVoltageFromMessage, processFromMessage, type TurnPolicy } from "./turn-policy.js";
 import type { AgentEvent, EmitEvent, PhotoAttachment, TurnMetrics } from "./types.js";
+
+const CHAT_MAX_BUDGET_USD = 3;
 
 export type AgentTurnInput = {
   message: string;
   sessionId?: string;
   conversationContext?: Array<{ role: "user" | "assistant"; content: string }>;
   artifacts?: ArtifactContext[];
-  photo?: PhotoAttachment;
+  photo?: { attachment: PhotoAttachment; image: Buffer };
   emit: EmitEvent;
   signal?: AbortSignal;
   queryAgent?: typeof query;
@@ -100,13 +101,15 @@ function agentOptions({
   mcpServer,
   model,
   resume,
-  repair
+  repair,
+  maxBudgetUsd
 }: {
   abortController: AbortController;
   mcpServer: ReturnType<typeof createManualTools>;
   model: string;
   resume?: string;
   repair: boolean;
+  maxBudgetUsd: number;
 }) {
   return {
     abortController,
@@ -121,7 +124,7 @@ function agentOptions({
     permissionMode: "dontAsk" as const,
     includePartialMessages: true,
     maxTurns: repair ? 8 : 12,
-    maxBudgetUsd: repair ? 0.15 : 0.35,
+    maxBudgetUsd,
     effort: "medium" as const,
     resume,
     env: {
@@ -140,7 +143,8 @@ async function runAttempt({
   model,
   queryAgent,
   toolContext,
-  photo
+  photo,
+  maxBudgetUsd
 }: {
   prompt: string;
   resume?: string;
@@ -151,6 +155,7 @@ async function runAttempt({
   queryAgent: typeof query;
   toolContext: ManualToolContext;
   photo?: { attachment: PhotoAttachment; image: Buffer };
+  maxBudgetUsd: number;
 }): Promise<AttemptResult> {
   const events: AgentEvent[] = [];
   const calledTools = new Set<string>();
@@ -179,7 +184,7 @@ async function runAttempt({
 
   const response = queryAgent({
     prompt: multimodalPrompt(prompt, photo),
-    options: agentOptions({ abortController, mcpServer, model, resume, repair })
+    options: agentOptions({ abortController, mcpServer, model, resume, repair, maxBudgetUsd })
   });
 
   try {
@@ -239,13 +244,13 @@ async function runAttempt({
 export async function runAgentTurn({ message, sessionId, conversationContext, artifacts, photo, emit, signal, queryAgent = query }: AgentTurnInput) {
   const turnStartedAt = Date.now();
   const policy = getTurnPolicy(message, { hasPhoto: Boolean(photo) });
-  const uploadedPhoto = photo ? await getUploadedPhoto(photo.id) : undefined;
   const toolContext: ManualToolContext = {
     originalQuestion: message,
     process: processFromMessage(message),
     inputVoltage: inputVoltageFromMessage(message),
     amps: ampsFromMessage(message),
-    photoAssetId: photo ? `upload:${photo.id}` : undefined,
+    photoAssetId: photo ? `upload:${photo.attachment.id}` : undefined,
+    photoImage: photo?.image,
     artifacts,
     annotationPreviewState: { attempts: 0, approvedHashes: new Set<string>() }
   };
@@ -261,7 +266,8 @@ export async function runAgentTurn({ message, sessionId, conversationContext, ar
     model,
     queryAgent,
     toolContext,
-    photo: uploadedPhoto
+    photo,
+    maxBudgetUsd: CHAT_MAX_BUDGET_USD
   });
   const cumulativeTools = new Set(firstAttempt.calledTools);
   let finalAttempt = firstAttempt;
@@ -283,7 +289,8 @@ export async function runAgentTurn({ message, sessionId, conversationContext, ar
   let toolCalls = firstAttempt.toolCalls;
   let toolErrors = firstAttempt.toolErrors;
 
-  if (validationIssues.length > 0 && !abortController.signal.aborted) {
+  const remainingBudgetUsd = Math.max(0, CHAT_MAX_BUDGET_USD - (firstAttempt.costUsd ?? 0));
+  if (validationIssues.length > 0 && remainingBudgetUsd > 0 && !abortController.signal.aborted) {
     repaired = true;
     const repairAttempt = await runAttempt({
       prompt: promptWithPresentationGuidance(makeRepairPrompt(message, validationIssues), policy),
@@ -293,7 +300,8 @@ export async function runAgentTurn({ message, sessionId, conversationContext, ar
       abortController,
       model,
       queryAgent,
-      toolContext
+      toolContext,
+      maxBudgetUsd: remainingBudgetUsd
     });
     for (const toolName of repairAttempt.calledTools) cumulativeTools.add(toolName);
     totalCost = (totalCost ?? 0) + (repairAttempt.costUsd ?? 0);

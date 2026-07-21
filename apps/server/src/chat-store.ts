@@ -3,7 +3,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { CHAT_STORE_SCHEMA } from "./chat-store-schema.js";
-import type { TurnMetrics } from "./types.js";
+import type { PhotoAttachment, TurnMetrics } from "./types.js";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -25,12 +25,26 @@ export type RecordTelemetryInput = {
   metrics: TurnMetrics;
 };
 
+export type SavePhotoInput = {
+  ownerId: string;
+  conversationId: string;
+  attachment: PhotoAttachment;
+  image: Uint8Array;
+};
+
+export type StoredPhoto = {
+  attachment: PhotoAttachment;
+  image: Buffer;
+};
+
 export interface ChatStoreLike {
   readonly kind: "sqlite" | "turso";
   listConversations(ownerId: string, limit?: number): Awaitable<ConversationSummary[]>;
   getConversation(ownerId: string, conversationId: string): Awaitable<StoredConversation | null>;
   saveMessage(input: SaveMessageInput): Awaitable<void>;
   removeConversation(ownerId: string, conversationId: string): Awaitable<boolean>;
+  savePhoto(input: SavePhotoInput): Awaitable<void>;
+  getPhoto(photoId: string): Awaitable<StoredPhoto | null>;
   recordTelemetry(input: RecordTelemetryInput): Awaitable<void>;
   telemetrySummary(ownerId: string, limit?: number): Awaitable<TelemetrySummary>;
   close(): Awaitable<void>;
@@ -94,6 +108,14 @@ export type ConversationRow = {
 };
 
 export type MessageRow = { sequence: number; payload_json: string };
+export type PhotoRow = {
+  photo_id: string;
+  mime_type: string;
+  width: number;
+  height: number;
+  size_bytes: number;
+  image_blob: Uint8Array;
+};
 export type TelemetryRow = {
   id: number;
   conversation_id: string;
@@ -266,9 +288,63 @@ export class ChatStore implements ChatStoreLike {
   removeConversation(ownerId: string, conversationId: string): boolean {
     return this.database.transaction(() => {
       this.database.prepare("DELETE FROM telemetry WHERE owner_id = ? AND conversation_id = ?").run(ownerId, conversationId);
+      this.database.prepare("DELETE FROM photos WHERE owner_id = ? AND conversation_id = ?").run(ownerId, conversationId);
       const result = this.database.prepare("DELETE FROM conversations WHERE owner_id = ? AND conversation_id = ?").run(ownerId, conversationId);
       return result.changes > 0;
     })();
+  }
+
+  savePhoto(input: SavePhotoInput): void {
+    const now = Date.now();
+    const orphanCutoff = now - 24 * 60 * 60 * 1_000;
+    this.database.transaction(() => {
+      this.database.prepare(`
+        DELETE FROM photos
+        WHERE created_at < ?
+          AND NOT EXISTS (
+            SELECT 1 FROM conversations
+            WHERE conversations.owner_id = photos.owner_id
+              AND conversations.conversation_id = photos.conversation_id
+          )
+      `).run(orphanCutoff);
+      this.database.prepare(`
+        INSERT INTO photos (
+          photo_id, owner_id, conversation_id, mime_type, width, height,
+          size_bytes, image_blob, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        input.attachment.id,
+        input.ownerId,
+        input.conversationId,
+        input.attachment.mimeType,
+        input.attachment.width,
+        input.attachment.height,
+        input.attachment.sizeBytes,
+        Buffer.from(input.image),
+        now
+      );
+    })();
+  }
+
+  getPhoto(photoId: string): StoredPhoto | null {
+    const row = this.database.prepare(`
+      SELECT photo_id, mime_type, width, height, size_bytes, image_blob
+      FROM photos
+      WHERE photo_id = ?
+    `).get(photoId) as PhotoRow | undefined;
+    if (!row) return null;
+    return {
+      image: Buffer.from(row.image_blob),
+      attachment: {
+        id: row.photo_id,
+        url: `/api/photos/${row.photo_id}`,
+        mimeType: "image/jpeg",
+        width: row.width,
+        height: row.height,
+        sizeBytes: row.size_bytes,
+        alt: "User-uploaded welder photo"
+      }
+    };
   }
 
   recordTelemetry(input: RecordTelemetryInput): void {

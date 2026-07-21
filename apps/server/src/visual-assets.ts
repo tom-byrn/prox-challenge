@@ -9,7 +9,7 @@ const CROP_MARGIN = 24;
 
 export type PreparedVisualAsset = {
   asset: VisualAsset;
-  imagePath: string;
+  imagePath: string | Buffer;
   image: Buffer;
   pixels: Buffer;
   channels: number;
@@ -54,7 +54,7 @@ function pixelAt(buffer: Buffer, width: number, channels: number, x: number, y: 
 
 async function prepare(
   assetBase: Omit<VisualAsset, "url" | "width" | "height" | "original" | "crop">,
-  imagePath: string,
+  imagePath: string | Buffer,
   options: { trim: boolean }
 ): Promise<PreparedVisualAsset> {
   const metadata = await sharp(imagePath).metadata();
@@ -114,7 +114,7 @@ async function prepare(
 
 export function prepareVisualAsset(
   assetBase: Omit<VisualAsset, "url" | "width" | "height" | "original" | "crop">,
-  imagePath: string,
+  imagePath: string | Buffer,
   options: { trim?: boolean } = {}
 ): Promise<PreparedVisualAsset> {
   const cached = preparedByAssetId.get(assetBase.assetId);

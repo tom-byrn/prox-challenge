@@ -437,7 +437,8 @@ export function lookupDutyCycle(processInput: string, inputVoltage: number, amps
     .filter((record) => {
       if (!rangeEndpoints || rangeEndpoints.length < 2) return true;
       const outputRange = String(record.values.output_range);
-      return outputRange.includes(`${rangeEndpoints[0]}A`) && outputRange.includes(`${rangeEndpoints.at(-1)}A`);
+      const finalEndpoint = rangeEndpoints[rangeEndpoints.length - 1];
+      return outputRange.includes(`${rangeEndpoints[0]}A`) && outputRange.includes(`${finalEndpoint}A`);
     })
     .map((record) => ({
       process,

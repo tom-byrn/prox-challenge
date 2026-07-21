@@ -100,6 +100,14 @@ function artifactResponse() {
   ]);
 }
 
+function photoResponse() {
+  return sse([
+    { type: "meta", conversationId: "test-conversation" },
+    { type: "text_delta", text: "I received the photo and can inspect it." },
+    { type: "done", sessionId: "00000000-0000-4000-8000-000000000004", metrics },
+  ]);
+}
+
 async function stubPersistence(page: Page) {
   await page.route("**/api/chats**", async (route: Route) => {
     if (route.request().method() === "GET") {
@@ -206,4 +214,56 @@ test("runs a typed React artifact in the isolated preview and carries its revisi
   const artifacts = requests[1]?.artifacts as Array<Record<string, unknown>>;
   expect(artifacts[0]).toMatchObject({ identifier: "process-selector", type: "application/vnd.ant.react", revision: 1 });
   expect(artifacts[0]?.content).toContain("export default function App()");
+});
+
+test("uploads, retrieves, renders, and deletes a database-backed photo", async ({ page }) => {
+  let chatRequest: Record<string, unknown> | undefined;
+  await page.route("**/api/chat", async (route) => {
+    chatRequest = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "text/event-stream", "cache-control": "no-cache" },
+      body: photoResponse(),
+    });
+  });
+  await page.goto("/");
+
+  await page.locator('input[type="file"]').setInputFiles("product.webp");
+  await expect(page.getByAltText("Selected upload preview")).toBeVisible();
+  await page.getByRole("textbox", { name: "Message the OmniPro 220 assistant" }).fill("Inspect this welder photo.");
+  const uploadResponsePromise = page.waitForResponse((response) => response.url().endsWith("/api/photos") && response.request().method() === "POST");
+  await page.getByRole("button", { name: "Send message" }).click();
+
+  const uploadResponse = await uploadResponsePromise;
+  expect(uploadResponse.status()).toBe(201);
+  const upload = await uploadResponse.json() as {
+    attachment: { id: string; url: string; mimeType: string; width: number; height: number };
+  };
+  expect(upload.attachment).toMatchObject({ mimeType: "image/jpeg", width: 1200, height: 1200 });
+  await expect(page.getByAltText("User-uploaded welder photo")).toBeVisible();
+  await expect(page.getByText("I received the photo and can inspect it.", { exact: true })).toBeVisible();
+  expect(chatRequest?.photoId).toBe(upload.attachment.id);
+
+  const storedPhoto = await page.request.get(upload.attachment.url);
+  expect(storedPhoto.status()).toBe(200);
+  expect(storedPhoto.headers()["content-type"]).toContain("image/jpeg");
+  expect((await storedPhoto.body()).length).toBeGreaterThan(1_000);
+
+  const renderedVisual = await page.request.get(`/api/visual-assets/${encodeURIComponent(`upload:${upload.attachment.id}`)}`);
+  expect(renderedVisual.status()).toBe(200);
+  expect(renderedVisual.headers()["content-type"]).toContain("image/png");
+
+  const conversationId = new URL(page.url()).searchParams.get("chat");
+  const ownerId = await page.evaluate(() => window.localStorage.getItem("prox-chat-owner"));
+  expect(conversationId).toBeTruthy();
+  expect(ownerId).toBeTruthy();
+  await page.unroute("**/api/chats**");
+  const saved = await page.request.post(`/api/chats/${conversationId}/messages`, {
+    data: { ownerId, title: "Photo test", messageId: "photo-test-message", sequence: 0, payload: { test: true } },
+  });
+  expect(saved.status()).toBe(201);
+  const removed = await page.request.delete(`/api/chats/${conversationId}?ownerId=${encodeURIComponent(ownerId!)}`);
+  expect(removed.status()).toBe(200);
+  expect((await removed.json()).removed).toBe(true);
+  expect((await page.request.get(upload.attachment.url)).status()).toBe(404);
 });

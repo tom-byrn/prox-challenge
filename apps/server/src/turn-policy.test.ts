@@ -106,9 +106,13 @@ test("prefers a generic reference card for a fully specified settings request", 
 test("buffers a rejected answer and performs only one repair turn", async () => {
   const events: AgentEvent[] = [];
   const results = ["Unsourced first answer.", "Complete replacement answer."];
+  const costs = [1.25, 0.5];
+  const seenOptions: Array<Record<string, unknown>> = [];
   let calls = 0;
-  const queryAgent = (() => {
+  const queryAgent = (({ options }: { options: Record<string, unknown> }) => {
+    seenOptions.push(options);
     const result = results[calls] ?? "Unexpected extra attempt";
+    const cost = costs[calls] ?? 0;
     calls += 1;
     return {
       async *[Symbol.asyncIterator]() {
@@ -116,7 +120,7 @@ test("buffers a rejected answer and performs only one repair turn", async () => 
           type: "result",
           subtype: "success",
           session_id: "00000000-0000-4000-8000-000000000001",
-          total_cost_usd: 0,
+          total_cost_usd: cost,
           result
         };
       },
@@ -141,4 +145,7 @@ test("buffers a rejected answer and performs only one repair turn", async () => 
   assert.equal(done.metrics.status, "degraded");
   assert.equal(done.metrics.validationIssues > 0, true);
   assert.equal(done.metrics.model, "claude-sonnet-4-6");
+  assert.equal(seenOptions.length, 2);
+  assert.deepEqual(seenOptions.map((options) => options.maxBudgetUsd), [3, 1.75]);
+  assert.equal(outcome.costUsd, 1.75);
 });

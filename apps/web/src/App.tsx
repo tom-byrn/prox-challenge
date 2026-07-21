@@ -158,7 +158,7 @@ export default function App() {
     const controller = new AbortController();
     void fetch("/api/health", { signal: controller.signal })
       .then((response) => response.ok ? response.json() : undefined)
-      .then((health: { photoStorage?: "local" | "disabled" } | undefined) => {
+      .then((health: { photoStorage?: "sqlite" | "turso" | "disabled" } | undefined) => {
         if (health?.photoStorage === "disabled") {
           setPhotoUploadsAvailable(false);
           clearPhoto();
@@ -358,7 +358,7 @@ export default function App() {
     let photo;
     if (attachedDraft) {
       try {
-        photo = await uploadPhoto(attachedDraft.file, controller.signal);
+        photo = await uploadPhoto(attachedDraft.file, ownerId, conversationId, controller.signal);
       } catch (error) {
         if ((error as Error).name !== "AbortError") setPhotoError(error instanceof Error ? error.message : "The photo upload failed.");
         setBusy(false);
@@ -427,7 +427,7 @@ export default function App() {
       setBusy(false);
       abortRef.current = undefined;
     }
-  }, [busy, clearPhoto, conversationId, handleEvent, input, messages, persistMessage, persistenceAvailable, photoDraft, sessionId, updateAssistant]);
+  }, [busy, clearPhoto, conversationId, handleEvent, input, messages, ownerId, persistMessage, persistenceAvailable, photoDraft, sessionId, updateAssistant]);
 
   const handleClarification = useCallback((answer: string, originalQuestion: string) => {
     const continuation = `The user is answering a clarification request. Continue the original task using this context:\n${JSON.stringify({ originalQuestion, answer })}`;

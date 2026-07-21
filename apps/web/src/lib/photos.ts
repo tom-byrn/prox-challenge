@@ -15,9 +15,11 @@ export function validatePhotoFile(file: File): string | undefined {
   return undefined;
 }
 
-export async function uploadPhoto(file: File, signal: AbortSignal): Promise<PhotoAttachment> {
+export async function uploadPhoto(file: File, ownerId: string, conversationId: string, signal: AbortSignal): Promise<PhotoAttachment> {
   const form = new FormData();
   form.set("photo", file);
+  form.set("ownerId", ownerId);
+  form.set("conversationId", conversationId);
   const response = await fetch("/api/photos", { method: "POST", body: form, signal });
   const payload = await response.json().catch(() => ({ error: `Upload failed (${response.status})` })) as { attachment?: PhotoAttachment; error?: string };
   if (!response.ok || !payload.attachment) throw new Error(payload.error ?? `Upload failed (${response.status})`);

@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { activeProductId } from "./knowledge-package.js";
 import { getFigure, getKnowledgeAssetPath, getPage, getVideoSegment } from "./knowledge.js";
-import { photoFilePath } from "./photos.js";
 import { prepareVisualAsset, visualContentDensity, type PreparedVisualAsset } from "./visual-assets.js";
 import {
   AnnotatedImageSchema,
@@ -16,13 +15,13 @@ import {
 
 type VisualAssetSource = {
   assetBase: Omit<VisualAsset, "url" | "width" | "height" | "original" | "crop">;
-  imagePath: string;
+  imagePath: string | Buffer;
 };
 
-function resolveVisualAssetSource(assetId: string, allowedUploadAssetId?: string): VisualAssetSource & { trim?: boolean } {
+function resolveVisualAssetSource(assetId: string, allowedUploadAssetId?: string, uploadedPhotoImage?: Buffer): VisualAssetSource & { trim?: boolean } {
   if (assetId.startsWith("upload:")) {
     if (!allowedUploadAssetId || assetId !== allowedUploadAssetId) throw new Error("That uploaded photo is not available in this turn.");
-    const photoId = assetId.slice("upload:".length);
+    if (!uploadedPhotoImage) throw new Error("That uploaded photo is no longer available.");
     return {
       assetBase: {
         assetId,
@@ -30,7 +29,7 @@ function resolveVisualAssetSource(assetId: string, allowedUploadAssetId?: string
         source: "user-photo",
         pages: []
       },
-      imagePath: photoFilePath(photoId),
+      imagePath: uploadedPhotoImage,
       trim: false
     };
   }
@@ -63,8 +62,8 @@ function resolveVisualAssetSource(assetId: string, allowedUploadAssetId?: string
   };
 }
 
-export async function resolveVisualAsset(assetId: string, allowedUploadAssetId?: string): Promise<PreparedVisualAsset> {
-  const source = resolveVisualAssetSource(assetId, allowedUploadAssetId);
+export async function resolveVisualAsset(assetId: string, allowedUploadAssetId?: string, uploadedPhotoImage?: Buffer): Promise<PreparedVisualAsset> {
+  const source = resolveVisualAssetSource(assetId, allowedUploadAssetId, uploadedPhotoImage);
   return prepareVisualAsset(source.assetBase, source.imagePath, { trim: source.trim });
 }
 
@@ -171,16 +170,16 @@ function previewSvg(spec: AnnotatedImageSpec, width: number, height: number): st
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="${markerSize}" markerHeight="${markerSize}" refX="${markerSize - 2}" refY="${markerSize / 2}" orient="auto"><path d="M 0 0 L ${markerSize} ${markerSize / 2} L 0 ${markerSize} z" fill="#ef7440"/></marker></defs>${grid}${shapes}</svg>`;
 }
 
-export async function buildAnnotationPreview(input: unknown, allowedUploadAssetId?: string): Promise<{ spec: AnnotatedImageSpec; prepared: PreparedVisualAsset; preview: Buffer; hash: string; valid: boolean; issues: AnnotationGroundingIssue[] }> {
+export async function buildAnnotationPreview(input: unknown, allowedUploadAssetId?: string, uploadedPhotoImage?: Buffer): Promise<{ spec: AnnotatedImageSpec; prepared: PreparedVisualAsset; preview: Buffer; hash: string; valid: boolean; issues: AnnotationGroundingIssue[] }> {
   const spec = AnnotatedImageSchema.parse(input);
-  const prepared = await resolveVisualAsset(spec.image.assetId, allowedUploadAssetId);
+  const prepared = await resolveVisualAsset(spec.image.assetId, allowedUploadAssetId, uploadedPhotoImage);
   const issues = annotationGroundingIssues(spec, prepared);
   const svg = previewSvg(spec, prepared.asset.width, prepared.asset.height);
   const preview = await sharp(prepared.image).composite([{ input: Buffer.from(svg) }]).png().toBuffer();
   return { spec, prepared, preview, hash: visualSpecHash(spec), valid: issues.length === 0, issues };
 }
 
-export async function buildVisualPayload(id: string, input: unknown, allowedUploadAssetId?: string): Promise<VisualPayload> {
+export async function buildVisualPayload(id: string, input: unknown, allowedUploadAssetId?: string, uploadedPhotoImage?: Buffer): Promise<VisualPayload> {
   const spec = VisualSpecSchema.parse(input);
   for (const ref of collectSourceRefs(spec)) {
     if (ref.kind === "figure") getFigure(ref.figureId);
@@ -188,7 +187,7 @@ export async function buildVisualPayload(id: string, input: unknown, allowedUplo
     else for (const page of ref.pages) getPage(ref.sourceId, page);
   }
   if (spec.kind !== "annotated-image") return { id, spec, assets: [] };
-  const prepared = await resolveVisualAsset(spec.image.assetId, allowedUploadAssetId);
+  const prepared = await resolveVisualAsset(spec.image.assetId, allowedUploadAssetId, uploadedPhotoImage);
   validateAnnotationGrounding(spec, prepared);
   return { id, spec, assets: [prepared.asset] };
 }

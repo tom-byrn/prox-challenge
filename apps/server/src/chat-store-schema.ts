@@ -28,6 +28,22 @@ export const CHAT_STORE_SCHEMA = `
   CREATE INDEX IF NOT EXISTS messages_owner_conversation_sequence
     ON messages (owner_id, conversation_id, sequence);
 
+  CREATE TABLE IF NOT EXISTS photos (
+    photo_id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL,
+    conversation_id TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    width INTEGER NOT NULL,
+    height INTEGER NOT NULL,
+    size_bytes INTEGER NOT NULL,
+    image_blob BLOB NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS photos_owner_conversation
+    ON photos (owner_id, conversation_id);
+  CREATE INDEX IF NOT EXISTS photos_created
+    ON photos (created_at);
+
   CREATE TABLE IF NOT EXISTS telemetry (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     owner_id TEXT NOT NULL,

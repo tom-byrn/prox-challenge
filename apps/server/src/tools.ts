@@ -40,6 +40,7 @@ export type ManualToolContext = {
   inputVoltage?: 120 | 240;
   amps?: number;
   photoAssetId?: string;
+  photoImage?: Buffer;
   artifacts?: ArtifactContext[];
   annotationPreviewState?: { attempts: number; approvedHashes: Set<string> };
 };
@@ -175,7 +176,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
       "Inspect the exact prepared pixels and dimensions for an approved visual before annotating it. Asset ids are figure:<figure-id>, page:<source>:<page>, or the upload:<photo-id> explicitly supplied in the current user message. Use absolute pixel coordinates relative to this exact prepared image; do not use normalized coordinates.",
       { assetId: VisualAssetIdSchema },
       instrument("inspect_visual_source", async ({ assetId }) => {
-        const prepared = await resolveVisualAsset(assetId, context.photoAssetId);
+        const prepared = await resolveVisualAsset(assetId, context.photoAssetId, context.photoImage);
         return {
           content: [
             { type: "text" as const, text: JSON.stringify({ ...prepared.asset, coordinateSystem: `absolute pixels: origin (0,0) at top-left; x 0–${prepared.asset.width}; y 0–${prepared.asset.height}` }, null, 2) },
@@ -198,7 +199,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
             instruction: "Stop revising coordinates. Do not narrate the failed attempts. Use an already approved spec if one exists; otherwise ask for a clearer photo or explain that a reliable overlay could not be produced."
           });
         }
-        const result = await buildAnnotationPreview(spec, context.photoAssetId);
+        const result = await buildAnnotationPreview(spec, context.photoAssetId, context.photoImage);
         if (result.valid) previewedAnnotations.add(result.hash);
         return {
           content: [
@@ -378,7 +379,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
           throw new Error("Annotated images must be validated with preview_visual_annotations using the exact same spec before display.");
         }
         await emitEvidence(spec.sourceRefs);
-        const visual = await buildVisualPayload(randomUUID(), spec, context.photoAssetId);
+        const visual = await buildVisualPayload(randomUUID(), spec, context.photoAssetId, context.photoImage);
         await emit({ type: "visual", visual });
         return jsonResult({ displayed: true, visualId: visual.id, kind: visual.spec.kind });
       }),

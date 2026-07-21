@@ -18,8 +18,8 @@ import {
   isValidAccessSession,
   readAccessControlConfig
 } from "./access-control.js";
-import type { ChatStoreLike, TelemetrySummary } from "./chat-store.js";
-import { getUploadedPhoto, isPhotoId, MAX_PHOTO_UPLOAD_BYTES, PhotoUploadError, storeUploadedPhoto } from "./photos.js";
+import type { ChatStoreLike, StoredPhoto, TelemetrySummary } from "./chat-store.js";
+import { isPhotoId, MAX_PHOTO_UPLOAD_BYTES, normalizeUploadedPhoto, PhotoUploadError } from "./photos.js";
 import type { AgentEvent } from "./types.js";
 import { getPreparedVisualAsset } from "./visual-assets.js";
 import { resolveVisualAsset } from "./visuals.js";
@@ -30,7 +30,7 @@ const webDist = fileURLToPath(new URL("../../web/dist/", import.meta.url));
 config({ path: fileURLToPath(new URL("../../../.env", import.meta.url)), quiet: true });
 
 type ChatStorageMode = "sqlite" | "turso" | "disabled";
-type PhotoStorageMode = "local" | "disabled";
+type PhotoStorageMode = "sqlite" | "turso" | "disabled";
 
 function configuredChatStorageMode(): ChatStorageMode {
   const configured = process.env.PROX_CHAT_STORAGE?.trim().toLowerCase();
@@ -41,8 +41,8 @@ function configuredChatStorageMode(): ChatStorageMode {
 
 function configuredPhotoStorageMode(): PhotoStorageMode {
   const configured = process.env.PROX_PHOTO_STORAGE?.trim().toLowerCase();
-  if (configured === "local" || configured === "disabled") return configured;
-  return process.env.VERCEL ? "disabled" : "local";
+  if (configured === "disabled") return "disabled";
+  return configuredChatStorageMode();
 }
 
 let chatStorePromise: Promise<ChatStoreLike | undefined> | undefined;
@@ -58,6 +58,16 @@ function optionalChatStore(): Promise<ChatStoreLike | undefined> {
       return undefined;
     });
   return chatStorePromise;
+}
+
+async function optionalStoredPhoto(photoId: string): Promise<StoredPhoto | undefined> {
+  const store = await optionalChatStore();
+  if (!store) return undefined;
+  try {
+    return await store.getPhoto(photoId) ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function emptyTelemetrySummary(): TelemetrySummary {
@@ -254,12 +264,19 @@ app.post("/api/photos", async (context) => {
   try {
     const form = await context.req.raw.formData();
     const file = form.get("photo");
+    const ownerId = OwnerId.safeParse(form.get("ownerId"));
+    const conversationId = ConversationId.safeParse(form.get("conversationId"));
     if (!(file instanceof File)) return context.json({ error: "Attach one photo using the photo field." }, 400);
-    const attachment = await storeUploadedPhoto(Buffer.from(await file.arrayBuffer()));
-    return context.json({ attachment }, 201);
+    if (!ownerId.success || !conversationId.success) return context.json({ error: "Valid owner and conversation ids are required." }, 400);
+    const store = await optionalChatStore();
+    if (!store) return context.json({ error: "Photo storage is unavailable in this deployment." }, 503);
+    const photo = await normalizeUploadedPhoto(Buffer.from(await file.arrayBuffer()));
+    await store.savePhoto({ ownerId: ownerId.data, conversationId: conversationId.data, ...photo });
+    return context.json({ attachment: photo.attachment }, 201);
   } catch (error) {
-    const message = error instanceof PhotoUploadError ? error.message : "The photo upload failed.";
-    return context.json({ error: message }, 400);
+    if (error instanceof PhotoUploadError) return context.json({ error: error.message }, 400);
+    console.error("Photo persistence failed.", error);
+    return context.json({ error: "Photo storage is temporarily unavailable." }, 503);
   }
 });
 
@@ -268,7 +285,8 @@ app.get("/api/photos/:photoId", async (context) => {
   const photoId = context.req.param("photoId");
   if (!isPhotoId(photoId)) return context.json({ error: "Photo not found." }, 404);
   try {
-    const photo = await getUploadedPhoto(photoId);
+    const photo = await optionalStoredPhoto(photoId);
+    if (!photo) return context.json({ error: "Photo not found." }, 404);
     return context.body(new Uint8Array(photo.image), 200, {
       "Content-Type": photo.attachment.mimeType,
       "Content-Length": String(photo.image.length),
@@ -282,8 +300,12 @@ app.get("/api/photos/:photoId", async (context) => {
 
 app.get("/api/visual-assets/:assetId", async (context) => {
   const assetId = decodeURIComponent(context.req.param("assetId"));
+  const uploadPhotoId = assetId.startsWith("upload:") ? assetId.slice("upload:".length) : undefined;
+  const uploadedPhoto = uploadPhotoId && isPhotoId(uploadPhotoId)
+    ? await optionalStoredPhoto(uploadPhotoId)
+    : undefined;
   const prepared = getPreparedVisualAsset(assetId)
-    ?? await resolveVisualAsset(assetId, assetId.startsWith("upload:") ? assetId : undefined).catch(() => undefined);
+    ?? await resolveVisualAsset(assetId, uploadedPhoto ? assetId : undefined, uploadedPhoto?.image).catch(() => undefined);
   if (!prepared) return context.json({ error: "Prepared visual asset not found." }, 404);
   return context.body(new Uint8Array(prepared.image), 200, {
     "Content-Type": "image/png",
@@ -312,7 +334,7 @@ app.post("/api/chat", async (context) => {
     return context.json({ error: "ANTHROPIC_API_KEY is missing. Copy .env.example to .env and add your key." }, 503);
   }
   const photo = parsed.data.photoId
-    ? await getUploadedPhoto(parsed.data.photoId).then((result) => result.attachment).catch(() => undefined)
+    ? await optionalStoredPhoto(parsed.data.photoId)
     : undefined;
   if (parsed.data.photoId && !photo) {
     return context.json({ error: "That uploaded photo is no longer available. Attach it again and retry." }, 400);

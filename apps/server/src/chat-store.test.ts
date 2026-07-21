@@ -10,6 +10,21 @@ test("stores, restores, summarizes, and deletes a complete local conversation", 
   const databasePath = join(directory, "test.sqlite");
   let store = new ChatStore(databasePath);
   try {
+    const photoId = "photo-0123456789abcdef01234567";
+    store.savePhoto({
+      ownerId: "browser-one",
+      conversationId: "chat-one",
+      attachment: {
+        id: photoId,
+        url: `/api/photos/${photoId}`,
+        mimeType: "image/jpeg",
+        width: 2,
+        height: 2,
+        sizeBytes: 4,
+        alt: "User-uploaded welder photo"
+      },
+      image: Buffer.from([1, 2, 3, 4])
+    });
     store.saveMessage({
       ownerId: "browser-one",
       conversationId: "chat-one",
@@ -59,6 +74,9 @@ test("stores, restores, summarizes, and deletes a complete local conversation", 
       status: "done",
       parts: [{ type: "text", text: "Restored answer" }]
     });
+    const restoredPhoto = store.getPhoto(photoId);
+    assert.equal(restoredPhoto?.attachment.width, 2);
+    assert.deepEqual([...restoredPhoto!.image], [1, 2, 3, 4]);
 
     store.recordTelemetry({
       ownerId: "browser-one",
@@ -81,6 +99,7 @@ test("stores, restores, summarizes, and deletes a complete local conversation", 
     assert.equal(store.getConversation("browser-one", "chat-one"), null);
     assert.equal(store.listConversations("browser-one").length, 0);
     assert.equal(store.telemetrySummary("browser-one").sampledTurns, 0);
+    assert.equal(store.getPhoto(photoId), null);
   } finally {
     store.close();
     rmSync(directory, { recursive: true, force: true });

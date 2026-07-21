@@ -5,8 +5,11 @@ import {
   type ChatStoreLike,
   type ConversationRow,
   type MessageRow,
+  type PhotoRow,
   type RecordTelemetryInput,
+  type SavePhotoInput,
   type SaveMessageInput,
+  type StoredPhoto,
   type StoredConversation,
   type TelemetryRow,
   type TelemetrySummary
@@ -26,6 +29,13 @@ function nullableText(row: DatabaseRow, key: string): string | null {
 
 function number(row: DatabaseRow, key: string): number {
   return Number(row[key] ?? 0);
+}
+
+function bytes(row: DatabaseRow, key: string): Uint8Array {
+  const value = row[key];
+  if (value instanceof Uint8Array) return value;
+  if (value instanceof ArrayBuffer) return new Uint8Array(value);
+  throw new Error(`Expected ${key} to contain binary photo data.`);
 }
 
 function conversationRow(row: DatabaseRow): ConversationRow {
@@ -59,6 +69,17 @@ function telemetryRow(row: DatabaseRow): TelemetryRow {
     repaired: number(row, "repaired"),
     validation_issues: number(row, "validation_issues"),
     created_at: number(row, "created_at")
+  };
+}
+
+function photoRow(row: DatabaseRow): PhotoRow {
+  return {
+    photo_id: text(row, "photo_id"),
+    mime_type: text(row, "mime_type"),
+    width: number(row, "width"),
+    height: number(row, "height"),
+    size_bytes: number(row, "size_bytes"),
+    image_blob: bytes(row, "image_blob")
   };
 }
 
@@ -167,10 +188,77 @@ export class TursoChatStore implements ChatStoreLike {
     await this.ready;
     const results = await this.client.batch([
       { sql: "DELETE FROM telemetry WHERE owner_id = ? AND conversation_id = ?", args: [ownerId, conversationId] },
+      { sql: "DELETE FROM photos WHERE owner_id = ? AND conversation_id = ?", args: [ownerId, conversationId] },
       { sql: "DELETE FROM messages WHERE owner_id = ? AND conversation_id = ?", args: [ownerId, conversationId] },
       { sql: "DELETE FROM conversations WHERE owner_id = ? AND conversation_id = ?", args: [ownerId, conversationId] }
     ], "write");
-    return (results[2]?.rowsAffected ?? 0) > 0;
+    return (results[3]?.rowsAffected ?? 0) > 0;
+  }
+
+  async savePhoto(input: SavePhotoInput): Promise<void> {
+    await this.ready;
+    const now = Date.now();
+    const orphanCutoff = now - 24 * 60 * 60 * 1_000;
+    await this.client.batch([
+      {
+        sql: `
+          DELETE FROM photos
+          WHERE created_at < ?
+            AND NOT EXISTS (
+              SELECT 1 FROM conversations
+              WHERE conversations.owner_id = photos.owner_id
+                AND conversations.conversation_id = photos.conversation_id
+            )
+        `,
+        args: [orphanCutoff]
+      },
+      {
+        sql: `
+          INSERT INTO photos (
+            photo_id, owner_id, conversation_id, mime_type, width, height,
+            size_bytes, image_blob, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        args: [
+          input.attachment.id,
+          input.ownerId,
+          input.conversationId,
+          input.attachment.mimeType,
+          input.attachment.width,
+          input.attachment.height,
+          input.attachment.sizeBytes,
+          input.image,
+          now
+        ]
+      }
+    ], "write");
+  }
+
+  async getPhoto(photoId: string): Promise<StoredPhoto | null> {
+    await this.ready;
+    const result = await this.client.execute({
+      sql: `
+        SELECT photo_id, mime_type, width, height, size_bytes, image_blob
+        FROM photos
+        WHERE photo_id = ?
+      `,
+      args: [photoId]
+    });
+    const raw = result.rows[0] as DatabaseRow | undefined;
+    if (!raw) return null;
+    const row = photoRow(raw);
+    return {
+      image: Buffer.from(row.image_blob),
+      attachment: {
+        id: row.photo_id,
+        url: `/api/photos/${row.photo_id}`,
+        mimeType: "image/jpeg",
+        width: row.width,
+        height: row.height,
+        sizeBytes: row.size_bytes,
+        alt: "User-uploaded welder photo"
+      }
+    };
   }
 
   async recordTelemetry(input: RecordTelemetryInput): Promise<void> {
