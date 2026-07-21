@@ -7,6 +7,10 @@ import { ampsFromMessage, getTurnPolicy, inputVoltageFromMessage, processFromMes
 import type { AgentEvent, EmitEvent, PhotoAttachment, TurnMetrics } from "./types.js";
 
 const CHAT_MAX_BUDGET_USD = 3;
+const DEPLOYED_CHAT_DEADLINE_MS = 105_000;
+const LOCAL_CHAT_DEADLINE_MS = 5 * 60_000;
+const MINIMUM_REPAIR_TIME_MS = 20_000;
+const AGENT_TIMEOUT_MESSAGE = "The response reached its time limit before it could finish. Please retry, or ask for a simpler visual.";
 
 export type AgentTurnInput = {
   message: string;
@@ -17,6 +21,7 @@ export type AgentTurnInput = {
   emit: EmitEvent;
   signal?: AbortSignal;
   queryAgent?: typeof query;
+  deadlineMs?: number;
 };
 
 function promptWithConversationContext(
@@ -123,7 +128,7 @@ function agentOptions({
     settingSources: [],
     permissionMode: "dontAsk" as const,
     includePartialMessages: true,
-    maxTurns: repair ? 8 : 12,
+    maxTurns: repair ? 4 : 8,
     maxBudgetUsd,
     effort: "medium" as const,
     resume,
@@ -241,7 +246,7 @@ async function runAttempt({
   }
 }
 
-export async function runAgentTurn({ message, sessionId, conversationContext, artifacts, photo, emit, signal, queryAgent = query }: AgentTurnInput) {
+async function executeAgentTurn({ message, sessionId, conversationContext, artifacts, photo, emit, signal, queryAgent = query }: AgentTurnInput, deadlineMs: number) {
   const turnStartedAt = Date.now();
   const policy = getTurnPolicy(message, { hasPhoto: Boolean(photo) });
   const toolContext: ManualToolContext = {
@@ -252,7 +257,7 @@ export async function runAgentTurn({ message, sessionId, conversationContext, ar
     photoAssetId: photo ? `upload:${photo.attachment.id}` : undefined,
     photoImage: photo?.image,
     artifacts,
-    annotationPreviewState: { attempts: 0, approvedHashes: new Set<string>() }
+    annotationPreviewState: { attempts: 0, approvedHashes: new Set<string>(), rejectedHashes: new Set<string>() }
   };
   const abortController = new AbortController();
   signal?.addEventListener("abort", () => abortController.abort(), { once: true });
@@ -290,7 +295,8 @@ export async function runAgentTurn({ message, sessionId, conversationContext, ar
   let toolErrors = firstAttempt.toolErrors;
 
   const remainingBudgetUsd = Math.max(0, CHAT_MAX_BUDGET_USD - (firstAttempt.costUsd ?? 0));
-  if (validationIssues.length > 0 && remainingBudgetUsd > 0 && !abortController.signal.aborted) {
+  const remainingTimeMs = deadlineMs - (Date.now() - turnStartedAt);
+  if (validationIssues.length > 0 && remainingBudgetUsd > 0 && remainingTimeMs >= MINIMUM_REPAIR_TIME_MS && !abortController.signal.aborted) {
     repaired = true;
     const repairAttempt = await runAttempt({
       prompt: promptWithPresentationGuidance(makeRepairPrompt(message, validationIssues), policy),
@@ -350,4 +356,39 @@ export async function runAgentTurn({ message, sessionId, conversationContext, ar
     validationIssues,
     metrics
   };
+}
+
+export async function runWithAgentDeadline<T>(
+  deadlineMs: number,
+  externalSignal: AbortSignal | undefined,
+  operation: (signal: AbortSignal) => Promise<T>
+): Promise<T> {
+  const controller = new AbortController();
+  const forwardAbort = () => controller.abort(externalSignal?.reason);
+  if (externalSignal?.aborted) forwardAbort();
+  else externalSignal?.addEventListener("abort", forwardAbort, { once: true });
+
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_resolve, reject) => {
+    timeout = setTimeout(() => {
+      controller.abort(new Error(AGENT_TIMEOUT_MESSAGE));
+      reject(new Error(AGENT_TIMEOUT_MESSAGE));
+    }, deadlineMs);
+  });
+
+  try {
+    return await Promise.race([operation(controller.signal), deadline]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+    externalSignal?.removeEventListener("abort", forwardAbort);
+  }
+}
+
+export async function runAgentTurn(input: AgentTurnInput) {
+  const deadlineMs = input.deadlineMs ?? (process.env.VERCEL ? DEPLOYED_CHAT_DEADLINE_MS : LOCAL_CHAT_DEADLINE_MS);
+  return runWithAgentDeadline(
+    deadlineMs,
+    input.signal,
+    (signal) => executeAgentTurn({ ...input, signal }, deadlineMs)
+  );
 }

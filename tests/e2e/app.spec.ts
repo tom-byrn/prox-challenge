@@ -108,6 +108,14 @@ function photoResponse() {
   ]);
 }
 
+function interruptedResponse() {
+  return sse([
+    { type: "meta", conversationId: "test-conversation" },
+    { type: "tool_start", id: "interrupted-tool", name: "preview_visual_annotations", label: "Checking annotation placement", input: { spec: {} } },
+    { type: "tool_end", id: "interrupted-tool", name: "preview_visual_annotations", ok: true },
+  ]);
+}
+
 async function stubPersistence(page: Page) {
   await page.route("**/api/chats**", async (route: Route) => {
     if (route.request().method() === "GET") {
@@ -266,4 +274,21 @@ test("uploads, retrieves, renders, and deletes a database-backed photo", async (
   expect(removed.status()).toBe(200);
   expect((await removed.json()).removed).toBe(true);
   expect((await page.request.get(upload.attachment.url)).status()).toBe(404);
+});
+
+test("turns an interrupted event stream into a visible retryable error", async ({ page }) => {
+  await page.route("**/api/chat", async (route) => {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "text/event-stream", "cache-control": "no-cache" },
+      body: interruptedResponse(),
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Message the OmniPro 220 assistant" }).fill("Annotate this image.");
+  await page.getByRole("button", { name: "Send message" }).click();
+
+  await expect(page.getByText("The response stream ended before completion. Please retry.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Thinking about the next step", { exact: true })).not.toBeVisible();
+  await expect(page.getByText("Complete", { exact: true }).first()).toBeVisible();
 });

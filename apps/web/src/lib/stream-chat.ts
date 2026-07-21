@@ -39,6 +39,11 @@ export async function streamChat({ message, sessionId, conversationContext, arti
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let receivedDone = false;
+  const dispatch = (event: StreamEvent) => {
+    if (event.type === "done") receivedDone = true;
+    onEvent(event);
+  };
 
   while (true) {
     const { value, done } = await reader.read();
@@ -48,12 +53,15 @@ export async function streamChat({ message, sessionId, conversationContext, arti
       const block = buffer.slice(0, boundary);
       buffer = buffer.slice(boundary + 2);
       const event = parseEventBlock(block);
-      if (event) onEvent(event);
+      if (event) dispatch(event);
       boundary = buffer.indexOf("\n\n");
     }
     if (done) break;
   }
 
   const finalEvent = parseEventBlock(buffer);
-  if (finalEvent) onEvent(finalEvent);
+  if (finalEvent) dispatch(finalEvent);
+  if (!receivedDone && !signal.aborted) {
+    throw new Error("The response stream ended before completion. Please retry.");
+  }
 }

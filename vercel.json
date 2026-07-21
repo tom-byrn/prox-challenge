@@ -5,7 +5,7 @@
   "outputDirectory": "apps/web/dist",
   "functions": {
     "api/handler.ts": {
-      "maxDuration": 60,
+      "maxDuration": 120,
       "supportsCancellation": true,
       "includeFiles": "{knowledge/**,node_modules/@anthropic-ai/claude-agent-sdk-linux-*/**}",
       "excludeFiles": "{.prox/**,apps/web/dist/**,files/**}"

@@ -42,8 +42,24 @@ export type ManualToolContext = {
   photoAssetId?: string;
   photoImage?: Buffer;
   artifacts?: ArtifactContext[];
-  annotationPreviewState?: { attempts: number; approvedHashes: Set<string> };
+  annotationPreviewState?: AnnotationPreviewState;
 };
+
+export type AnnotationPreviewState = {
+  attempts: number;
+  approvedHashes: Set<string>;
+  rejectedHashes: Set<string>;
+};
+
+const MAX_ANNOTATION_PREVIEWS = 2;
+
+export function beginAnnotationPreview(state: AnnotationPreviewState, hash: string): "proceed" | "approved" | "duplicate" | "limit" {
+  if (state.approvedHashes.has(hash)) return "approved";
+  if (state.rejectedHashes.has(hash)) return "duplicate";
+  if (state.attempts >= MAX_ANNOTATION_PREVIEWS) return "limit";
+  state.attempts += 1;
+  return "proceed";
+}
 
 export function resolveToolArgument<T>(requested: T | undefined, userContext: T | undefined): T | undefined {
   return userContext ?? requested;
@@ -89,7 +105,7 @@ function displayName(toolName: string): string {
 
 export function createManualTools(emit: EmitEvent, context: ManualToolContext = { originalQuestion: "" }) {
   const product = getKnowledgeProductInfo();
-  const annotationPreviewState = context.annotationPreviewState ?? { attempts: 0, approvedHashes: new Set<string>() };
+  const annotationPreviewState = context.annotationPreviewState ?? { attempts: 0, approvedHashes: new Set<string>(), rejectedHashes: new Set<string>() };
   const previewedAnnotations = annotationPreviewState.approvedHashes;
   let artifactRendered = false;
 
@@ -188,19 +204,37 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
     ),
     tool(
       "preview_visual_annotations",
-      "Preview and validate an annotated-image spec before displaying it. The tool always returns the numbered overlay with a temporary absolute-pixel coordinate grid, including when a marker is invalid, so use that image—not blind coordinate nudges—to revise only the named invalid annotations. A preview is approved for render_visual only when valid is true. At most four previews are allowed per turn.",
+      "Preview and validate an annotated-image spec before displaying it. The tool returns a numbered overlay with a temporary absolute-pixel coordinate grid, including when a marker is invalid, so use that image—not blind coordinate nudges—to revise only the named invalid annotations. A preview is approved for render_visual only when valid is true. Never resubmit an unchanged invalid spec. At most two image previews are allowed per turn; after that, fall back to the unannotated image with a concise textual legend.",
       { spec: AnnotatedImageSchema },
       instrument("preview_visual_annotations", async ({ spec }) => {
-        annotationPreviewState.attempts += 1;
-        if (annotationPreviewState.attempts > 4) {
+        const hash = visualSpecHash(spec);
+        const decision = beginAnnotationPreview(annotationPreviewState, hash);
+        if (decision === "approved") {
+          return jsonResult({
+            valid: true,
+            alreadyApproved: true,
+            visualHash: hash,
+            instruction: "This exact spec is already approved. Call render_visual with it now."
+          });
+        }
+        if (decision === "duplicate") {
+          return jsonResult({
+            valid: false,
+            duplicate: true,
+            visualHash: hash,
+            instruction: "This exact spec already failed validation. Do not submit it again. Make one evidence-based coordinate revision from the previous overlay, or fall back to the unannotated image with a concise textual legend."
+          });
+        }
+        if (decision === "limit") {
           return jsonResult({
             valid: false,
             attemptLimitReached: true,
-            instruction: "Stop revising coordinates. Do not narrate the failed attempts. Use an already approved spec if one exists; otherwise ask for a clearer photo or explain that a reliable overlay could not be produced."
+            instruction: "Stop revising coordinates and do not call this tool again. Do not narrate the failed attempts. Use an already approved spec if one exists; otherwise show the source image without annotations and provide a concise textual legend."
           });
         }
         const result = await buildAnnotationPreview(spec, context.photoAssetId, context.photoImage);
         if (result.valid) previewedAnnotations.add(result.hash);
+        else annotationPreviewState.rejectedHashes.add(result.hash);
         return {
           content: [
             {
@@ -209,7 +243,7 @@ export function createManualTools(emit: EmitEvent, context: ManualToolContext = 
                 previewed: true,
                 valid: result.valid,
                 attempt: annotationPreviewState.attempts,
-                attemptsRemaining: 4 - annotationPreviewState.attempts,
+                attemptsRemaining: MAX_ANNOTATION_PREVIEWS - annotationPreviewState.attempts,
                 visualHash: result.hash,
                 width: result.prepared.asset.width,
                 height: result.prepared.asset.height,

@@ -181,11 +181,6 @@ npm run eval
 
 ## Current limitations
 
-- Hosted follow-up turns use a bounded recent transcript rather than durable Agent SDK session files.
-- The shared password is not user authentication and has no per-user spending limits or login throttling.
-- The Vercel function must complete each turn within 60 seconds.
-- Product-specific deterministic calculators currently cover OmniPro 220; the generic knowledge package supports broader source-grounded retrieval.
-
 ## Environment variables
 
 | Variable | Purpose |
